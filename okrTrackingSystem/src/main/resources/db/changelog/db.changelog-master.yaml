@@ -1,0 +1,86 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1-create-division-table
+      author: spencer
+      changes:
+        - createTable:
+            tableName: division
+            columns:
+              - column:
+                  name: id
+                  type: varchar(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: leader_id
+                  type: uuid
+                  constraints:
+                    foreignKeyName: fk_division_leader
+                    references: users(id)
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 2-add-division-to-department
+      author: spencer
+      changes:
+        - addColumn:
+            tableName: department
+            columns:
+              - column:
+                  name: division_id
+                  type: varchar(36)
+                  constraints:
+                    nullable: true  # Temporarily nullable for migration
+                    foreignKeyName: fk_department_division
+                    references: division(id)
+
+  - changeSet:
+      id: 3-create-default-division
+      author: yourname
+      changes:
+        - insert:
+            tableName: division
+            columns:
+              - column:
+                  name: id
+                  value: "default-division-id-12345"
+              - column:
+                  name: name
+                  value: "Default Division"
+              - column:
+                  name: created_at
+                  valueDate: NOW()
+              - column:
+                  name: updated_at
+                  valueDate: NOW()
+
+  - changeSet:
+      id: 4-assign-departments-to-default-division
+      author: yourname
+      changes:
+        - sql:
+            sql: UPDATE department SET division_id = 'default-division-id-12345' WHERE division_id IS NULL
+
+  - changeSet:
+      id: 5-make-division-id-required
+      author: spencer
+      changes:
+        - addNotNullConstraint:
+            tableName: department
+            columnName: division_id
+            columnDataType: varchar(36)

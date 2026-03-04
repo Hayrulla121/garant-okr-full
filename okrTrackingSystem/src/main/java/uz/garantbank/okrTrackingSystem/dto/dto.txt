@@ -1,0 +1,6 @@
+What are DTOs?
+DTOs are like "view models" - simplified versions of your entities that you send to the frontend. They:
+
+Hide sensitive data (like passwords)
+Only include fields the frontend needs
+Prevent circular reference issues (Division → Department → Division → ...)

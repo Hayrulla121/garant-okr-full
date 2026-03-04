@@ -1,0 +1,2498 @@
+openapi: 3.1.0
+info:
+  title: OKR Tracking System API
+  description: |
+    ## OKR Tracking System — Garant Bank
+
+    REST API for managing **Objectives & Key Results (OKR)**, organizational structure, user management, and multi-source performance evaluations.
+
+    ### Key Features
+    - **OKR Management** — Create and track Objectives with weighted Key Results
+    - **Multi-Source Evaluations** — Director (star rating), HR (letter grade), and Business Block assessments
+    - **Score Calculation** — Automatic weighted scoring: 60% OKR + 20% Director + 20% HR
+    - **Organizational Hierarchy** — Divisions → Departments → Objectives → Key Results
+    - **Role-Based Access Control** — 6 roles with fine-grained permissions
+    - **Excel Export** — Export all OKR data to Excel spreadsheets
+
+    ### Authentication
+    All endpoints (except login and export) require a **JWT Bearer token**.
+    1. Call `POST /api/auth/login` with your credentials
+    2. Copy the `token` from the response
+    3. Click the **Authorize** button above and enter the token
+
+    ### Roles
+    | Role | Description |
+    |------|-------------|
+    | `ADMIN` | Full system access, user management |
+    | `DIRECTOR` | Division oversight, star-based evaluations |
+    | `DEPARTMENT_LEADER` | Department OKR management |
+    | `HR` | Letter-grade evaluations (A/B/C/D) |
+    | `BUSINESS_BLOCK` | Business block star-based evaluations |
+    | `EMPLOYEE` | View own profile and assigned departments |
+  version: 1.0.0
+externalDocs:
+  description: OKR Tracking System Documentation
+  url: https://garantbank.uz/docs/okr
+servers:
+- url: http://localhost:8080
+  description: Development Server
+security:
+- Bearer Authentication: []
+tags:
+- name: Users
+  description: "User management including creation, profile updates, department assignments,\
+    \ photo uploads, and score overview."
+- name: Divisions
+  description: Division CRUD operations. Divisions are the top-level organizational
+    unit containing Departments.
+- name: Score Levels
+  description: "Score level configuration for the scoring system. Defines levels:\
+    \ Не соответствует (0-0.3), Ниже ожиданий (0.31-0.50), На уровне ожиданий (0.51-0.85),\
+    \ Превышает ожидания (0.86-0.97), Исключительно (0.98-1.0)."
+- name: Authentication
+  description: "Login, registration, and current user operations"
+- name: Users
+  description: "User management, profiles, department assignments, and photo uploads"
+- name: Authentication
+  description: "Login, registration, and current user operations. Use `POST /api/auth/login`\
+    \ to obtain a JWT token."
+- name: Divisions
+  description: Division management — top-level organizational units
+- name: Objectives
+  description: Objective management within departments. Each objective has a weight
+    (0-100%) and contains Key Results.
+- name: Key Results
+  description: "Key Result management within objectives. Supports HIGHER_BETTER, LOWER_BETTER,\
+    \ and QUALITATIVE metric types with configurable thresholds."
+- name: Evaluations
+  description: "Multi-source performance evaluations. Director (1-5 stars → 4.25-5.0),\
+    \ HR (A/B/C/D letter grades → 5.0/4.75/4.5/4.25), and Business Block assessments."
+- name: Demo Data
+  description: Load sample/demo data for testing purposes. Admin only.
+- name: Platform Settings
+  description: Global platform configuration (ADMIN only for writes)
+- name: Score Levels
+  description: Score level configuration for the OKR scoring system
+- name: Departments
+  description: Department CRUD operations. Departments belong to Divisions and contain
+    Objectives.
+- name: Evaluations
+  description: "Multi-source performance evaluations (Director, HR, Business Block)"
+- name: Export
+  description: Data export operations. Currently supports Excel (.xlsx) export of
+    all OKR data.
+paths:
+  /api/users/{id}:
+    get:
+      tags:
+      - Users
+      summary: Get user by ID
+      description: Returns user details by ID. ADMIN and DIRECTOR can view any user.
+        Other users can only view their own profile.
+      operationId: getUserById
+      parameters:
+      - name: id
+        in: path
+        description: User ID (UUID)
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDTO"
+        "403":
+          description: Can only view own profile
+        "404":
+          description: User not found
+    put:
+      tags:
+      - Users
+      summary: Update user
+      description: |-
+        Update user details.
+
+        **ADMIN** can update all fields including role, department assignments, and account status.
+
+        **Regular users** can only update their own profile fields: fullName, email, jobTitle, phoneNumber, bio, password.
+      operationId: updateUser
+      parameters:
+      - name: id
+        in: path
+        description: User ID (UUID)
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+        required: true
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDTO"
+        "400":
+          description: Invalid request
+        "403":
+          description: Cannot update admin-only fields
+        "404":
+          description: User not found
+    delete:
+      tags:
+      - Users
+      summary: Delete user
+      description: Permanently delete a user account. Users cannot delete their own
+        account. **Requires ADMIN role.**
+      operationId: deleteUser
+      parameters:
+      - name: id
+        in: path
+        description: User ID (UUID)
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: User deleted
+        "400":
+          description: Cannot delete your own account
+        "403":
+          description: Only ADMIN can delete users
+        "404":
+          description: User not found
+  /api/score-levels:
+    get:
+      tags:
+      - Score Levels
+      summary: Get all score levels
+      description: "Returns all configured score levels ordered by display order.\
+        \ Default levels: Не соответствует (0-0.3), Ниже ожиданий (0.31-0.50), На\
+        \ уровне ожиданий (0.51-0.85), Превышает ожидания (0.86-0.97), Исключитель\
+        но (0.98-1.0)."
+      operationId: getAllScoreLevels
+      responses:
+        "200":
+          description: List of score levels
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ScoreLevelDTO"
+    put:
+      tags:
+      - Score Levels
+      summary: Update score levels
+      description: "Replace all score levels with the provided list. Each level must\
+        \ have a unique name, score value, color, and display order."
+      operationId: updateScoreLevels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/ScoreLevelDTO"
+        required: true
+      responses:
+        "200":
+          description: Score levels updated — returns new configuration
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ScoreLevelDTO"
+        "400":
+          description: Invalid configuration
+  /api/platform-settings/{key}:
+    get:
+      tags:
+      - Platform Settings
+      summary: Get a platform setting by key
+      description: Returns a single platform setting by its key.
+      operationId: getSetting
+      parameters:
+      - name: key
+        in: path
+        description: Setting key
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Setting found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlatformSetting"
+        "404":
+          description: Setting not found
+    put:
+      tags:
+      - Platform Settings
+      summary: Update a platform setting
+      description: Create or update a platform setting. **Requires ADMIN role.**
+      operationId: updateSetting
+      parameters:
+      - name: key
+        in: path
+        description: Setting key
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: string
+        required: true
+      responses:
+        "200":
+          description: Setting updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlatformSetting"
+        "403":
+          description: Only ADMIN can update settings
+  /api/objectives/{id}:
+    put:
+      tags:
+      - Objectives
+      summary: Update objective
+      description: Update an objective's name and weight. Requires edit permission
+        for the parent department.
+      operationId: updateObjective
+      parameters:
+      - name: id
+        in: path
+        description: Objective ID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ObjectiveDTO"
+        required: true
+      responses:
+        "200":
+          description: Objective updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectiveDTO"
+        "403":
+          description: No edit permission
+        "404":
+          description: Objective not found
+    delete:
+      tags:
+      - Objectives
+      summary: Delete objective
+      description: Delete an objective and all its key results. Requires edit permission
+        for the parent department.
+      operationId: deleteObjective
+      parameters:
+      - name: id
+        in: path
+        description: Objective ID
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Objective deleted
+        "403":
+          description: No edit permission
+        "404":
+          description: Objective not found
+  /api/key-results/{id}:
+    put:
+      tags:
+      - Key Results
+      summary: Update key result
+      description: "Update a key result's properties including name, description,\
+        \ metric type, thresholds, and weight."
+      operationId: updateKeyResult
+      parameters:
+      - name: id
+        in: path
+        description: Key Result ID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/KeyResultDTO"
+        required: true
+      responses:
+        "200":
+          description: Key result updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KeyResultDTO"
+        "403":
+          description: No edit permission
+        "404":
+          description: Key result not found
+    delete:
+      tags:
+      - Key Results
+      summary: Delete key result
+      description: Permanently delete a key result. Requires edit permission for the
+        parent department.
+      operationId: deleteKeyResult
+      parameters:
+      - name: id
+        in: path
+        description: Key Result ID
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Key result deleted
+        "403":
+          description: No edit permission
+        "404":
+          description: Key result not found
+  /api/key-results/{id}/progress:
+    put:
+      tags:
+      - Key Results
+      summary: Update key result progress
+      description: Update the progress percentage (0-100) of a key result. Only ADMIN
+        or DEPARTMENT_LEADER assigned to the department can update progress.
+      operationId: updateKeyResultProgress
+      parameters:
+      - name: id
+        in: path
+        description: Key Result ID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: integer
+                format: int32
+        required: true
+      responses:
+        "200":
+          description: Progress updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KeyResultDTO"
+        "400":
+          description: Invalid progress value (must be 0-100)
+        "403":
+          description: No permission to edit progress
+        "404":
+          description: Key result not found
+  /api/key-results/{id}/actual-value:
+    put:
+      tags:
+      - Key Results
+      summary: Update key result actual value
+      description: "Update the actual/measured value of a key result, optionally with\
+        \ a proof attachment. If the platform setting REQUIRE_ATTACHMENT_FOR_ACTUAL_VALUE\
+        \ is enabled, an attachment file is mandatory. The score is automatically\
+        \ recalculated based on the new value and the configured thresholds."
+      operationId: updateKeyResultActualValue
+      parameters:
+      - name: id
+        in: path
+        description: Key Result ID
+        required: true
+        schema:
+          type: string
+      - name: actualValue
+        in: query
+        description: The new actual value
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: "Proof/basis attachment file (PDF, DOC, DOCX, XLS,\
+                    \ XLSX, images)"
+      responses:
+        "200":
+          description: Actual value updated and score recalculated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KeyResultDTO"
+        "400":
+          description: Missing required attachment or invalid file
+        "403":
+          description: No edit permission
+        "404":
+          description: Key result not found
+  /api/evaluations/{id}:
+    put:
+      tags:
+      - Evaluations
+      summary: Update evaluation
+      description: Modify an existing evaluation. Evaluators can update their evaluations
+        even after submission (to correct mistakes). Only the original evaluator can
+        update.
+      operationId: updateEvaluation
+      parameters:
+      - name: id
+        in: path
+        description: Evaluation ID (UUID)
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvaluationCreateRequest"
+        required: true
+      responses:
+        "200":
+          description: Evaluation updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvaluationDTO"
+        "403":
+          description: Not the evaluation owner
+        "404":
+          description: Evaluation not found
+    delete:
+      tags:
+      - Evaluations
+      summary: Delete evaluation
+      description: Delete a draft evaluation. Only evaluations in `DRAFT` status can
+        be deleted. Only the original evaluator can delete their evaluation.
+      operationId: deleteEvaluation
+      parameters:
+      - name: id
+        in: path
+        description: Evaluation ID (UUID)
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: Evaluation deleted
+        "400":
+          description: Cannot delete non-draft evaluation
+        "403":
+          description: Not the evaluation owner
+        "404":
+          description: Evaluation not found
+  /api/divisions/{id}:
+    get:
+      tags:
+      - Divisions
+      summary: Get division by ID
+      description: Returns a single division with its leader info and department summaries.
+      operationId: getDivisionById
+      parameters:
+      - name: id
+        in: path
+        description: Division ID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Division found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DivisionDTO"
+        "404":
+          description: Division not found
+    put:
+      tags:
+      - Divisions
+      summary: Update division
+      description: "Update a division's name and/or leader. Requires edit permission\
+        \ (ADMIN, DIRECTOR, or division leader)."
+      operationId: updateDivision
+      parameters:
+      - name: id
+        in: path
+        description: Division ID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDivisionRequest"
+        required: true
+      responses:
+        "200":
+          description: Division updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DivisionDTO"
+        "400":
+          description: Invalid request
+        "403":
+          description: No edit permission for this division
+        "404":
+          description: Division not found
+    delete:
+      tags:
+      - Divisions
+      summary: Delete division
+      description: Delete a division. The division must have no departments assigned.
+        **Requires ADMIN role.**
+      operationId: deleteDivision
+      parameters:
+      - name: id
+        in: path
+        description: Division ID
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Division deleted
+        "400":
+          description: Division still has departments
+        "403":
+          description: Only ADMIN can delete divisions
+        "404":
+          description: Division not found
+  /api/departments/{id}:
+    get:
+      tags:
+      - Departments
+      summary: Get department by ID
+      description: "Returns a single department with its objectives, key results,\
+        \ and computed scores."
+      operationId: getDepartment
+      parameters:
+      - name: id
+        in: path
+        description: Department ID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Department found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DepartmentDTO"
+        "404":
+          description: Department not found
+    put:
+      tags:
+      - Departments
+      summary: Update department
+      description: "Update a department's name and other properties. Requires edit\
+        \ permission for the department (ADMIN, DIRECTOR, or assigned DEPARTMENT_LEADER)."
+      operationId: updateDepartment
+      parameters:
+      - name: id
+        in: path
+        description: Department ID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DepartmentDTO"
+        required: true
+      responses:
+        "200":
+          description: Department updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DepartmentDTO"
+        "403":
+          description: No edit permission for this department
+        "404":
+          description: Department not found
+    delete:
+      tags:
+      - Departments
+      summary: Delete department
+      description: Permanently delete a department and all its objectives/key results.
+        **Requires ADMIN role.**
+      operationId: deleteDepartment
+      parameters:
+      - name: id
+        in: path
+        description: Department ID
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Department deleted
+        "403":
+          description: Only ADMIN can delete departments
+        "404":
+          description: Department not found
+  /api/users:
+    get:
+      tags:
+      - Users
+      summary: Get all users
+      description: Returns all users in the system. **Requires ADMIN or DIRECTOR role.**
+      operationId: getAllUsers
+      responses:
+        "200":
+          description: List of all users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserDTO"
+        "403":
+          description: Insufficient permissions
+    post:
+      tags:
+      - Users
+      summary: Create user
+      description: Create a new user account with specified role and optional department
+        assignments. **Requires ADMIN role.**
+      operationId: createUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+        required: true
+      responses:
+        "200":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDTO"
+        "400":
+          description: "Invalid request (e.g., duplicate username/email)"
+        "403":
+          description: Only ADMIN can create users
+  /api/users/{id}/photo:
+    post:
+      tags:
+      - Users
+      summary: Upload profile photo
+      description: "Upload a profile photo for a user. Accepts JPEG, PNG, and GIF\
+        \ files up to 5MB. ADMIN can upload for any user; other users can only upload\
+        \ their own photo."
+      operationId: uploadPhoto
+      parameters:
+      - name: id
+        in: path
+        description: User ID (UUID)
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                photo:
+                  type: string
+                  format: binary
+                  description: "Profile photo file (JPEG, PNG, GIF; max 5MB)"
+              required:
+              - photo
+      responses:
+        "200":
+          description: Photo uploaded — returns updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDTO"
+        "400":
+          description: Invalid file (wrong type or too large)
+        "403":
+          description: Can only upload own photo
+  /api/users/{id}/departments:
+    post:
+      tags:
+      - Users
+      summary: Assign departments to user
+      description: Assign one or more departments to a user. Replaces existing department
+        assignments. **Requires ADMIN role.**
+      operationId: assignDepartments
+      parameters:
+      - name: id
+        in: path
+        description: User ID (UUID)
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignDepartmentsRequest"
+        required: true
+      responses:
+        "200":
+          description: Departments assigned — returns updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDTO"
+        "403":
+          description: Only ADMIN can assign departments
+        "404":
+          description: User or department not found
+  /api/score-levels/reset:
+    post:
+      tags:
+      - Score Levels
+      summary: Reset score levels to defaults
+      description: "Reset all score levels to the system defaults: Не соответствуе\
+        т (0-0.3), Ниже ожиданий (0.31-0.50), На уровне ожиданий (0.51-0.85), Прев\
+        ышает ожидания (0.86-0.97), Исключительно (0.98-1.0)."
+      operationId: resetToDefaults
+      responses:
+        "200":
+          description: Score levels reset to defaults
+  /api/platform-settings/watermark-image:
+    post:
+      tags:
+      - Platform Settings
+      summary: Upload watermark image
+      description: Upload an image file to use as the UI watermark. Deletes the previous
+        watermark image if one existed. **Requires ADMIN role.**
+      operationId: uploadWatermarkImage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: "Image file (JPEG, PNG, GIF — max 5 MB)"
+              required:
+              - file
+      responses:
+        "200":
+          description: Image uploaded and setting saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlatformSetting"
+        "400":
+          description: Invalid file
+        "403":
+          description: Only ADMIN can upload watermark
+  /api/objectives/{objectiveId}/key-results:
+    post:
+      tags:
+      - Key Results
+      summary: Create key result
+      description: "Create a new key result within an objective. Configure metric\
+        \ type (HIGHER_BETTER, LOWER_BETTER, QUALITATIVE), unit, weight, and threshold\
+        \ values. Key result weights within an objective should sum to 100%."
+      operationId: createKeyResult
+      parameters:
+      - name: objectiveId
+        in: path
+        description: Objective ID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/KeyResultDTO"
+        required: true
+      responses:
+        "200":
+          description: Key result created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KeyResultDTO"
+        "403":
+          description: No edit permission
+        "404":
+          description: Objective not found
+  /api/evaluations:
+    post:
+      tags:
+      - Evaluations
+      summary: Create evaluation
+      description: |-
+        Create a new performance evaluation for a department or employee.
+
+        **Evaluator types and their rating scales:**
+        - `DIRECTOR` — 1-5 star rating (converted to 4.25-5.0 score)
+        - `HR` — Letter grade: A (5.0), B (4.75), C (4.5), D (4.25)
+        - `BUSINESS_BLOCK` — 1-5 star rating (displayed separately, not in final calculation)
+
+        Evaluations are created in `DRAFT` status and must be submitted separately.
+
+        **Requires:** DIRECTOR, HR, BUSINESS_BLOCK, or ADMIN role.
+      operationId: createEvaluation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvaluationCreateRequest"
+        required: true
+      responses:
+        "200":
+          description: Evaluation created in DRAFT status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvaluationDTO"
+        "400":
+          description: "Invalid request (e.g., invalid rating)"
+        "403":
+          description: Insufficient permissions
+  /api/evaluations/{id}/submit:
+    post:
+      tags:
+      - Evaluations
+      summary: Submit evaluation
+      description: "Change an evaluation from `DRAFT` to `SUBMITTED` status. Once\
+        \ submitted, the evaluation contributes to the department/employee's final\
+        \ score calculation. Only the original evaluator can submit their own evaluation."
+      operationId: submitEvaluation
+      parameters:
+      - name: id
+        in: path
+        description: Evaluation ID (UUID)
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Evaluation submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvaluationDTO"
+        "403":
+          description: Not the evaluation owner
+        "404":
+          description: Evaluation not found
+  /api/divisions:
+    get:
+      tags:
+      - Divisions
+      summary: Get all divisions
+      description: Returns all divisions with their leader info and department summaries.
+        Accessible to all authenticated users.
+      operationId: getAllDivisions
+      responses:
+        "200":
+          description: List of all divisions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DivisionDTO"
+    post:
+      tags:
+      - Divisions
+      summary: Create division
+      description: Create a new division. Optionally assign a division leader. **Requires
+        ADMIN or DIRECTOR role.**
+      operationId: createDivision
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDivisionRequest"
+        required: true
+      responses:
+        "201":
+          description: Division created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DivisionDTO"
+        "400":
+          description: "Invalid request (e.g., name too short)"
+        "403":
+          description: Insufficient permissions
+  /api/departments:
+    get:
+      tags:
+      - Departments
+      summary: Get all departments
+      description: "Returns all departments with their objectives, key results, and\
+        \ computed scores. Accessible to all authenticated users."
+      operationId: getAllDepartments
+      responses:
+        "200":
+          description: List of all departments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DepartmentDTO"
+        "401":
+          description: Not authenticated
+    post:
+      tags:
+      - Departments
+      summary: Create department
+      description: Create a new department. **Requires ADMIN or DIRECTOR role.** The
+        department must be assigned to an existing division via the `divisionId` field.
+      operationId: createDepartment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DepartmentDTO"
+        required: true
+      responses:
+        "200":
+          description: Department created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DepartmentDTO"
+        "403":
+          description: Insufficient permissions
+  /api/departments/{departmentId}/objectives:
+    post:
+      tags:
+      - Objectives
+      summary: Create objective
+      description: Create a new objective within a department. The objective weight
+        should be between 0-100 and all objective weights in a department should sum
+        to 100%. Requires edit permission for the department.
+      operationId: createObjective
+      parameters:
+      - name: departmentId
+        in: path
+        description: Department ID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ObjectiveDTO"
+        required: true
+      responses:
+        "200":
+          description: Objective created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectiveDTO"
+        "403":
+          description: No edit permission for this department
+        "404":
+          description: Department not found
+  /api/demo/load:
+    post:
+      tags:
+      - Demo Data
+      summary: Load demo data
+      description: "Load sample OKR data for testing and demonstration purposes. Creates\
+        \ sample divisions, departments, objectives, and key results. **Requires ADMIN\
+        \ role.**"
+      operationId: loadDemoData
+      responses:
+        "200":
+          description: Demo data loaded — returns all departments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DepartmentDTO"
+        "403":
+          description: Only ADMIN can load demo data
+  /api/auth/register:
+    post:
+      tags:
+      - Authentication
+      summary: Register new user
+      description: Create a new user account. **Requires ADMIN role.** The user will
+        be assigned the specified role and optionally linked to a department.
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+        required: true
+      responses:
+        "200":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDTO"
+        "400":
+          description: "Invalid request (e.g., duplicate username)"
+        "403":
+          description: Only ADMIN can register users
+  /api/auth/login:
+    post:
+      tags:
+      - Authentication
+      summary: User login
+      description: Authenticate with username and password to receive a JWT token.
+        The token should be included in the `Authorization` header as `Bearer <token>`
+        for all subsequent requests.
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+        required: true
+      responses:
+        "200":
+          description: Login successful — returns JWT token and user details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Invalid credentials
+      security: []
+  /api/users/with-scores:
+    get:
+      tags:
+      - Users
+      summary: Get all users with scores
+      description: Returns all users with their overall performance scores calculated
+        from assigned departments. Used for the Team Overview page. **Requires ADMIN
+        or DIRECTOR role.**
+      operationId: getAllUsersWithScores
+      responses:
+        "200":
+          description: List of users with score data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserWithScoreDTO"
+        "403":
+          description: Insufficient permissions
+  /api/users/me/profile:
+    get:
+      tags:
+      - Users
+      summary: Get my profile
+      description: "Returns the extended profile of the currently authenticated user,\
+        \ including detailed department information and recent evaluations."
+      operationId: getMyProfile
+      responses:
+        "200":
+          description: User profile with detailed departments and evaluations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfileDTO"
+        "401":
+          description: Not authenticated
+  /api/users/by-department/{deptId}:
+    get:
+      tags:
+      - Users
+      summary: Get users by department
+      description: Returns all users assigned to a specific department.
+      operationId: getUsersByDepartment
+      parameters:
+      - name: deptId
+        in: path
+        description: Department ID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List of users in the department
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserDTO"
+        "404":
+          description: Department not found
+  /api/platform-settings:
+    get:
+      tags:
+      - Platform Settings
+      summary: Get all platform settings
+      description: Returns all platform-wide configuration settings. Accessible to
+        all authenticated users.
+      operationId: getAllSettings
+      responses:
+        "200":
+          description: List of all settings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlatformSetting"
+  /api/export/excel:
+    get:
+      tags:
+      - Export
+      summary: Export OKRs to Excel
+      description: "Export all departments, objectives, and key results to an Excel\
+        \ (.xlsx) file. The file includes scores and status information. **Public\
+        \ endpoint — no authentication required.**"
+      operationId: exportToExcel
+      responses:
+        "200":
+          description: Excel file generated
+          content:
+            application/octet-stream: {}
+        "500":
+          description: Export failed
+      security: []
+  /api/evaluations/target/{type}/{id}:
+    get:
+      tags:
+      - Evaluations
+      summary: Get evaluations for target
+      description: "Retrieve all evaluations for a specific department or employee.\
+        \ Returns evaluations from all evaluator types (Director, HR, Business Block)."
+      operationId: getEvaluationsForTarget
+      parameters:
+      - name: type
+        in: path
+        description: Target type
+        required: true
+        schema:
+          type: string
+          enum:
+          - DEPARTMENT
+          - EMPLOYEE
+      - name: id
+        in: path
+        description: Target ID (UUID)
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: List of evaluations for the target
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EvaluationDTO"
+  /api/evaluations/my:
+    get:
+      tags:
+      - Evaluations
+      summary: Get my evaluations
+      description: Retrieve all evaluations created by the currently authenticated
+        user.
+      operationId: getMyEvaluations
+      responses:
+        "200":
+          description: List of user's evaluations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EvaluationDTO"
+  /api/evaluations/all:
+    get:
+      tags:
+      - Evaluations
+      summary: Get all evaluations
+      description: Retrieve all evaluations in the system. **Requires ADMIN role.**
+        Intended for debugging and administration.
+      operationId: getAllEvaluations
+      responses:
+        "200":
+          description: All evaluations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EvaluationDTO"
+        "403":
+          description: Only ADMIN can view all evaluations
+  /api/divisions/{id}/score:
+    get:
+      tags:
+      - Divisions
+      summary: Get division score
+      description: "Returns the division's aggregated score calculated from its departments'\
+        \ scores, including score level and color classification."
+      operationId: getDivisionScore
+      parameters:
+      - name: id
+        in: path
+        description: Division ID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Division score details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DivisionWithScoreDTO"
+        "404":
+          description: Division not found
+  /api/divisions/{id}/departments:
+    get:
+      tags:
+      - Divisions
+      summary: Get departments in division
+      description: Returns a summary list of all departments belonging to the specified
+        division.
+      operationId: getDepartmentsByDivision
+      parameters:
+      - name: id
+        in: path
+        description: Division ID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List of departments in the division
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DepartmentSummaryDTO"
+        "404":
+          description: Division not found
+  /api/departments/{id}/scores:
+    get:
+      tags:
+      - Departments
+      summary: Get department scores with evaluations
+      description: "Returns detailed score breakdown for a department including automatic\
+        \ OKR score (60%), Director evaluation (20%), HR evaluation (20%), Business\
+        \ Block assessment, and the combined final score."
+      operationId: getDepartmentScores
+      parameters:
+      - name: id
+        in: path
+        description: Department ID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Department score details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DepartmentScoreResult"
+        "404":
+          description: Department not found
+  /api/auth/me:
+    get:
+      tags:
+      - Authentication
+      summary: Get current user
+      description: Returns the profile information of the currently authenticated
+        user based on the JWT token.
+      operationId: getCurrentUser
+      responses:
+        "200":
+          description: Current user details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDTO"
+        "401":
+          description: Not authenticated
+  /api/users/{id}/departments/{deptId}:
+    delete:
+      tags:
+      - Users
+      summary: Remove department from user
+      description: Remove a specific department assignment from a user. **Requires
+        ADMIN role.**
+      operationId: removeDepartment
+      parameters:
+      - name: id
+        in: path
+        description: User ID (UUID)
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: deptId
+        in: path
+        description: Department ID to remove
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Department removed — returns updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDTO"
+        "403":
+          description: Only ADMIN can remove departments
+        "404":
+          description: User or department not found
+components:
+  schemas:
+    UpdateUserRequest:
+      type: object
+      description: Request to update user details. All fields are optional — only
+        provided fields are updated. Fields marked 'ADMIN only' are ignored for non-admin
+        users.
+      properties:
+        fullName:
+          type: string
+          description: Full display name
+          example: John Doe Updated
+        email:
+          type: string
+          description: Email address
+          example: john.updated@garantbank.uz
+        jobTitle:
+          type: string
+          description: Job title
+          example: Lead Developer
+        phoneNumber:
+          type: string
+          description: Phone number
+          example: +998 90 987 65 43
+        bio:
+          type: string
+          description: Bio/description
+          example: Team lead with 5 years experience
+        role:
+          type: string
+          description: User role (ADMIN only)
+          enum:
+          - EMPLOYEE
+          - DEPARTMENT_LEADER
+          - HR
+          - DIRECTOR
+          - BUSINESS_BLOCK
+          - ADMIN
+          example: DEPARTMENT_LEADER
+        assignedDepartmentIds:
+          type: array
+          description: Department IDs to assign (ADMIN only)
+          example:
+          - dept-001
+          - dept-002
+          items:
+            type: string
+        password:
+          type: string
+          description: "New password (optional, for password change)"
+          example: newSecurePass456
+        isActive:
+          type: boolean
+          description: Account active status (ADMIN only)
+          example: true
+        canEditAssignedDepartments:
+          type: boolean
+          description: Whether user can edit assigned departments (ADMIN only)
+          example: true
+        readOnly:
+          type: boolean
+          description: Whether user is in read-only mode (ADMIN only)
+          example: false
+    DepartmentSummaryDTO:
+      type: object
+      description: Lightweight department reference
+      properties:
+        id:
+          type: string
+          description: Department ID
+          example: dept-001
+        name:
+          type: string
+          description: Department name
+          example: Software Development
+    UserDTO:
+      type: object
+      description: User information (password excluded)
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: User ID
+          example: 550e8400-e29b-41d4-a716-446655440000
+        username:
+          type: string
+          description: Unique username
+          example: john.doe
+        email:
+          type: string
+          description: Email address
+          example: john.doe@garantbank.uz
+        fullName:
+          type: string
+          description: Full display name
+          example: John Doe
+        role:
+          type: string
+          description: User role
+          enum:
+          - EMPLOYEE
+          - DEPARTMENT_LEADER
+          - HR
+          - DIRECTOR
+          - BUSINESS_BLOCK
+          - ADMIN
+          example: EMPLOYEE
+        profilePhotoUrl:
+          type: string
+          description: URL to user's profile photo
+          example: /uploads/photo-abc123.jpg
+        jobTitle:
+          type: string
+          description: Job title
+          example: Senior Developer
+        phoneNumber:
+          type: string
+          description: Phone number
+          example: +998 90 123 45 67
+        bio:
+          type: string
+          description: User bio/description
+          example: Experienced developer focused on backend systems
+        lastLogin:
+          type: string
+          format: date-time
+          description: Timestamp of last login
+          example: 2025-01-15T10:30:00
+        assignedDepartments:
+          type: array
+          description: Departments the user is assigned to
+          items:
+            $ref: "#/components/schemas/DepartmentSummaryDTO"
+        createdAt:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+          example: 2025-01-01T09:00:00
+        active:
+          type: boolean
+        isActive:
+          type: boolean
+          description: Whether the user account is active
+          example: true
+        canEditAssignedDepartments:
+          type: boolean
+          description: Whether the employee can edit their assigned departments
+          example: false
+        readOnly:
+          type: boolean
+          description: Whether the user is in read-only mode (cannot make any edits)
+          example: false
+    ScoreLevelDTO:
+      type: object
+      description: Score level configuration entry
+      properties:
+        id:
+          type: string
+          description: Score level ID
+          example: sl-001
+        name:
+          type: string
+          description: Level name
+          enum:
+          - Не соответствует
+          - Ниже ожиданий
+          - На уровне ожиданий
+          - Превышает ожидания
+          - Исключительно
+          example: На уровне ожиданий
+        scoreValue:
+          type: number
+          format: double
+          description: Numeric score value (lower bound) for this level
+          example: 0.51
+        color:
+          type: string
+          description: Hex color code for UI display
+          example: "#4CAF50"
+        displayOrder:
+          type: integer
+          format: int32
+          description: Display order (lower = displayed first)
+          example: 3
+    PlatformSetting:
+      type: object
+      properties:
+        settingKey:
+          type: string
+        settingValue:
+          type: string
+        description:
+          type: string
+    KeyResultDTO:
+      type: object
+      description: "Key Result with thresholds, actual value, and computed score"
+      properties:
+        id:
+          type: string
+          description: Key Result ID
+          example: kr-001
+        name:
+          type: string
+          description: Key Result name
+          example: System uptime percentage
+        description:
+          type: string
+          description: Detailed description
+          example: Measure monthly system uptime across all production services
+        metricType:
+          type: string
+          description: Metric type determining score calculation direction
+          enum:
+          - HIGHER_BETTER
+          - LOWER_BETTER
+          - QUALITATIVE
+          example: HIGHER_BETTER
+        unit:
+          type: string
+          description: Unit of measurement
+          example: '%'
+        weight:
+          type: integer
+          format: int32
+          description: Weight as percentage of objective total (0-100)
+          example: 50
+        thresholds:
+          $ref: "#/components/schemas/ThresholdDTO"
+          description: Threshold values for each score level
+        actualValue:
+          type: string
+          description: Actual measured value
+          example: 99.5
+        objectiveId:
+          type: string
+          description: Parent objective ID
+          example: obj-001
+        score:
+          $ref: "#/components/schemas/ScoreResult"
+          description: Computed score based on actual value vs thresholds
+        attachmentUrl:
+          type: string
+          description: URL to the attached proof/basis file
+          example: /uploads/kr-attachments/kr-001_1234567890.pdf
+        attachmentFileName:
+          type: string
+          description: Original filename of the attachment
+          example: quarterly_report.pdf
+        progress:
+          type: integer
+          format: int32
+          description: "Progress percentage (0-100), manually set by ADMIN or DEPARTMENT_LEADER.\
+            \ Null if the current user cannot view progress for this department."
+          example: 50
+    ObjectiveDTO:
+      type: object
+      description: Objective with key results and computed score
+      properties:
+        id:
+          type: string
+          description: Objective ID
+          example: obj-001
+        name:
+          type: string
+          description: Objective name
+          example: Improve System Reliability
+        weight:
+          type: integer
+          format: int32
+          description: Weight as percentage of department total (0-100). All objectives
+            in a department should sum to 100.
+          example: 40
+        departmentId:
+          type: string
+          description: Parent department ID
+          example: dept-001
+        keyResults:
+          type: array
+          description: Key results under this objective
+          items:
+            $ref: "#/components/schemas/KeyResultDTO"
+        score:
+          $ref: "#/components/schemas/ScoreResult"
+          description: Computed score based on key result achievements
+    ScoreResult:
+      type: object
+      description: Computed score with level classification and color
+      properties:
+        score:
+          type: number
+          format: double
+          description: Numeric score (0.0-1.0)
+          example: 0.65
+        level:
+          type: string
+          description: Score level classification
+          enum:
+          - не_соответствует
+          - ниже_ожиданий
+          - на_уровне_ожиданий
+          - превышает_ожидания
+          - исключительно
+          example: на_уровне_ожиданий
+        color:
+          type: string
+          description: Hex color for the score level
+          example: "#4CAF50"
+        percentage:
+          type: number
+          format: double
+          description: Score as percentage (0-100)
+          example: 75.0
+    ThresholdDTO:
+      type: object
+      description: Threshold values defining score level boundaries for a Key Result
+      properties:
+        below:
+          type: number
+          format: double
+          description: Value at or below which score is 'Не соответствует' (0.0)
+          example: 90.0
+        meets:
+          type: number
+          format: double
+          description: Value at which score is 'Ниже ожиданий' (0.31)
+          example: 95.0
+        good:
+          type: number
+          format: double
+          description: Value at which score is 'На уровне ожиданий' (0.51)
+          example: 97.0
+        veryGood:
+          type: number
+          format: double
+          description: Value at which score is 'Превышает ожидания' (0.86)
+          example: 98.5
+        exceptional:
+          type: number
+          format: double
+          description: Value at which score is 'Исключительно' (0.98)
+          example: 99.5
+    EvaluationCreateRequest:
+      type: object
+      description: Request to create or update an evaluation
+      properties:
+        targetType:
+          type: string
+          description: Target entity type
+          enum:
+          - DEPARTMENT
+          - EMPLOYEE
+          example: DEPARTMENT
+        targetId:
+          type: string
+          format: uuid
+          description: ID of the target department or employee
+          example: 550e8400-e29b-41d4-a716-446655440000
+        evaluatorType:
+          type: string
+          description: Evaluator type
+          enum:
+          - DIRECTOR
+          - HR
+          - BUSINESS_BLOCK
+          example: DIRECTOR
+        numericRating:
+          type: number
+          format: double
+          description: Numeric rating — for DIRECTOR (4.25-5.0) or BUSINESS_BLOCK
+            (4.25-5.0)
+          example: 4.75
+        starRating:
+          type: integer
+          format: int32
+          description: "Star rating — for DIRECTOR and BUSINESS_BLOCK (1-5 stars,\
+            \ converted to 4.25-5.0)"
+          example: 4
+        letterRating:
+          type: string
+          description: Letter rating — for HR evaluations
+          enum:
+          - A
+          - B
+          - C
+          - D
+          example: B
+        comment:
+          type: string
+          description: Evaluator's comment
+          example: Good progress on quarterly objectives
+      required:
+      - evaluatorType
+      - targetId
+      - targetType
+    EvaluationDTO:
+      type: object
+      description: "Evaluation record from a Director, HR, or Business Block evaluator"
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Evaluation ID
+          example: 550e8400-e29b-41d4-a716-446655440000
+        evaluatorId:
+          type: string
+          format: uuid
+          description: ID of the user who created this evaluation
+          example: 660e8400-e29b-41d4-a716-446655440001
+        evaluatorName:
+          type: string
+          description: Name of the evaluator
+          example: Jane Smith
+        evaluatorType:
+          type: string
+          description: Type of evaluator
+          enum:
+          - DIRECTOR
+          - HR
+          - BUSINESS_BLOCK
+          example: DIRECTOR
+        targetType:
+          type: string
+          description: Target entity type
+          enum:
+          - DEPARTMENT
+          - EMPLOYEE
+          example: DEPARTMENT
+        targetId:
+          type: string
+          format: uuid
+          description: ID of the target department or employee
+          example: 770e8400-e29b-41d4-a716-446655440002
+        numericRating:
+          type: number
+          format: double
+          description: "Numeric rating (Director: 4.25-5.0 from stars; HR: 4.25-5.0\
+            \ from letter grade)"
+          example: 4.75
+        letterRating:
+          type: string
+          description: Letter rating for HR evaluations
+          enum:
+          - A
+          - B
+          - C
+          - D
+          example: B
+        comment:
+          type: string
+          description: Evaluator's comment
+          example: "Strong performance, exceeds expectations in key areas"
+        status:
+          type: string
+          description: Evaluation status
+          enum:
+          - DRAFT
+          - SUBMITTED
+          - APPROVED
+          example: SUBMITTED
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        submittedAt:
+          type: string
+          format: date-time
+          description: Submission timestamp (null if still in DRAFT)
+    UpdateDivisionRequest:
+      type: object
+      description: Request to update a division (all fields optional)
+      properties:
+        name:
+          type: string
+          description: New division name (2-100 characters)
+          example: Information Technology & Security
+          maxLength: 100
+          minLength: 2
+        leaderId:
+          type: string
+          format: uuid
+          description: New division leader user ID
+          example: 550e8400-e29b-41d4-a716-446655440000
+    DivisionDTO:
+      type: object
+      description: Division with leader info and department summaries
+      properties:
+        id:
+          type: string
+          description: Division ID
+          example: div-001
+        name:
+          type: string
+          description: Division name
+          example: Information Technology
+        divisionLeader:
+          $ref: "#/components/schemas/UserSummaryDTO"
+          description: Division leader (basic info)
+        departments:
+          type: array
+          description: Departments in this division
+          items:
+            $ref: "#/components/schemas/DepartmentSummaryDTO"
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: 2025-01-01T09:00:00
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: 2025-01-15T14:30:00
+    UserSummaryDTO:
+      type: object
+      description: Lightweight user summary for display purposes
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: User ID
+          example: 550e8400-e29b-41d4-a716-446655440000
+        username:
+          type: string
+          description: Username
+          example: john.doe
+        fullName:
+          type: string
+          description: Full name
+          example: John Doe
+        profilePhotoUrl:
+          type: string
+          description: Profile photo URL
+          example: /uploads/photo-abc.jpg
+    DepartmentDTO:
+      type: object
+      description: "Department with objectives, scores, and division info"
+      properties:
+        division:
+          $ref: "#/components/schemas/DivisionSummaryDTO"
+          description: Parent division summary
+        divisionId:
+          type: string
+          description: Division ID (used when creating a department)
+          example: div-001
+        id:
+          type: string
+          description: Department ID
+          example: dept-001
+        name:
+          type: string
+          description: Department name
+          example: Software Development
+        objectives:
+          type: array
+          description: List of objectives in this department
+          items:
+            $ref: "#/components/schemas/ObjectiveDTO"
+        score:
+          $ref: "#/components/schemas/ScoreResult"
+          description: Automatic OKR score computed from key results
+        finalScore:
+          $ref: "#/components/schemas/ScoreResult"
+          description: "Final combined score: 60% OKR + 20% Director + 20% HR"
+        hasAllEvaluations:
+          type: boolean
+          description: True if the department has both Director and HR evaluations
+          example: true
+    DivisionSummaryDTO:
+      type: object
+      description: Lightweight division reference
+      properties:
+        id:
+          type: string
+          description: Division ID
+          example: div-001
+        name:
+          type: string
+          description: Division name
+          example: Information Technology
+    CreateUserRequest:
+      type: object
+      description: Request to create a new user (ADMIN only)
+      properties:
+        username:
+          type: string
+          description: Unique username
+          example: john.doe
+          minLength: 1
+        email:
+          type: string
+          description: Email address
+          example: john.doe@garantbank.uz
+          minLength: 1
+        password:
+          type: string
+          description: Password (min 6 characters)
+          example: securePass123
+          maxLength: 2147483647
+          minLength: 6
+        fullName:
+          type: string
+          description: Full display name
+          example: John Doe
+          minLength: 1
+        role:
+          type: string
+          description: User role
+          enum:
+          - EMPLOYEE
+          - DEPARTMENT_LEADER
+          - HR
+          - DIRECTOR
+          - BUSINESS_BLOCK
+          - ADMIN
+          example: EMPLOYEE
+        assignedDepartmentIds:
+          type: array
+          description: Optional list of department IDs to assign
+          example:
+          - dept-001
+          items:
+            type: string
+        jobTitle:
+          type: string
+          description: Job title
+          example: Senior Developer
+        phoneNumber:
+          type: string
+          description: Phone number
+          example: +998 90 123 45 67
+        bio:
+          type: string
+          description: Bio/description
+          example: Experienced backend developer
+        readOnly:
+          type: boolean
+          description: Whether user starts in read-only mode (defaults to false)
+          example: false
+      required:
+      - email
+      - fullName
+      - password
+      - role
+      - username
+    AssignDepartmentsRequest:
+      type: object
+      description: Request to assign departments to a user
+      properties:
+        departmentIds:
+          type: array
+          description: List of department IDs to assign
+          example:
+          - dept-001
+          - dept-002
+          items:
+            type: string
+      required:
+      - departmentIds
+    CreateDivisionRequest:
+      type: object
+      description: Request to create a new division
+      properties:
+        name:
+          type: string
+          description: Division name (2-100 characters)
+          example: Information Technology
+          maxLength: 100
+          minLength: 2
+        leaderId:
+          type: string
+          format: uuid
+          description: Optional ID of the user to assign as division leader
+          example: 550e8400-e29b-41d4-a716-446655440000
+      required:
+      - name
+    RegisterRequest:
+      type: object
+      description: User registration request (admin only)
+      properties:
+        username:
+          type: string
+          description: Unique username
+          example: john.doe
+        email:
+          type: string
+          description: Email address
+          example: john.doe@garantbank.uz
+        password:
+          type: string
+          description: Password (min 6 characters)
+          example: securePass123
+        fullName:
+          type: string
+          description: User's full display name
+          example: John Doe
+        role:
+          type: string
+          description: User role
+          enum:
+          - EMPLOYEE
+          - DEPARTMENT_LEADER
+          - HR
+          - DIRECTOR
+          - BUSINESS_BLOCK
+          - ADMIN
+          example: EMPLOYEE
+        departmentId:
+          type: string
+          description: Optional department ID to assign
+          example: dept-001
+      required:
+      - email
+      - fullName
+      - password
+      - role
+      - username
+    LoginRequest:
+      type: object
+      description: Login credentials
+      properties:
+        username:
+          type: string
+          description: Username
+          example: admin
+        password:
+          type: string
+          description: Password
+          example: admin123
+      required:
+      - password
+      - username
+    LoginResponse:
+      type: object
+      description: Login response containing JWT token and user details
+      properties:
+        token:
+          type: string
+          description: JWT access token
+          example: eyJhbGciOiJIUzI1NiJ9...
+        type:
+          type: string
+          default: Bearer
+          description: Token type
+          example: Bearer
+        user:
+          $ref: "#/components/schemas/UserDTO"
+          description: Authenticated user details
+    UserWithScoreDTO:
+      type: object
+      description: User with overall performance score — used for Team Overview page
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: User ID
+          example: 550e8400-e29b-41d4-a716-446655440000
+        username:
+          type: string
+          description: Username
+          example: john.doe
+        email:
+          type: string
+          description: Email
+          example: john.doe@garantbank.uz
+        fullName:
+          type: string
+          description: Full name
+          example: John Doe
+        role:
+          type: string
+          description: User role
+          enum:
+          - EMPLOYEE
+          - DEPARTMENT_LEADER
+          - HR
+          - DIRECTOR
+          - BUSINESS_BLOCK
+          - ADMIN
+          example: EMPLOYEE
+        profilePhotoUrl:
+          type: string
+          description: Profile photo URL
+          example: /uploads/photo-abc.jpg
+        jobTitle:
+          type: string
+          description: Job title
+          example: Senior Developer
+        phoneNumber:
+          type: string
+          description: Phone number
+          example: +998 90 123 45 67
+        bio:
+          type: string
+          description: Bio
+          example: Backend developer
+        lastLogin:
+          type: string
+          format: date-time
+          description: Last login timestamp
+        assignedDepartments:
+          type: array
+          description: Assigned departments
+          items:
+            $ref: "#/components/schemas/DepartmentSummaryDTO"
+        createdAt:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+        overallScore:
+          type: number
+          format: double
+          description: Overall score — average of assigned department scores (0.0-1.0)
+          example: 0.65
+        scoreLevel:
+          type: string
+          description: Score level name
+          enum:
+          - не_соответствует
+          - ниже_ожиданий
+          - на_уровне_ожиданий
+          - превышает_ожидания
+          - исключительно
+          example: на_уровне_ожиданий
+        scoreColor:
+          type: string
+          description: Color associated with score level
+          example: "#4CAF50"
+        scorePercentage:
+          type: number
+          format: double
+          description: Score as percentage (0-100)
+          example: 75.0
+        active:
+          type: boolean
+        isActive:
+          type: boolean
+          description: Account active status
+          example: true
+        canEditAssignedDepartments:
+          type: boolean
+          description: Can edit assigned departments
+          example: false
+        readOnly:
+          type: boolean
+          description: Whether the user is in read-only mode
+          example: false
+    UserProfileDTO:
+      type: object
+      description: Extended user profile with detailed department info and recent
+        evaluations
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: User ID
+          example: 550e8400-e29b-41d4-a716-446655440000
+        username:
+          type: string
+          description: Username
+          example: john.doe
+        email:
+          type: string
+          description: Email
+          example: john.doe@garantbank.uz
+        fullName:
+          type: string
+          description: Full name
+          example: John Doe
+        role:
+          type: string
+          description: User role
+          enum:
+          - EMPLOYEE
+          - DEPARTMENT_LEADER
+          - HR
+          - DIRECTOR
+          - BUSINESS_BLOCK
+          - ADMIN
+          example: EMPLOYEE
+        profilePhotoUrl:
+          type: string
+          description: Profile photo URL
+          example: /uploads/photo-abc.jpg
+        jobTitle:
+          type: string
+          description: Job title
+          example: Senior Developer
+        phoneNumber:
+          type: string
+          description: Phone number
+          example: +998 90 123 45 67
+        bio:
+          type: string
+          description: Bio
+          example: Backend developer
+        lastLogin:
+          type: string
+          format: date-time
+          description: Last login timestamp
+        createdAt:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+        assignedDepartments:
+          type: array
+          description: Summary list of assigned departments
+          items:
+            $ref: "#/components/schemas/DepartmentSummaryDTO"
+        assignedDepartmentsDetail:
+          type: array
+          description: Full department details including objectives and scores
+          items:
+            $ref: "#/components/schemas/DepartmentDTO"
+        recentEvaluations:
+          type: array
+          description: Recent evaluations for this user
+          items:
+            $ref: "#/components/schemas/EvaluationDTO"
+        active:
+          type: boolean
+        isActive:
+          type: boolean
+          description: Account active status
+          example: true
+        readOnly:
+          type: boolean
+          description: Whether the user is in read-only mode
+          example: false
+    DivisionWithScoreDTO:
+      type: object
+      description: Division with aggregated score from its departments
+      properties:
+        id:
+          type: string
+          description: Division ID
+          example: div-001
+        name:
+          type: string
+          description: Division name
+          example: Information Technology
+        score:
+          type: number
+          format: double
+          description: Aggregated score (0.0-1.0)
+          example: 0.65
+        scoreLevel:
+          type: string
+          description: Score level classification
+          enum:
+          - не_соответствует
+          - ниже_ожиданий
+          - на_уровне_ожиданий
+          - превышает_ожидания
+          - исключительно
+          example: на_уровне_ожиданий
+        color:
+          type: string
+          description: Hex color for score level
+          example: "#4CAF50"
+        percentage:
+          type: number
+          format: double
+          description: Score as percentage (0-100)
+          example: 67.5
+    DepartmentScoreResult:
+      type: object
+      description: Detailed department score breakdown with multi-source evaluations
+      properties:
+        automaticOkrScore:
+          type: number
+          format: double
+          description: Automatic OKR score (0.0-1.0)
+          example: 0.65
+        automaticOkrPercentage:
+          type: number
+          format: double
+          description: Automatic OKR score as percentage (0-100%)
+          example: 62.5
+        directorEvaluation:
+          type: number
+          format: double
+          description: "Director evaluation score (0.0-1.0, converted from stars)"
+          example: 0.86
+        directorStars:
+          type: integer
+          format: int32
+          description: "Director star rating (1-5 stars, for UI display)"
+          example: 4
+        directorComment:
+          type: string
+          description: Director's comment
+          example: Strong performance this quarter
+        hrEvaluationLetter:
+          type: string
+          description: HR letter grade
+          enum:
+          - A
+          - B
+          - C
+          - D
+          example: B
+        hrEvaluationNumeric:
+          type: number
+          format: double
+          description: "HR evaluation as numeric score (A=0.98, B=0.86, C=0.51, D=0.31)"
+          example: 0.86
+        hrComment:
+          type: string
+          description: HR's comment
+          example: Good team collaboration
+        businessBlockEvaluation:
+          type: number
+          format: double
+          description: Business Block evaluation score (0.0-1.0)
+          example: 0.51
+        businessBlockStars:
+          type: integer
+          format: int32
+          description: Business Block star rating (1-5 stars)
+          example: 3
+        businessBlockComment:
+          type: string
+          description: Business Block comment
+          example: Meets expectations
+        finalCombinedScore:
+          type: number
+          format: double
+          description: "Final weighted score: auto*60% + director*20% + hr*20%"
+          example: 0.72
+        finalPercentage:
+          type: number
+          format: double
+          description: Final score as percentage (0-100%)
+          example: 72.5
+        scoreLevel:
+          type: string
+          description: Score level classification
+          enum:
+          - не_соответствует
+          - ниже_ожиданий
+          - на_уровне_ожиданий
+          - превышает_ожидания
+          - исключительно
+          example: на_уровне_ожиданий
+        color:
+          type: string
+          description: Hex color for the score level
+          example: "#4CAF50"
+        hasDirectorEvaluation:
+          type: boolean
+          description: Whether a Director evaluation exists
+          example: true
+        hasHrEvaluation:
+          type: boolean
+          description: Whether an HR evaluation exists
+          example: true
+        hasBusinessBlockEvaluation:
+          type: boolean
+          description: Whether a Business Block evaluation exists
+          example: false
+        directorSubmittedAt:
+          type: string
+          format: date-time
+          description: When the Director evaluation was submitted
+        directorUpdatedAt:
+          type: string
+          format: date-time
+          description: When the Director evaluation was last updated
+        hrSubmittedAt:
+          type: string
+          format: date-time
+          description: When the HR evaluation was submitted
+        hrUpdatedAt:
+          type: string
+          format: date-time
+          description: When the HR evaluation was last updated
+        businessBlockSubmittedAt:
+          type: string
+          format: date-time
+          description: When the Business Block evaluation was submitted
+        businessBlockUpdatedAt:
+          type: string
+          format: date-time
+          description: When the Business Block evaluation was last updated
+  securitySchemes:
+    Bearer Authentication:
+      type: http
+      description: Enter the JWT token obtained from `POST /api/auth/login`
+      name: Bearer Authentication
+      scheme: bearer
+      bearerFormat: JWT

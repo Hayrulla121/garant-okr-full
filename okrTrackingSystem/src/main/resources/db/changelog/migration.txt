@@ -1,0 +1,14 @@
+What this migration does:
+- Creates new division table with all columns
+- Adds division_id column to department table (initially nullable)
+- Creates a default division called "Default Division"
+- Assigns ALL existing departments to this default division
+- Makes division_id required (not null)
+
+
+Why This Approach?
+
+- Safe: Existing data is preserved
+- Reversible: Each changeset can be rolled back
+- Trackable: You know exactly what changed and when
+- Production-Ready: Professional approach used in real companies

@@ -1,0 +1,94 @@
+// ============================================
+// OKR Tracking System - ERD (dbdiagram.io format)
+// Paste this at: https://dbdiagram.io/d
+// ============================================
+
+Table users {
+  id UUID [pk]
+  username VARCHAR(255) [unique, not null]
+  email VARCHAR(255) [unique, not null]
+  password VARCHAR(255) [not null]
+  full_name VARCHAR(255)
+  role VARCHAR(50) [not null, note: 'EMPLOYEE, DEPARTMENT_LEADER, HR, DIRECTOR, BUSINESS_BLOCK, ADMIN']
+  profile_photo_url VARCHAR(500)
+  job_title VARCHAR(255)
+  phone_number VARCHAR(50)
+  bio VARCHAR(1000)
+  is_active BOOLEAN [not null, default: true]
+  can_edit_assigned_departments BOOLEAN [not null, default: false]
+  last_login TIMESTAMP
+  created_at TIMESTAMP [not null]
+  updated_at TIMESTAMP
+}
+
+Table division {
+  id VARCHAR(36) [pk]
+  name VARCHAR(255)
+  leader_id UUID [ref: > users.id]
+  created_at TIMESTAMP
+  updated_at TIMESTAMP
+}
+
+Table department {
+  id VARCHAR(36) [pk]
+  name VARCHAR(255) [not null]
+  division_id VARCHAR(36) [not null, ref: > division.id]
+  leader_id UUID [ref: > users.id]
+  created_at TIMESTAMP
+  updated_at TIMESTAMP
+}
+
+Table user_departments {
+  user_id UUID [pk, ref: > users.id]
+  department_id VARCHAR(36) [pk, ref: > department.id]
+
+  Note: 'Many-to-many join table'
+}
+
+Table objectives {
+  id VARCHAR(36) [pk]
+  name VARCHAR(255) [not null]
+  weight INTEGER [not null, note: 'Percentage 0-100']
+  department_id VARCHAR(36) [ref: > department.id]
+  employee_id UUID [ref: > users.id]
+  level VARCHAR(50) [not null, note: 'DEPARTMENT or INDIVIDUAL']
+}
+
+Table key_results {
+  id VARCHAR(36) [pk]
+  name VARCHAR(255) [not null]
+  description TEXT
+  metric_type VARCHAR(50) [not null, note: 'HIGHER_BETTER, LOWER_BETTER, QUALITATIVE']
+  unit VARCHAR(100)
+  weight INTEGER [not null, note: 'Percentage 0-100']
+  threshold_below DOUBLE
+  threshold_meets DOUBLE
+  threshold_good DOUBLE
+  threshold_very_good DOUBLE
+  threshold_exceptional DOUBLE
+  actual_value VARCHAR(255)
+  objective_id VARCHAR(36) [not null, ref: > objectives.id]
+}
+
+Table evaluations {
+  id UUID [pk]
+  evaluator_id UUID [not null, ref: > users.id]
+  evaluator_type VARCHAR(50) [not null, note: 'DIRECTOR, HR, BUSINESS_BLOCK']
+  target_type VARCHAR(50) [not null, note: 'DEPARTMENT or EMPLOYEE']
+  target_id UUID [not null]
+  numeric_rating DOUBLE [note: 'For DIRECTOR (4.25-5.0) and BUSINESS_BLOCK (1-5)']
+  letter_rating VARCHAR(5) [note: 'For HR (A, B, C, D)']
+  comment TEXT
+  status VARCHAR(50) [not null, note: 'DRAFT, SUBMITTED, APPROVED']
+  created_at TIMESTAMP [not null]
+  updated_at TIMESTAMP
+}
+
+Table score_levels {
+  id VARCHAR(36) [pk]
+  name VARCHAR(255) [not null, note: 'Below, Meets, Good, Very Good, Exceptional']
+  score_value DOUBLE [not null, note: '3.0, 4.25, 4.5, 4.75, 5.0']
+  color VARCHAR(20) [not null, note: 'Hex color code']
+  display_order INTEGER [not null]
+  is_default BOOLEAN [not null]
+}

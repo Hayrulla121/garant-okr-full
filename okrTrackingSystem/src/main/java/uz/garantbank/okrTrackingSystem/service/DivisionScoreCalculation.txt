@@ -1,0 +1,11 @@
+Weighted Average: Just like departments aggregate objectives, divisions aggregate departments using weighted averages.
+
+Score Flow:
+
+KeyResult scores → weighted avg → Objective score
+Objective scores → weighted avg → Department score
+Department scores → weighted avg → Division score
+Dynamic Score Levels: Your system uses ScoreLevelService to define customizable score levels (Below, Meets, Good, etc.), so division scores automatically work with any level configuration.
+
+Multi-Source Evaluations: If you want divisions to have manual evaluations (like departments do), you can extend the evaluation system to support targetType="DIVISION".
+

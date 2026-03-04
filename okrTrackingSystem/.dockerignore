@@ -1,0 +1,9 @@
+.git
+.idea
+*.iml
+target/
+data/
+uploads/
+node_modules/
+frontend/
+*.md

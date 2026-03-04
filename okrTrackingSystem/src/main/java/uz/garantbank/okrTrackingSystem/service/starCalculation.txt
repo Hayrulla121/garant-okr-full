@@ -1,0 +1,18 @@
+With your 0.0-1.0 scale, the star ratings map as follows:
+  ┌───────┬───────┬──────────────────┐
+  │ Stars │ Score │  Closest Level   │
+  ├───────┼───────┼──────────────────┤
+  │ 1 ⭐  │ 0.00  │ Below            │                                                                                                                                          ─
+  ├───────┼───────┼──────────────────┤
+  │ 2 ⭐  │ 0.25  │ Meets (0.30)     │
+  ├───────┼───────┼──────────────────┤
+  │ 3 ⭐  │ 0.50  │ Good             │
+  ├───────┼───────┼──────────────────┤
+  │ 4 ⭐  │ 0.75  │ Very Good (0.70) │
+  ├───────┼───────┼──────────────────┤
+  │ 5 ⭐  │ 1.00  │ Exceptional      │
+  └───────┴───────┴──────────────────┘
+  The formula is:
+  score = minScore + (stars - 1) × (maxScore - minScore) / 4
+
+  So 1 star = 0.0 (the minimum/Below level).

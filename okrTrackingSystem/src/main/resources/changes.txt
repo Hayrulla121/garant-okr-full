@@ -1,0 +1,53 @@
+Currently, OKR tracking system has a flat structure. Department -> Employee.
+
+- Before i had departments like Sales, HR, PMO and employees are assigned to them
+- After: I will have divisions (like "Commercial Division" or "Technology Division") and each division can contain multiple departments which then contains employees
+
+Garant Bank
+├── Commercial Division
+│   ├── Retail Banking Department
+│   │   ├── Employee: John Doe
+│   │   └── Employee: Jane Smith
+│   ├── Corporate Banking Department
+│   │   └── Employee: Bob Johnson
+│   └── Sales Department
+│       └── Employee: Alice Williams
+│
+├── Technology Division
+│   ├── Software Engineering Department
+│   │   ├── Employee: Dev One
+│   │   └── Employee: Dev Two
+│   └── IT Support Department
+│       └── Employee: Support Person
+│
+└── Operations Division
+    ├── HR Department
+    └── Finance Department
+
+
+Better Organization: Large organizations have multiple layers of management
+Accurate Reporting: Division leaders can see all departments under them
+Scalability: Easy to add new divisions without restructuring everything
+Clear Hierarchy: Everyone knows who reports to whom
+
+
+
+
+I need to:
+
+- Create new Division entity
+- Add division_id foreign key to Department table
+- Departments must belong to a Division (required relationship)
+- Users still assigned to departments (not divisions directly)
+
+
+Database changes:
+What is JPA?
+
+JPA (Java Persistence API) is a way to map Java objects to database tables. Think of it as a translator between your Java code and SQL database.
+
+Relationship Types:
+
+@OneToMany: One parent can have many children (e.g., one Division has many Departments)
+@ManyToOne: Many children belong to one parent (e.g., many Departments belong to one Division)
+@ManyToMany: Many-to-many relationship (e.g., many Users assigned to many Departments)
