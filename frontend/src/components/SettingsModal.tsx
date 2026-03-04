@@ -397,7 +397,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ departments, onClose, onU
       platformSettingsApi.getAll().then(res => {
         const setting = res.data.find(s => s.settingKey === 'REQUIRE_ATTACHMENT_FOR_ACTUAL_VALUE');
         setAttachmentRequired(setting?.settingValue === 'true');
-      }).catch(() => {});
+      }).catch(() => { });
     }
   }, [isAdmin]);
 
@@ -598,11 +598,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ departments, onClose, onU
               ...(isAdmin ? [{ key: 'watermark', label: t.watermark }] : []),
             ] as { key: Tab; label: string }[]).map(tab => (
               <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-                className={`px-4 py-3 text-sm font-semibold transition-all ${
-                  activeTab === tab.key
-                    ? 'text-primary border-b-2 border-primary'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
+                className={`px-4 py-3 text-sm font-semibold transition-all ${activeTab === tab.key
+                  ? 'text-primary border-b-2 border-primary'
+                  : 'text-slate-500 hover:text-slate-700'
+                  }`}
               >{tab.label}</button>
             ))}
           </div>
@@ -654,7 +653,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ departments, onClose, onU
 
                       {canCreateDepartment && !isReadOnly && (
                         <button onClick={() => openAddForm(`dept-${div.id}`)} className={btnGhost}>
-                          <PlusIcon /> Add Dept
+                          <PlusIcon /> {t.addDept}
                         </button>
                       )}
                       {isAdmin && (
@@ -673,7 +672,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ departments, onClose, onU
                           <input className={`${inputCls} flex-1`} placeholder="Department name *" value={deptName}
                             onChange={e => setDeptName(e.target.value)} required autoFocus />
                           <button type="button" onClick={() => setOpenForm(null)} className="px-3 py-2 text-sm text-slate-500 hover:bg-slate-100 rounded-lg">{t.cancel}</button>
-                          <button type="submit" disabled={loading} className={btnPrimary}>{loading ? '…' : '+ Add'}</button>
+                          <button type="submit" disabled={loading} className={btnPrimary}>{loading ? '…' : t.addBtn}</button>
                         </div>
                       </form>
                     )}
@@ -698,7 +697,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ departments, onClose, onU
 
                                 {canEdit && !isReadOnly && (
                                   <button onClick={() => openAddForm(`obj-${dept.id}`)} className={btnGhost}>
-                                    <PlusIcon /> Add Objective
+                                    <PlusIcon /> {t.addObjectiveBtn}
                                   </button>
                                 )}
                                 {/* Add Leader Objective — only shown if dept has a leader */}
@@ -729,7 +728,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ departments, onClose, onU
                                     <input className={`${inputCls} flex-1`} type="number" placeholder={t.weightPercent} min="0" max="100"
                                       value={objWeight} onChange={e => setObjWeight(e.target.value)} />
                                     <button type="button" onClick={() => setOpenForm(null)} className="px-3 py-2 text-sm text-slate-500 hover:bg-slate-100 rounded-lg">{t.cancel}</button>
-                                    <button type="submit" disabled={loading} className={btnPrimary}>{loading ? '…' : '+ Add'}</button>
+                                    <button type="submit" disabled={loading} className={btnPrimary}>{loading ? '…' : t.addBtn}</button>
                                   </div>
                                 </form>
                               )}
@@ -749,7 +748,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ departments, onClose, onU
                                     <button type="button" onClick={() => setOpenForm(null)} className="px-3 py-2 text-sm text-slate-500 hover:bg-slate-100 rounded-lg">{t.cancel}</button>
                                     <button type="submit" disabled={loading}
                                       className="px-4 py-2 bg-violet-600 text-white text-sm font-semibold rounded-lg hover:bg-violet-700 disabled:opacity-50 transition-colors">
-                                      {loading ? '…' : '+ Add'}
+                                      {loading ? '…' : t.addBtn}
                                     </button>
                                   </div>
                                 </form>
@@ -773,7 +772,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ departments, onClose, onU
                                         <span className="text-xs text-slate-400">{obj.keyResults.length} KR</span>
                                         {canEdit && !isReadOnly && (
                                           <button onClick={() => openAddForm(`kr-${obj.id}`)} className="px-2 py-1 text-xs font-medium text-violet-600 hover:bg-violet-100 rounded-lg flex items-center gap-1">
-                                            <PlusIcon /> Add KR
+                                            <PlusIcon /> {t.addKrBtn}
                                           </button>
                                         )}
                                         {canEdit && (
@@ -831,7 +830,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ departments, onClose, onU
 
                                           {canEdit && !isReadOnly && (
                                             <button onClick={() => openAddForm(`kr-${obj.id}`)} className={btnGhost}>
-                                              <PlusIcon /> Add KR
+                                              <PlusIcon /> {t.addKrBtn}
                                             </button>
                                           )}
                                           {canEdit && (
@@ -862,47 +861,47 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ departments, onClose, onU
                                               const totalWeight = obj.keyResults.reduce((s, k) => s + (k.weight ?? 0), 0);
                                               const otherWeight = totalWeight - (kr.weight ?? 0);
                                               return (
-                                              <div key={kr.id} className="rounded-lg border border-emerald-200 overflow-hidden">
-                                                <div className="flex items-center gap-2 px-3 py-2 bg-white">
-                                                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
-                                                  <div className="flex-1 min-w-0">
-                                                    <span className="text-sm text-slate-700 font-medium">{kr.name}</span>
-                                                    <span className="ml-2 text-xs text-slate-400">{kr.metricType.replace('_', ' ')}</span>
-                                                    {kr.unit && <span className="ml-1 text-xs text-slate-400">({kr.unit})</span>}
-                                                    <span className={`ml-2 text-xs font-bold px-1.5 py-0.5 rounded ${totalWeight > 100 ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-700'}`}>
-                                                      {kr.weight ?? 0}%
-                                                    </span>
+                                                <div key={kr.id} className="rounded-lg border border-emerald-200 overflow-hidden">
+                                                  <div className="flex items-center gap-2 px-3 py-2 bg-white">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+                                                    <div className="flex-1 min-w-0">
+                                                      <span className="text-sm text-slate-700 font-medium">{kr.name}</span>
+                                                      <span className="ml-2 text-xs text-slate-400">{kr.metricType.replace('_', ' ')}</span>
+                                                      {kr.unit && <span className="ml-1 text-xs text-slate-400">({kr.unit})</span>}
+                                                      <span className={`ml-2 text-xs font-bold px-1.5 py-0.5 rounded ${totalWeight > 100 ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-700'}`}>
+                                                        {kr.weight ?? 0}%
+                                                      </span>
+                                                    </div>
+                                                    {canEdit && (
+                                                      <>
+                                                        <button
+                                                          onClick={() => openAddForm(`edit-kr-${kr.id}`)}
+                                                          className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded transition-colors"
+                                                          title={t.editKeyResult}
+                                                        >
+                                                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                          </svg>
+                                                        </button>
+                                                        <button onClick={() => handleDeleteKeyResult(kr.id)} className={btnDanger} title={t.deleteKeyResult}>
+                                                          <TrashIcon />
+                                                        </button>
+                                                      </>
+                                                    )}
                                                   </div>
-                                                  {canEdit && (
-                                                    <>
-                                                      <button
-                                                        onClick={() => openAddForm(`edit-kr-${kr.id}`)}
-                                                        className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded transition-colors"
-                                                        title={t.editKeyResult}
-                                                      >
-                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                        </svg>
-                                                      </button>
-                                                      <button onClick={() => handleDeleteKeyResult(kr.id)} className={btnDanger} title={t.deleteKeyResult}>
-                                                        <TrashIcon />
-                                                      </button>
-                                                    </>
+                                                  {openForm === `edit-kr-${kr.id}` && (
+                                                    <KrEditForm
+                                                      kr={kr}
+                                                      objName={obj.name}
+                                                      otherKrWeightTotal={otherWeight}
+                                                      scoreLevels={scoreLevels}
+                                                      t={t}
+                                                      onCancel={() => setOpenForm(null)}
+                                                      onSuccess={() => { setOpenForm(null); onUpdate(); flashSuccess('Key Result updated.'); }}
+                                                      onError={msg => setError(msg)}
+                                                    />
                                                   )}
                                                 </div>
-                                                {openForm === `edit-kr-${kr.id}` && (
-                                                  <KrEditForm
-                                                    kr={kr}
-                                                    objName={obj.name}
-                                                    otherKrWeightTotal={otherWeight}
-                                                    scoreLevels={scoreLevels}
-                                                    t={t}
-                                                    onCancel={() => setOpenForm(null)}
-                                                    onSuccess={() => { setOpenForm(null); onUpdate(); flashSuccess('Key Result updated.'); }}
-                                                    onError={msg => setError(msg)}
-                                                  />
-                                                )}
-                                              </div>
                                               );
                                             })}
                                             {/* Total weight indicator */}
@@ -978,14 +977,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ departments, onClose, onU
                         <button type="button" onClick={() => setOpenForm(null)} className="px-3 py-2 text-sm text-slate-500 hover:bg-slate-100 rounded-lg">{t.cancel}</button>
                         <button type="submit" disabled={loading}
                           className="px-4 py-2 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors">
-                          {loading ? '…' : '+ Create Division'}
+                          {loading ? '…' : t.addBtn}
                         </button>
                       </div>
                     </form>
                   ) : (
                     <button onClick={() => openAddForm('div')}
                       className="w-full py-2.5 border-2 border-dashed border-purple-300 text-purple-600 rounded-xl text-sm font-semibold hover:border-purple-500 hover:bg-purple-50 transition-all flex items-center justify-center gap-2">
-                      <PlusIcon /> Add Division
+                      <PlusIcon /> {t.createDivision}
                     </button>
                   )}
                 </div>

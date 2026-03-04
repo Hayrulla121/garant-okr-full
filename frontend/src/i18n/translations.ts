@@ -12,6 +12,7 @@ export interface Translations {
   noDepartments: string;
   settings: string;
   export: string;
+  import: string;
   demo: string;
   myProfile: string;
   userManagement: string;
@@ -134,6 +135,10 @@ export interface Translations {
   customColor: string;
   close: string;
   addLevel: string;
+  addDept: string;
+  addObjectiveBtn: string;
+  addKrBtn: string;
+  addBtn: string;
   saveChanges: string;
   saving: string;
   resetToDefaults: string;
@@ -150,6 +155,27 @@ export interface Translations {
 
   // Department Modal
   performanceDetails: string;
+
+  // Organization Structure
+  expandAll: string;
+  collapseAll: string;
+  createDivision: string;
+  orgStructureTitle: string;
+  orgStructureDesc: string;
+  hierarchicalView: string;
+  nodePath: string;
+  noDivisionsYet: string;
+  createFirstDivision: string;
+  divisionsCount: string;
+  departmentsCount: string;
+  employeesCount: string;
+  leaderLabel: string;
+  deptsShort: string;
+  empShort: string;
+  unassignedDepts: string;
+  needsDivision: string;
+  headquarters: string;
+  loadingOrgStructure: string;
 
   // Speedometer
   rating: string;
@@ -169,6 +195,10 @@ export interface Translations {
   failedToDeleteKeyResult: string;
   failedToLoadDepartments: string;
   failedToExportExcel: string;
+  importSuccess: string;
+  importFailed: string;
+  importInProgress: string;
+  onlyXlsxSupported: string;
 
   // Loading
   loadingOKRTracker: string;
@@ -398,6 +428,7 @@ export const translations: Record<Language, Translations> = {
     noDepartments: 'No departments',
     settings: 'Settings',
     export: 'Export',
+    import: 'Import',
     demo: 'Demo',
     myProfile: 'My Profile',
     userManagement: 'User Management',
@@ -520,6 +551,10 @@ export const translations: Record<Language, Translations> = {
     customColor: 'Custom color:',
     close: 'Close',
     addLevel: 'Add Level',
+    addDept: 'Add Dept',
+    addObjectiveBtn: 'Add Objective',
+    addKrBtn: 'Add KR',
+    addBtn: '+ Add',
     saveChanges: 'Save Changes',
     saving: 'Saving...',
     resetToDefaults: 'Reset to Defaults',
@@ -536,6 +571,27 @@ export const translations: Record<Language, Translations> = {
 
     // Department Modal
     performanceDetails: 'Performance Details',
+
+    // Organization Structure
+    expandAll: 'Expand All',
+    collapseAll: 'Collapse All',
+    createDivision: 'Create Division',
+    orgStructureTitle: 'Organization Structure',
+    orgStructureDesc: 'Manage divisions, departments, and employee assignments',
+    hierarchicalView: 'Hierarchical org structure view',
+    nodePath: 'Division → Department → Employee',
+    noDivisionsYet: 'No divisions yet',
+    createFirstDivision: 'Create your first division to start building the organization structure',
+    divisionsCount: 'Divisions',
+    departmentsCount: 'Departments',
+    employeesCount: 'Employees',
+    leaderLabel: 'Leader:',
+    deptsShort: 'Depts',
+    empShort: 'Emp',
+    unassignedDepts: 'Unassigned Departments',
+    needsDivision: 'Needs Division',
+    headquarters: 'Headquarters',
+    loadingOrgStructure: 'Loading organization structure...',
 
     // Speedometer
     rating: 'Rating',
@@ -555,6 +611,10 @@ export const translations: Record<Language, Translations> = {
     failedToDeleteKeyResult: 'Failed to delete key result',
     failedToLoadDepartments: 'Failed to load departments',
     failedToExportExcel: 'Failed to export Excel',
+    importSuccess: 'Import completed successfully!',
+    importFailed: 'Import failed',
+    importInProgress: 'Importing...',
+    onlyXlsxSupported: 'Only .xlsx files are supported',
 
     // Loading
     loadingOKRTracker: 'Loading OKR Tracker...',
@@ -783,6 +843,7 @@ export const translations: Record<Language, Translations> = {
     noDepartments: 'Нет отделов',
     settings: 'Настройки',
     export: 'Экспорт',
+    import: 'Импорт',
     demo: 'Демо',
     myProfile: 'Мой профиль',
     userManagement: 'Управление пользователями',
@@ -902,9 +963,13 @@ export const translations: Record<Language, Translations> = {
     colorClickToPick: 'Цвет (нажмите для выбора)',
     preview: 'Предпросмотр',
     chooseAColor: 'Выберите цвет:',
-    customColor: 'Свой цвет:',
+    customColor: 'Пользовательский цвет:',
     close: 'Закрыть',
     addLevel: 'Добавить уровень',
+    addDept: 'Добавить Отдел',
+    addObjectiveBtn: 'Добавить Цель',
+    addKrBtn: 'Добавить КР',
+    addBtn: '+ Добавить',
     saveChanges: 'Сохранить изменения',
     saving: 'Сохранение...',
     resetToDefaults: 'Сбросить на умолчания',
@@ -921,6 +986,27 @@ export const translations: Record<Language, Translations> = {
 
     // Department Modal
     performanceDetails: 'Детали эффективности',
+
+    // Organization Structure
+    expandAll: 'Развернуть все',
+    collapseAll: 'Свернуть все',
+    createDivision: 'Создать дивизион',
+    orgStructureTitle: 'Организационная структура',
+    orgStructureDesc: 'Управление дивизионами, отделами и сотрудниками',
+    hierarchicalView: 'Иерархический вид орг. структуры',
+    nodePath: 'Дивизион → Отдел → Сотрудник',
+    noDivisionsYet: 'Пока нет дивизионов',
+    createFirstDivision: 'Создайте ваш первый дивизион, чтобы начать строить структуру',
+    divisionsCount: 'Дивизионы',
+    departmentsCount: 'Отделы',
+    employeesCount: 'Сотрудники',
+    leaderLabel: 'Руководитель:',
+    deptsShort: 'Отд',
+    empShort: 'Сот',
+    unassignedDepts: 'Нераспределенные отделы',
+    needsDivision: 'Нужен дивизион',
+    headquarters: 'Штаб-квартира',
+    loadingOrgStructure: 'Загрузка орг. структуры...',
 
     // Speedometer
     rating: 'Рейтинг',
@@ -940,6 +1026,10 @@ export const translations: Record<Language, Translations> = {
     failedToDeleteKeyResult: 'Не удалось удалить ключевой результат',
     failedToLoadDepartments: 'Не удалось загрузить отделы',
     failedToExportExcel: 'Не удалось экспортировать в Excel',
+    importSuccess: 'Импорт завершён успешно!',
+    importFailed: 'Ошибка импорта',
+    importInProgress: 'Импортируется...',
+    onlyXlsxSupported: 'Поддерживается только формат .xlsx',
 
     // Loading
     loadingOKRTracker: 'Загрузка OKR Трекера...',
@@ -1168,6 +1258,7 @@ export const translations: Record<Language, Translations> = {
     noDepartments: "Bo'limlar yo'q",
     settings: 'Sozlamalar',
     export: 'Eksport',
+    import: 'Import',
     demo: 'Demo',
     myProfile: 'Mening profilim',
     userManagement: "Foydalanuvchilar boshqaruvi",
@@ -1289,7 +1380,11 @@ export const translations: Record<Language, Translations> = {
     chooseAColor: 'Rangni tanlang:',
     customColor: 'Maxsus rang:',
     close: 'Yopish',
-    addLevel: "Daraja qo'shish",
+    addLevel: 'Daraja qo\'shish',
+    addDept: 'Bo\'lim qo\'shish',
+    addObjectiveBtn: 'Maqsad qo\'shish',
+    addKrBtn: 'K.N qo\'shish',
+    addBtn: '+ Qo\'shish',
     saveChanges: "O'zgarishlarni saqlash",
     saving: 'Saqlanmoqda...',
     resetToDefaults: 'Standartga qaytarish',
@@ -1306,6 +1401,27 @@ export const translations: Record<Language, Translations> = {
 
     // Department Modal
     performanceDetails: 'Samaradorlik tafsilotlari',
+
+    // Organization Structure
+    expandAll: 'Barchasini yoyish',
+    collapseAll: 'Barchasini yig\'ish',
+    createDivision: 'Bo\'linma yaratish',
+    orgStructureTitle: 'Tashkiliy tuzilma',
+    orgStructureDesc: 'Bo\'linmalar, bo\'limlar va xodimlarni boshqarish',
+    hierarchicalView: 'Tashkiliy tuzilmaning ierarxik ko\'rinishi',
+    nodePath: 'Bo\'linma → Bo\'lim → Xodim',
+    noDivisionsYet: 'Hali bo\'linmalar yo\'q',
+    createFirstDivision: 'Tuzilmani qurishni boshlash uchun birinchi bo\'linmani yarating',
+    divisionsCount: 'Bo\'linmalar',
+    departmentsCount: 'Bo\'limlar',
+    employeesCount: 'Xodimlar',
+    leaderLabel: 'Rahbar:',
+    deptsShort: 'Bo\'l',
+    empShort: 'Xod',
+    unassignedDepts: 'Birlashtirilmagan bo\'limlar',
+    needsDivision: 'Bo\'linma kerak',
+    headquarters: 'Bosh ofis',
+    loadingOrgStructure: 'Tashkiliy tuzilma yuklanmoqda...',
 
     // Speedometer
     rating: 'Reyting',
@@ -1325,6 +1441,10 @@ export const translations: Record<Language, Translations> = {
     failedToDeleteKeyResult: "Asosiy natijani o'chirib bo'lmadi",
     failedToLoadDepartments: "Bo'limlarni yuklab bo'lmadi",
     failedToExportExcel: "Excelga eksport qilib bo'lmadi",
+    importSuccess: "Import muvaffaqiyatli yakunlandi!",
+    importFailed: "Import amalga oshmadi",
+    importInProgress: "Import qilinmoqda...",
+    onlyXlsxSupported: "Faqat .xlsx formati qo'llab-quvvatlanadi",
 
     // Loading
     loadingOKRTracker: 'OKR Kuzatuvchisi yuklanmoqda...',

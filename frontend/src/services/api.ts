@@ -129,6 +129,17 @@ export const exportApi = {
     exportExcel: () => api.get('/export/excel', { responseType: 'blob' }),
 };
 
+// Import API
+export const importApi = {
+    importExcel: (file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        return api.post('/import/excel', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+    },
+};
+
 // User Management API
 export const userApi = {
     // Get all users (ADMIN only)

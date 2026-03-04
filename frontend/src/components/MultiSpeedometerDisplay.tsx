@@ -4,6 +4,7 @@ import SpeedometerABCD from './SpeedometerABCD';
 import { DepartmentScoreResult } from '../types/evaluation';
 import { ScoreResult } from '../types/okr';
 import { useLanguage } from '../i18n/LanguageContext';
+import { getImageUrl } from '../utils/imageUrl';
 
 interface Props {
     scores: DepartmentScoreResult;
@@ -93,6 +94,20 @@ const MultiSpeedometerDisplay: React.FC<Props> = ({ scores }) => {
                     </div>
                     {scores.hasDirectorEvaluation ? (
                         <>
+                            {scores.directorName && (
+                                <div className="flex flex-col items-center justify-center mb-2 mt-1">
+                                    {scores.directorAvatar ? (
+                                        <img src={getImageUrl(scores.directorAvatar)} alt={scores.directorName} className="w-10 h-10 rounded-full object-cover border-2 border-purple-200 mb-1" />
+                                    ) : (
+                                        <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center border-2 border-purple-200 mb-1">
+                                            <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                        </div>
+                                    )}
+                                    <span className="text-sm font-bold text-gray-800">{scores.directorName}</span>
+                                </div>
+                            )}
                             <Speedometer
                                 score={directorScore}
                                 size="sm"
@@ -142,6 +157,20 @@ const MultiSpeedometerDisplay: React.FC<Props> = ({ scores }) => {
                     </div>
                     {scores.hasHrEvaluation ? (
                         <>
+                            {scores.hrName && (
+                                <div className="flex flex-col items-center justify-center mb-2 mt-1">
+                                    {scores.hrAvatar ? (
+                                        <img src={getImageUrl(scores.hrAvatar)} alt={scores.hrName} className="w-10 h-10 rounded-full object-cover border-2 border-blue-200 mb-1" />
+                                    ) : (
+                                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center border-2 border-blue-200 mb-1">
+                                            <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                        </div>
+                                    )}
+                                    <span className="text-sm font-bold text-gray-800">{scores.hrName}</span>
+                                </div>
+                            )}
                             <SpeedometerABCD
                                 value={scores.hrEvaluationLetter as 'A' | 'B' | 'C' | 'D'}
                                 title={t.hrEvaluation}
@@ -185,6 +214,20 @@ const MultiSpeedometerDisplay: React.FC<Props> = ({ scores }) => {
                     </div>
                     {scores.hasBusinessBlockEvaluation ? (
                         <>
+                            {scores.businessBlockName && (
+                                <div className="flex flex-col items-center justify-center mb-2 mt-1">
+                                    {scores.businessBlockAvatar ? (
+                                        <img src={getImageUrl(scores.businessBlockAvatar)} alt={scores.businessBlockName} className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 mb-1" />
+                                    ) : (
+                                        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center border-2 border-gray-200 mb-1">
+                                            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                        </div>
+                                    )}
+                                    <span className="text-sm font-bold text-gray-800">{scores.businessBlockName}</span>
+                                </div>
+                            )}
                             <Speedometer
                                 score={businessBlockScore}
                                 size="sm"

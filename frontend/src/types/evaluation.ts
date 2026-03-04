@@ -51,12 +51,18 @@ export interface EmployeeEvaluationSummary {
 export interface DepartmentScoreResult {
   automaticOkrScore: number;
   automaticOkrPercentage: number;
+  directorName?: string;
+  directorAvatar?: string;
   directorEvaluation?: number;
   directorStars?: number;
   directorComment?: string;
+  hrName?: string;
+  hrAvatar?: string;
   hrEvaluationLetter?: string;
   hrEvaluationNumeric?: number;
   hrComment?: string;
+  businessBlockName?: string;
+  businessBlockAvatar?: string;
   businessBlockEvaluation?: number;
   businessBlockStars?: number;
   businessBlockComment?: string;

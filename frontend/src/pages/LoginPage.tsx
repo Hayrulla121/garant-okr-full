@@ -46,6 +46,7 @@ const LoginPage: React.FC = () => {
                             onChange={(e) => setUsername(e.target.value)}
                             required
                             autoFocus
+                            placeholder="Enter your username"
                             disabled={loading}
                         />
                     </div>
@@ -58,6 +59,7 @@ const LoginPage: React.FC = () => {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
+                            placeholder="Enter your password"
                             disabled={loading}
                         />
                     </div>
@@ -69,14 +71,6 @@ const LoginPage: React.FC = () => {
                     </button>
                 </form>
 
-                <div className="demo-credentials">
-                    <h3>Demo Credentials</h3>
-                    <p><strong>Admin:</strong> admin / admin123</p>
-                    <p><strong>Director:</strong> director / director123</p>
-                    <p><strong>HR:</strong> hr / hr123</p>
-                    <p><strong>Business Block:</strong> business / business123</p>
-                    <p><strong>PMO Leader:</strong> pmo_leader / leader123</p>
-                </div>
             </div>
         </div>
     );
