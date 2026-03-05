@@ -2,7 +2,9 @@ package uz.garantbank.okrTrackingSystem.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.*;
+import org.springframework.web.servlet.config.annotation.CorsRegistration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
@@ -12,10 +14,15 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/api/**")
-                .allowedOrigins(allowedOrigins.split(","))
+        CorsRegistration cors = registry.addMapping("/api/**")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
+                .allowedHeaders("*");
+
+        if ("*".equals(allowedOrigins.trim())) {
+            cors.allowedOrigins("*");
+        } else {
+            cors.allowedOrigins(allowedOrigins.split(","))
                 .allowCredentials(true);
+        }
     }
 }
