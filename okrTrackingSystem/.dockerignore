@@ -1,9 +1,12 @@
 .git
+.gitignore
 .idea
+.vscode
 *.iml
 target/
 data/
 uploads/
+logs/
 node_modules/
 frontend/
 *.md
