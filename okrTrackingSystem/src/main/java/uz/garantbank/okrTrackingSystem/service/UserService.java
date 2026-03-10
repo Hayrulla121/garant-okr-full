@@ -5,7 +5,9 @@ import uz.garantbank.okrTrackingSystem.dto.*;
 import uz.garantbank.okrTrackingSystem.dto.user.*;
 import uz.garantbank.okrTrackingSystem.entity.*;
 import uz.garantbank.okrTrackingSystem.repository.DepartmentRepository;
+import uz.garantbank.okrTrackingSystem.repository.DivisionRepository;
 import uz.garantbank.okrTrackingSystem.repository.EvaluationRepository;
+import uz.garantbank.okrTrackingSystem.repository.ObjectiveRepository;
 import uz.garantbank.okrTrackingSystem.repository.ScoreLevelRepository;
 import uz.garantbank.okrTrackingSystem.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -30,6 +32,8 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
+    private final DivisionRepository divisionRepository;
+    private final ObjectiveRepository objectiveRepository;
     private final ScoreLevelRepository scoreLevelRepository;
     private final PasswordEncoder passwordEncoder;
     private final FileUploadService fileUploadService;
@@ -185,18 +189,53 @@ public class UserService {
     }
 
     /**
-     * Delete a user
+     * Delete a user — cleans up all foreign key references first
      */
     @Transactional
     public void deleteUser(UUID id) {
-        User user = userRepository.findById(id)
+        User user = userRepository.findByIdWithDepartments(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-        // Delete profile photo if exists
+        // 1. Remove as department leader
+        for (Department dept : user.getAssignedDepartments()) {
+            if (dept.getDepartmentLeader() != null && dept.getDepartmentLeader().getId().equals(id)) {
+                dept.setDepartmentLeader(null);
+                departmentRepository.save(dept);
+            }
+        }
+
+        // 2. Remove as division leader
+        List<Division> ledDivisions = divisionRepository.findByDivisionLeaderId(id);
+        for (Division div : ledDivisions) {
+            div.setDivisionLeader(null);
+            divisionRepository.save(div);
+        }
+
+        // 3. Nullify employee reference on objectives assigned to this user
+        List<Objective> assignedObjectives = objectiveRepository.findByEmployeeId(id);
+        for (Objective obj : assignedObjectives) {
+            obj.setEmployee(null);
+            objectiveRepository.save(obj);
+        }
+
+        // 4. Delete all evaluations created by this user
+        List<Evaluation> createdEvaluations = evaluationRepository.findByEvaluatorId(id);
+        evaluationRepository.deleteAll(createdEvaluations);
+
+        // 5. Delete evaluations targeting this user
+        List<Evaluation> targetEvaluations = evaluationRepository.findByTargetTypeAndTargetId("EMPLOYEE", id);
+        evaluationRepository.deleteAll(targetEvaluations);
+
+        // 6. Clear department assignments
+        user.getAssignedDepartments().clear();
+        userRepository.save(user);
+
+        // 7. Delete profile photo if exists
         if (user.getProfilePhotoUrl() != null) {
             fileUploadService.deleteProfilePhoto(user.getProfilePhotoUrl());
         }
 
+        // 8. Delete the user
         userRepository.delete(user);
     }
 

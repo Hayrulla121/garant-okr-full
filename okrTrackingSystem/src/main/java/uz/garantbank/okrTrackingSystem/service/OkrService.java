@@ -275,6 +275,8 @@ public class OkrService {
 
         kr.setName(dto.getName());
         kr.setDescription(dto.getDescription());
+        kr.setMetricType(dto.getMetricType());
+        kr.setUnit(dto.getUnit());
         kr.setActualValue(dto.getActualValue());
         kr.setWeight(dto.getWeight());
 

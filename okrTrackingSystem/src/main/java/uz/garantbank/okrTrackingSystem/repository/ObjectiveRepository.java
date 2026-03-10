@@ -28,6 +28,9 @@ public interface ObjectiveRepository extends JpaRepository<Objective, String> {
     // Find objective by name within a department (for import upsert)
     Optional<Objective> findByNameAndDepartmentId(String name, String departmentId);
 
+    // Find objectives assigned to an employee
+    List<Objective> findByEmployeeId(java.util.UUID employeeId);
+
     // Find individual (leader) objective by name, department, and employee
     @Query("SELECT o FROM Objective o WHERE o.name = :name AND o.department.id = :departmentId AND o.employee.id = :employeeId AND o.level = 'INDIVIDUAL'")
     Optional<Objective> findByNameAndDepartmentIdAndEmployeeId(@Param("name") String name, @Param("departmentId") String departmentId, @Param("employeeId") java.util.UUID employeeId);
