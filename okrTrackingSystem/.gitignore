@@ -31,3 +31,20 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### OS files ###
+.DS_Store
+Thumbs.db
+
+### Logs ###
+logs/
+*.log
+
+### H2 Database ###
+data/
+
+### Uploads ###
+uploads/
+
+### Maven wrapper jar ###
+.mvn/wrapper/maven-wrapper.jar
