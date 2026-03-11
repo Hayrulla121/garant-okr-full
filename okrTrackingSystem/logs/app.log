@@ -13557,3 +13557,5 @@
 2026-03-11 17:11:13.740 TRACE [http-nio-8080-exec-2] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [EMPLOYEE]
 2026-03-11 17:11:13.740 TRACE [http-nio-8080-exec-2] org.hibernate.orm.jdbc.bind - binding parameter (2:UUID) <- [38691d53-6613-44e1-b4dc-dfd73303795c]
 2026-03-11 17:11:13.741 INFO  [http-nio-8080-exec-2] u.g.o.config.RequestLoggingFilter - GET /api/evaluations/at-risk 200 (7ms)
+2026-03-11 17:23:49.811 INFO  [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2026-03-11 17:23:49.814 INFO  [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
