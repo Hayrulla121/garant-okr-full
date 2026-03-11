@@ -6992,3 +6992,1184 @@
 2026-03-11 09:33:33.611 INFO  [http-nio-8080-exec-8] u.g.o.config.RequestLoggingFilter - GET /api/departments/18266283-74ed-4cc0-bb50-9b519a455b50/scores 200 (3ms)
 2026-03-11 09:38:38.275 INFO  [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
 2026-03-11 09:38:38.277 INFO  [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2026-03-11 10:24:58.606 INFO  [main] u.g.o.OkrTrackingSystemApplication - Starting OkrTrackingSystemApplication using Java 25.0.2 with PID 9589 (/Users/spencer_coder/IdeaProjects/OKR/okrTrackingSystem/target/classes started by spencer_coder in /Users/spencer_coder/IdeaProjects/OKR/okrTrackingSystem)
+2026-03-11 10:24:58.606 DEBUG [main] u.g.o.OkrTrackingSystemApplication - Running with Spring Boot v4.1.0-M1, Spring v7.0.3
+2026-03-11 10:24:58.607 INFO  [main] u.g.o.OkrTrackingSystemApplication - No active profile set, falling back to 1 default profile: "default"
+2026-03-11 10:24:58.718 INFO  [background-preinit] o.h.validator.internal.util.Version - HV000001: Hibernate Validator 9.1.0.Final
+2026-03-11 10:24:59.123 INFO  [main] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2026-03-11 10:24:59.124 INFO  [main] o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-03-11 10:24:59.124 INFO  [main] o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/11.0.15]
+2026-03-11 10:24:59.181 INFO  [main] org.hibernate.orm.jpa - HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-03-11 10:24:59.204 INFO  [main] org.hibernate.orm.core - HHH000001: Hibernate ORM core version 7.2.1.Final
+2026-03-11 10:24:59.352 INFO  [main] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-03-11 10:24:59.425 INFO  [main] com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection conn0: url=jdbc:h2:file:./data/okrdb user=SA
+2026-03-11 10:24:59.426 INFO  [main] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-03-11 10:24:59.435 WARN  [main] org.hibernate.orm.deprecation - HHH90000025: H2Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-03-11 10:24:59.442 INFO  [main] o.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [jdbc:h2:file:./data/okrdb]
+	Database driver: H2 JDBC Driver
+	Database dialect: H2Dialect
+	Database version: 2.4.240
+	Default catalog/schema: OKRDB/PUBLIC
+	Autocommit mode: undefined/unknown
+	Isolation level: READ_COMMITTED [default READ_COMMITTED]
+	JDBC fetch size: 100
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-03-11 10:24:59.811 INFO  [main] org.hibernate.orm.core - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-03-11 10:25:00.118 DEBUG [main] u.g.o.s.JwtAuthenticationFilter - Filter 'jwtAuthenticationFilter' configured for use
+2026-03-11 10:25:00.118 DEBUG [main] u.g.o.config.RequestLoggingFilter - Filter 'requestLoggingFilter' configured for use
+2026-03-11 10:25:00.184 WARN  [main] o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2026-03-11 10:25:00.318 DEBUG [main] org.hibernate.SQL - 
+    select
+        count(*) 
+    from
+        score_levels sl1_0
+2026-03-11 10:25:00.374 WARN  [main] o.s.b.j.a.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-03-11 10:25:00.672 INFO  [main] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2026-03-11 10:25:00.679 INFO  [main] u.g.o.OkrTrackingSystemApplication - Started OkrTrackingSystemApplication in 2.256 seconds (process running for 2.577)
+2026-03-11 10:25:00.689 DEBUG [main] org.hibernate.SQL - 
+    select
+        d1_0.id,
+        d1_0.created_at,
+        d1_0.leader_id,
+        d1_0.division_id,
+        d1_0.name,
+        d1_0.updated_at 
+    from
+        department d1_0 
+    where
+        d1_0.division_id is null
+2026-03-11 10:25:00.693 DEBUG [main] u.g.o.config.DataMigrationConfig - No orphan departments found - migration not needed
+2026-03-11 10:25:00.694 DEBUG [main] org.hibernate.SQL - 
+    select
+        count(*) 
+    from
+        users u1_0
+2026-03-11 10:25:00.694 DEBUG [main] org.hibernate.SQL - 
+    select
+        count(*) 
+    from
+        users u1_0
+2026-03-11 10:25:00.694 INFO  [main] u.g.o.config.DataInitializer - Users already exist in database, count: 24
+2026-03-11 10:25:00.697 DEBUG [main] org.hibernate.SQL - 
+    select
+        count(*) 
+    from
+        platform_settings ps1_0 
+    where
+        ps1_0.setting_key=?
+2026-03-11 10:25:00.697 TRACE [main] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [REQUIRE_ATTACHMENT_FOR_ACTUAL_VALUE]
+2026-03-11 10:25:00.701 DEBUG [main] org.hibernate.SQL - 
+    select
+        e1_0.id,
+        e1_0.comment,
+        e1_0.created_at,
+        e1_0.evaluator_id,
+        e1_0.evaluator_type,
+        e1_0.letter_rating,
+        e1_0.numeric_rating,
+        e1_0.status,
+        e1_0.submitted_at,
+        e1_0.target_id,
+        e1_0.target_type,
+        e1_0.updated_at 
+    from
+        evaluations e1_0
+2026-03-11 10:25:00.706 INFO  [main] u.g.o.service.EvaluationService - No DRAFT evaluations found to migrate
+2026-03-11 10:25:00.996 INFO  [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-03-11 10:25:01.037 INFO  [http-nio-8080-exec-6] u.g.o.s.UserDetailsServiceImpl - Loading user by username: admin
+2026-03-11 10:25:01.037 INFO  [http-nio-8080-exec-5] u.g.o.s.UserDetailsServiceImpl - Loading user by username: admin
+2026-03-11 10:25:01.037 INFO  [http-nio-8080-exec-8] u.g.o.s.UserDetailsServiceImpl - Loading user by username: admin
+2026-03-11 10:25:01.037 INFO  [http-nio-8080-exec-7] u.g.o.s.UserDetailsServiceImpl - Loading user by username: admin
+2026-03-11 10:25:01.039 DEBUG [http-nio-8080-exec-5] org.hibernate.SQL - 
+    select
+        u1_0.id,
+        u1_0.bio,
+        u1_0.can_edit_assigned_departments,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.full_name,
+        u1_0.is_active,
+        u1_0.job_title,
+        u1_0.last_login,
+        u1_0.password,
+        u1_0.phone_number,
+        u1_0.profile_photo_url,
+        u1_0.read_only,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2026-03-11 10:25:01.039 DEBUG [http-nio-8080-exec-8] org.hibernate.SQL - 
+    select
+        u1_0.id,
+        u1_0.bio,
+        u1_0.can_edit_assigned_departments,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.full_name,
+        u1_0.is_active,
+        u1_0.job_title,
+        u1_0.last_login,
+        u1_0.password,
+        u1_0.phone_number,
+        u1_0.profile_photo_url,
+        u1_0.read_only,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2026-03-11 10:25:01.039 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        u1_0.id,
+        u1_0.bio,
+        u1_0.can_edit_assigned_departments,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.full_name,
+        u1_0.is_active,
+        u1_0.job_title,
+        u1_0.last_login,
+        u1_0.password,
+        u1_0.phone_number,
+        u1_0.profile_photo_url,
+        u1_0.read_only,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2026-03-11 10:25:01.039 DEBUG [http-nio-8080-exec-7] org.hibernate.SQL - 
+    select
+        u1_0.id,
+        u1_0.bio,
+        u1_0.can_edit_assigned_departments,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.full_name,
+        u1_0.is_active,
+        u1_0.job_title,
+        u1_0.last_login,
+        u1_0.password,
+        u1_0.phone_number,
+        u1_0.profile_photo_url,
+        u1_0.read_only,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2026-03-11 10:25:01.039 TRACE [http-nio-8080-exec-8] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [admin]
+2026-03-11 10:25:01.039 TRACE [http-nio-8080-exec-5] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [admin]
+2026-03-11 10:25:01.039 TRACE [http-nio-8080-exec-6] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [admin]
+2026-03-11 10:25:01.039 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [admin]
+2026-03-11 10:25:01.042 INFO  [http-nio-8080-exec-8] u.g.o.s.UserDetailsServiceImpl - Found user: admin, role: ADMIN, active: true
+2026-03-11 10:25:01.043 INFO  [http-nio-8080-exec-7] u.g.o.s.UserDetailsServiceImpl - Found user: admin, role: ADMIN, active: true
+2026-03-11 10:25:01.043 INFO  [http-nio-8080-exec-6] u.g.o.s.UserDetailsServiceImpl - Found user: admin, role: ADMIN, active: true
+2026-03-11 10:25:01.043 INFO  [http-nio-8080-exec-6] u.g.o.s.UserDetailsServiceImpl - UserDetails created, enabled: true
+2026-03-11 10:25:01.043 INFO  [http-nio-8080-exec-8] u.g.o.s.UserDetailsServiceImpl - UserDetails created, enabled: true
+2026-03-11 10:25:01.043 INFO  [http-nio-8080-exec-7] u.g.o.s.UserDetailsServiceImpl - UserDetails created, enabled: true
+2026-03-11 10:25:01.043 INFO  [http-nio-8080-exec-5] u.g.o.s.UserDetailsServiceImpl - Found user: admin, role: ADMIN, active: true
+2026-03-11 10:25:01.043 INFO  [http-nio-8080-exec-5] u.g.o.s.UserDetailsServiceImpl - UserDetails created, enabled: true
+2026-03-11 10:25:01.052 DEBUG [http-nio-8080-exec-5] org.hibernate.SQL - 
+    select
+        ps1_0.setting_key,
+        ps1_0.description,
+        ps1_0.setting_value 
+    from
+        platform_settings ps1_0
+2026-03-11 10:25:01.055 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        sl1_0.id,
+        sl1_0.color,
+        sl1_0.display_order,
+        sl1_0.is_default,
+        sl1_0.name,
+        sl1_0.score_value 
+    from
+        score_levels sl1_0 
+    order by
+        sl1_0.display_order
+2026-03-11 10:25:01.055 DEBUG [http-nio-8080-exec-7] org.hibernate.SQL - 
+    select
+        distinct d1_0.id,
+        d1_0.created_at,
+        d1_0.leader_id,
+        d1_0.division_id,
+        d1_0.name,
+        o1_0.department_id,
+        o1_0.id,
+        o1_0.employee_id,
+        kr1_0.objective_id,
+        kr1_0.id,
+        kr1_0.actual_value,
+        kr1_0.attachment_file_name,
+        kr1_0.attachment_url,
+        kr1_0.description,
+        kr1_0.metric_type,
+        kr1_0.name,
+        kr1_0.progress,
+        kr1_0.threshold_below,
+        kr1_0.threshold_exceptional,
+        kr1_0.threshold_good,
+        kr1_0.threshold_meets,
+        kr1_0.threshold_very_good,
+        kr1_0.unit,
+        kr1_0.weight,
+        o1_0.level,
+        o1_0.name,
+        o1_0.weight,
+        d1_0.updated_at 
+    from
+        department d1_0 
+    left join
+        objectives o1_0 
+            on d1_0.id=o1_0.department_id 
+    left join
+        key_results kr1_0 
+            on o1_0.id=kr1_0.objective_id
+2026-03-11 10:25:01.056 DEBUG [http-nio-8080-exec-8] org.hibernate.SQL - 
+    select
+        u1_0.id,
+        u1_0.bio,
+        u1_0.can_edit_assigned_departments,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.full_name,
+        u1_0.is_active,
+        u1_0.job_title,
+        u1_0.last_login,
+        u1_0.password,
+        u1_0.phone_number,
+        u1_0.profile_photo_url,
+        u1_0.read_only,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.id=?
+2026-03-11 10:25:01.056 TRACE [http-nio-8080-exec-8] org.hibernate.orm.jdbc.bind - binding parameter (1:UUID) <- [1f7838d8-3bd1-4ac1-9bf1-f63f276c5c32]
+2026-03-11 10:25:01.059 DEBUG [http-nio-8080-exec-8] org.hibernate.SQL - 
+    select
+        e1_0.id,
+        e1_0.comment,
+        e1_0.created_at,
+        e1_0.evaluator_id,
+        e1_0.evaluator_type,
+        e1_0.letter_rating,
+        e1_0.numeric_rating,
+        e1_0.status,
+        e1_0.submitted_at,
+        e1_0.target_id,
+        e1_0.target_type,
+        e1_0.updated_at 
+    from
+        evaluations e1_0 
+    where
+        e1_0.target_type=? 
+        and e1_0.target_id=?
+2026-03-11 10:25:01.059 TRACE [http-nio-8080-exec-8] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [EMPLOYEE]
+2026-03-11 10:25:01.059 TRACE [http-nio-8080-exec-8] org.hibernate.orm.jdbc.bind - binding parameter (2:UUID) <- [1f7838d8-3bd1-4ac1-9bf1-f63f276c5c32]
+2026-03-11 10:25:01.069 DEBUG [http-nio-8080-exec-7] org.hibernate.SQL - 
+    select
+        d1_0.id,
+        d1_0.created_at,
+        d1_0.leader_id,
+        d1_0.name,
+        d1_0.updated_at 
+    from
+        division d1_0 
+    where
+        d1_0.id in (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-03-11 10:25:01.069 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [4d541230-c2ba-4746-9494-a0b374041a98]
+2026-03-11 10:25:01.070 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (2:VARCHAR) <- [03a06901-53b8-4dea-a6f6-8bc2aa320e8c]
+2026-03-11 10:25:01.070 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (3:VARCHAR) <- [c2183c24-a412-4682-b4fe-8b3e03bb4ba5]
+2026-03-11 10:25:01.070 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (4:VARCHAR) <- [65c3991e-85c5-4997-a6f7-217c4ee7d024]
+2026-03-11 10:25:01.070 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (5:VARCHAR) <- [f13873af-9334-4ab2-96f9-1d3f49a5ac79]
+2026-03-11 10:25:01.070 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (6:VARCHAR) <- [null]
+2026-03-11 10:25:01.070 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (7:VARCHAR) <- [null]
+2026-03-11 10:25:01.070 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (8:VARCHAR) <- [null]
+2026-03-11 10:25:01.070 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (9:VARCHAR) <- [null]
+2026-03-11 10:25:01.070 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (10:VARCHAR) <- [null]
+2026-03-11 10:25:01.070 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (11:VARCHAR) <- [null]
+2026-03-11 10:25:01.070 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (12:VARCHAR) <- [null]
+2026-03-11 10:25:01.070 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (13:VARCHAR) <- [null]
+2026-03-11 10:25:01.070 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (14:VARCHAR) <- [null]
+2026-03-11 10:25:01.070 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (15:VARCHAR) <- [null]
+2026-03-11 10:25:01.070 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (16:VARCHAR) <- [null]
+2026-03-11 10:25:01.070 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (17:VARCHAR) <- [null]
+2026-03-11 10:25:01.070 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (18:VARCHAR) <- [null]
+2026-03-11 10:25:01.070 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (19:VARCHAR) <- [null]
+2026-03-11 10:25:01.070 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (20:VARCHAR) <- [null]
+2026-03-11 10:25:01.073 DEBUG [http-nio-8080-exec-7] org.hibernate.SQL - 
+    select
+        u1_0.id,
+        u1_0.bio,
+        u1_0.can_edit_assigned_departments,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.full_name,
+        u1_0.is_active,
+        u1_0.job_title,
+        u1_0.last_login,
+        u1_0.password,
+        u1_0.phone_number,
+        u1_0.profile_photo_url,
+        u1_0.read_only,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.id=?
+2026-03-11 10:25:01.073 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (1:UUID) <- [1f7838d8-3bd1-4ac1-9bf1-f63f276c5c32]
+2026-03-11 10:25:01.074 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля операций без ошибок (%)': actual=91.0, type=HIGHER_BETTER, thresholds=[below=85.0, meets=90.0, good=95.0, veryGood=98.0, exceptional=100.0]
+2026-03-11 10:25:01.075 DEBUG [http-nio-8080-exec-7] org.hibernate.SQL - 
+    select
+        sl1_0.id,
+        sl1_0.color,
+        sl1_0.display_order,
+        sl1_0.is_default,
+        sl1_0.name,
+        sl1_0.score_value 
+    from
+        score_levels sl1_0 
+    order by
+        sl1_0.display_order
+2026-03-11 10:25:01.076 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля операций без ошибок (%)' score result: score=0.35, level=ниже_ожиданий
+2026-03-11 10:25:01.076 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Время обработки платежей (мин)': actual=35.0, type=LOWER_BETTER, thresholds=[below=60.0, meets=40.0, good=20.0, veryGood=10.0, exceptional=5.0]
+2026-03-11 10:25:01.077 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Время обработки платежей (мин)' score result: score=0.36, level=ниже_ожиданий
+2026-03-11 10:25:01.077 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля операций без ошибок (%)': actual=91.0, type=HIGHER_BETTER, thresholds=[below=85.0, meets=90.0, good=95.0, veryGood=98.0, exceptional=100.0]
+2026-03-11 10:25:01.077 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля операций без ошибок (%)' score result: score=0.35, level=ниже_ожиданий
+2026-03-11 10:25:01.077 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Время обработки платежей (мин)': actual=35.0, type=LOWER_BETTER, thresholds=[below=60.0, meets=40.0, good=20.0, veryGood=10.0, exceptional=5.0]
+2026-03-11 10:25:01.077 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Время обработки платежей (мин)' score result: score=0.36, level=ниже_ожиданий
+2026-03-11 10:25:01.077 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Нарушения регуляторных требований (кол-во)': actual=0.0, type=LOWER_BETTER, thresholds=[below=10.0, meets=6.0, good=3.0, veryGood=1.0, exceptional=0.0]
+2026-03-11 10:25:01.077 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Нарушения регуляторных требований (кол-во)' score result: score=1.0, level=исключительно
+2026-03-11 10:25:01.077 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Отчёты в ЦБ, сданные в срок (%)': actual=100.0, type=HIGHER_BETTER, thresholds=[below=70.0, meets=80.0, good=90.0, veryGood=97.0, exceptional=100.0]
+2026-03-11 10:25:01.078 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Отчёты в ЦБ, сданные в срок (%)' score result: score=1.0, level=исключительно
+2026-03-11 10:25:01.078 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Нарушения регуляторных требований (кол-во)': actual=0.0, type=LOWER_BETTER, thresholds=[below=10.0, meets=6.0, good=3.0, veryGood=1.0, exceptional=0.0]
+2026-03-11 10:25:01.078 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Нарушения регуляторных требований (кол-во)' score result: score=1.0, level=исключительно
+2026-03-11 10:25:01.078 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Отчёты в ЦБ, сданные в срок (%)': actual=100.0, type=HIGHER_BETTER, thresholds=[below=70.0, meets=80.0, good=90.0, veryGood=97.0, exceptional=100.0]
+2026-03-11 10:25:01.078 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Отчёты в ЦБ, сданные в срок (%)' score result: score=1.0, level=исключительно
+2026-03-11 10:25:01.078 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Инциденты операционного риска (кол-во)': actual=0.0, type=LOWER_BETTER, thresholds=[below=15.0, meets=10.0, good=5.0, veryGood=2.0, exceptional=0.0]
+2026-03-11 10:25:01.078 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Инциденты операционного риска (кол-во)' score result: score=1.0, level=исключительно
+2026-03-11 10:25:01.078 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Инциденты операционного риска (кол-во)': actual=0.0, type=LOWER_BETTER, thresholds=[below=15.0, meets=10.0, good=5.0, veryGood=2.0, exceptional=0.0]
+2026-03-11 10:25:01.078 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Инциденты операционного риска (кол-во)' score result: score=1.0, level=исключительно
+2026-03-11 10:25:01.079 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля операций без ошибок (%)': actual=91.0, type=HIGHER_BETTER, thresholds=[below=85.0, meets=90.0, good=95.0, veryGood=98.0, exceptional=100.0]
+2026-03-11 10:25:01.079 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля операций без ошибок (%)' score result: score=0.35, level=ниже_ожиданий
+2026-03-11 10:25:01.079 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Время обработки платежей (мин)': actual=35.0, type=LOWER_BETTER, thresholds=[below=60.0, meets=40.0, good=20.0, veryGood=10.0, exceptional=5.0]
+2026-03-11 10:25:01.079 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Время обработки платежей (мин)' score result: score=0.36, level=ниже_ожиданий
+2026-03-11 10:25:01.079 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Нарушения регуляторных требований (кол-во)': actual=0.0, type=LOWER_BETTER, thresholds=[below=10.0, meets=6.0, good=3.0, veryGood=1.0, exceptional=0.0]
+2026-03-11 10:25:01.079 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Нарушения регуляторных требований (кол-во)' score result: score=1.0, level=исключительно
+2026-03-11 10:25:01.079 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Отчёты в ЦБ, сданные в срок (%)': actual=100.0, type=HIGHER_BETTER, thresholds=[below=70.0, meets=80.0, good=90.0, veryGood=97.0, exceptional=100.0]
+2026-03-11 10:25:01.079 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Отчёты в ЦБ, сданные в срок (%)' score result: score=1.0, level=исключительно
+2026-03-11 10:25:01.079 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Инциденты операционного риска (кол-во)': actual=0.0, type=LOWER_BETTER, thresholds=[below=15.0, meets=10.0, good=5.0, veryGood=2.0, exceptional=0.0]
+2026-03-11 10:25:01.079 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Инциденты операционного риска (кол-во)' score result: score=1.0, level=исключительно
+2026-03-11 10:25:01.079 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля операций без ошибок (%)': actual=91.0, type=HIGHER_BETTER, thresholds=[below=85.0, meets=90.0, good=95.0, veryGood=98.0, exceptional=100.0]
+2026-03-11 10:25:01.079 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля операций без ошибок (%)' score result: score=0.35, level=ниже_ожиданий
+2026-03-11 10:25:01.079 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Время обработки платежей (мин)': actual=35.0, type=LOWER_BETTER, thresholds=[below=60.0, meets=40.0, good=20.0, veryGood=10.0, exceptional=5.0]
+2026-03-11 10:25:01.079 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Время обработки платежей (мин)' score result: score=0.36, level=ниже_ожиданий
+2026-03-11 10:25:01.080 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Нарушения регуляторных требований (кол-во)': actual=0.0, type=LOWER_BETTER, thresholds=[below=10.0, meets=6.0, good=3.0, veryGood=1.0, exceptional=0.0]
+2026-03-11 10:25:01.080 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Нарушения регуляторных требований (кол-во)' score result: score=1.0, level=исключительно
+2026-03-11 10:25:01.080 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Отчёты в ЦБ, сданные в срок (%)': actual=100.0, type=HIGHER_BETTER, thresholds=[below=70.0, meets=80.0, good=90.0, veryGood=97.0, exceptional=100.0]
+2026-03-11 10:25:01.080 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Отчёты в ЦБ, сданные в срок (%)' score result: score=1.0, level=исключительно
+2026-03-11 10:25:01.080 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Инциденты операционного риска (кол-во)': actual=0.0, type=LOWER_BETTER, thresholds=[below=15.0, meets=10.0, good=5.0, veryGood=2.0, exceptional=0.0]
+2026-03-11 10:25:01.080 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Инциденты операционного риска (кол-во)' score result: score=1.0, level=исключительно
+2026-03-11 10:25:01.080 INFO  [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Fetching evaluations for targetType=DEPARTMENT, targetId=18266283-74ed-4cc0-bb50-9b519a455b50
+2026-03-11 10:25:01.081 DEBUG [http-nio-8080-exec-7] org.hibernate.SQL - 
+    select
+        e1_0.id,
+        e1_0.comment,
+        e1_0.created_at,
+        e1_0.evaluator_id,
+        e1_0.evaluator_type,
+        e1_0.letter_rating,
+        e1_0.numeric_rating,
+        e1_0.status,
+        e1_0.submitted_at,
+        e1_0.target_id,
+        e1_0.target_type,
+        e1_0.updated_at 
+    from
+        evaluations e1_0 
+    where
+        e1_0.target_type=? 
+        and e1_0.target_id=? 
+        and e1_0.status=?
+2026-03-11 10:25:01.082 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [DEPARTMENT]
+2026-03-11 10:25:01.082 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (2:UUID) <- [18266283-74ed-4cc0-bb50-9b519a455b50]
+2026-03-11 10:25:01.082 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (3:ENUM) <- [SUBMITTED]
+2026-03-11 10:25:01.082 INFO  [http-nio-8080-exec-6] u.g.o.config.RequestLoggingFilter - GET /api/score-levels 200 (37ms)
+2026-03-11 10:25:01.082 INFO  [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Found 1 submitted evaluations for targetId=18266283-74ed-4cc0-bb50-9b519a455b50
+2026-03-11 10:25:01.082 INFO  [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService -   - Evaluation: id=2671110b-ff9d-4bc5-91f6-aa9518eb81b1, evaluatorType=HR, targetId=18266283-74ed-4cc0-bb50-9b519a455b50, status=SUBMITTED
+2026-03-11 10:25:01.082 INFO  [http-nio-8080-exec-8] u.g.o.config.RequestLoggingFilter - GET /api/evaluations/employee/1f7838d8-3bd1-4ac1-9bf1-f63f276c5c32/summary 200 (37ms)
+2026-03-11 10:25:01.082 INFO  [http-nio-8080-exec-5] u.g.o.config.RequestLoggingFilter - GET /api/platform-settings 200 (37ms)
+2026-03-11 10:25:01.083 DEBUG [http-nio-8080-exec-7] org.hibernate.SQL - 
+    select
+        u1_0.id,
+        u1_0.bio,
+        u1_0.can_edit_assigned_departments,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.full_name,
+        u1_0.is_active,
+        u1_0.job_title,
+        u1_0.last_login,
+        u1_0.password,
+        u1_0.phone_number,
+        u1_0.profile_photo_url,
+        u1_0.read_only,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.id=?
+2026-03-11 10:25:01.083 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (1:UUID) <- [241cfc1f-eccf-43c9-a677-5f5ba7611e80]
+2026-03-11 10:25:01.084 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Прохождение сертификации сотрудниками (%)': actual=60.0, type=HIGHER_BETTER, thresholds=[below=40.0, meets=60.0, good=75.0, veryGood=88.0, exceptional=100.0]
+2026-03-11 10:25:01.084 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Прохождение сертификации сотрудниками (%)' score result: score=0.31, level=ниже_ожиданий
+2026-03-11 10:25:01.084 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Прохождение сертификации сотрудниками (%)': actual=60.0, type=HIGHER_BETTER, thresholds=[below=40.0, meets=60.0, good=75.0, veryGood=88.0, exceptional=100.0]
+2026-03-11 10:25:01.084 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Прохождение сертификации сотрудниками (%)' score result: score=0.31, level=ниже_ожиданий
+2026-03-11 10:25:01.084 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Среднее время обработки звонка (сек)': actual=155.0, type=LOWER_BETTER, thresholds=[below=300.0, meets=240.0, good=180.0, veryGood=120.0, exceptional=90.0]
+2026-03-11 10:25:01.084 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Среднее время обработки звонка (сек)' score result: score=0.66, level=на_уровне_ожиданий
+2026-03-11 10:25:01.085 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля отвеченных звонков в течение 30 сек (%)': actual=76.0, type=HIGHER_BETTER, thresholds=[below=60.0, meets=72.0, good=82.0, veryGood=90.0, exceptional=98.0]
+2026-03-11 10:25:01.085 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля отвеченных звонков в течение 30 сек (%)' score result: score=0.39, level=ниже_ожиданий
+2026-03-11 10:25:01.085 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Среднее время обработки звонка (сек)': actual=155.0, type=LOWER_BETTER, thresholds=[below=300.0, meets=240.0, good=180.0, veryGood=120.0, exceptional=90.0]
+2026-03-11 10:25:01.085 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Среднее время обработки звонка (сек)' score result: score=0.66, level=на_уровне_ожиданий
+2026-03-11 10:25:01.085 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля отвеченных звонков в течение 30 сек (%)': actual=76.0, type=HIGHER_BETTER, thresholds=[below=60.0, meets=72.0, good=82.0, veryGood=90.0, exceptional=98.0]
+2026-03-11 10:25:01.085 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля отвеченных звонков в течение 30 сек (%)' score result: score=0.39, level=ниже_ожиданий
+2026-03-11 10:25:01.085 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'NPS (Net Promoter Score)': actual=47.0, type=HIGHER_BETTER, thresholds=[below=20.0, meets=35.0, good=50.0, veryGood=65.0, exceptional=80.0]
+2026-03-11 10:25:01.085 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'NPS (Net Promoter Score)' score result: score=0.47, level=ниже_ожиданий
+2026-03-11 10:25:01.085 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля жалоб, решённых с первого обращения (%)': actual=72.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=65.0, good=75.0, veryGood=85.0, exceptional=95.0]
+2026-03-11 10:25:01.085 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля жалоб, решённых с первого обращения (%)' score result: score=0.45, level=ниже_ожиданий
+2026-03-11 10:25:01.085 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Среднее время ожидания в очереди (мин)': actual=7.0, type=LOWER_BETTER, thresholds=[below=15.0, meets=10.0, good=6.0, veryGood=3.0, exceptional=1.0]
+2026-03-11 10:25:01.085 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Среднее время ожидания в очереди (мин)' score result: score=0.46, level=ниже_ожиданий
+2026-03-11 10:25:01.085 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'NPS (Net Promoter Score)': actual=47.0, type=HIGHER_BETTER, thresholds=[below=20.0, meets=35.0, good=50.0, veryGood=65.0, exceptional=80.0]
+2026-03-11 10:25:01.085 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'NPS (Net Promoter Score)' score result: score=0.47, level=ниже_ожиданий
+2026-03-11 10:25:01.085 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля жалоб, решённых с первого обращения (%)': actual=72.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=65.0, good=75.0, veryGood=85.0, exceptional=95.0]
+2026-03-11 10:25:01.085 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля жалоб, решённых с первого обращения (%)' score result: score=0.45, level=ниже_ожиданий
+2026-03-11 10:25:01.085 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Среднее время ожидания в очереди (мин)': actual=7.0, type=LOWER_BETTER, thresholds=[below=15.0, meets=10.0, good=6.0, veryGood=3.0, exceptional=1.0]
+2026-03-11 10:25:01.085 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Среднее время ожидания в очереди (мин)' score result: score=0.46, level=ниже_ожиданий
+2026-03-11 10:25:01.086 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Прохождение сертификации сотрудниками (%)': actual=60.0, type=HIGHER_BETTER, thresholds=[below=40.0, meets=60.0, good=75.0, veryGood=88.0, exceptional=100.0]
+2026-03-11 10:25:01.086 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Прохождение сертификации сотрудниками (%)' score result: score=0.31, level=ниже_ожиданий
+2026-03-11 10:25:01.086 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Среднее время обработки звонка (сек)': actual=155.0, type=LOWER_BETTER, thresholds=[below=300.0, meets=240.0, good=180.0, veryGood=120.0, exceptional=90.0]
+2026-03-11 10:25:01.086 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Среднее время обработки звонка (сек)' score result: score=0.66, level=на_уровне_ожиданий
+2026-03-11 10:25:01.086 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля отвеченных звонков в течение 30 сек (%)': actual=76.0, type=HIGHER_BETTER, thresholds=[below=60.0, meets=72.0, good=82.0, veryGood=90.0, exceptional=98.0]
+2026-03-11 10:25:01.086 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля отвеченных звонков в течение 30 сек (%)' score result: score=0.39, level=ниже_ожиданий
+2026-03-11 10:25:01.086 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'NPS (Net Promoter Score)': actual=47.0, type=HIGHER_BETTER, thresholds=[below=20.0, meets=35.0, good=50.0, veryGood=65.0, exceptional=80.0]
+2026-03-11 10:25:01.086 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'NPS (Net Promoter Score)' score result: score=0.47, level=ниже_ожиданий
+2026-03-11 10:25:01.086 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля жалоб, решённых с первого обращения (%)': actual=72.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=65.0, good=75.0, veryGood=85.0, exceptional=95.0]
+2026-03-11 10:25:01.086 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля жалоб, решённых с первого обращения (%)' score result: score=0.45, level=ниже_ожиданий
+2026-03-11 10:25:01.086 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Среднее время ожидания в очереди (мин)': actual=7.0, type=LOWER_BETTER, thresholds=[below=15.0, meets=10.0, good=6.0, veryGood=3.0, exceptional=1.0]
+2026-03-11 10:25:01.086 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Среднее время ожидания в очереди (мин)' score result: score=0.46, level=ниже_ожиданий
+2026-03-11 10:25:01.086 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Прохождение сертификации сотрудниками (%)': actual=60.0, type=HIGHER_BETTER, thresholds=[below=40.0, meets=60.0, good=75.0, veryGood=88.0, exceptional=100.0]
+2026-03-11 10:25:01.086 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Прохождение сертификации сотрудниками (%)' score result: score=0.31, level=ниже_ожиданий
+2026-03-11 10:25:01.086 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Среднее время обработки звонка (сек)': actual=155.0, type=LOWER_BETTER, thresholds=[below=300.0, meets=240.0, good=180.0, veryGood=120.0, exceptional=90.0]
+2026-03-11 10:25:01.086 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Среднее время обработки звонка (сек)' score result: score=0.66, level=на_уровне_ожиданий
+2026-03-11 10:25:01.086 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля отвеченных звонков в течение 30 сек (%)': actual=76.0, type=HIGHER_BETTER, thresholds=[below=60.0, meets=72.0, good=82.0, veryGood=90.0, exceptional=98.0]
+2026-03-11 10:25:01.086 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля отвеченных звонков в течение 30 сек (%)' score result: score=0.39, level=ниже_ожиданий
+2026-03-11 10:25:01.086 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'NPS (Net Promoter Score)': actual=47.0, type=HIGHER_BETTER, thresholds=[below=20.0, meets=35.0, good=50.0, veryGood=65.0, exceptional=80.0]
+2026-03-11 10:25:01.086 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'NPS (Net Promoter Score)' score result: score=0.47, level=ниже_ожиданий
+2026-03-11 10:25:01.086 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля жалоб, решённых с первого обращения (%)': actual=72.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=65.0, good=75.0, veryGood=85.0, exceptional=95.0]
+2026-03-11 10:25:01.086 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля жалоб, решённых с первого обращения (%)' score result: score=0.45, level=ниже_ожиданий
+2026-03-11 10:25:01.086 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Среднее время ожидания в очереди (мин)': actual=7.0, type=LOWER_BETTER, thresholds=[below=15.0, meets=10.0, good=6.0, veryGood=3.0, exceptional=1.0]
+2026-03-11 10:25:01.086 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Среднее время ожидания в очереди (мин)' score result: score=0.46, level=ниже_ожиданий
+2026-03-11 10:25:01.086 INFO  [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Fetching evaluations for targetType=DEPARTMENT, targetId=4dd0dec7-9ba7-4340-814a-1a22df2c16b4
+2026-03-11 10:25:01.087 DEBUG [http-nio-8080-exec-7] org.hibernate.SQL - 
+    select
+        e1_0.id,
+        e1_0.comment,
+        e1_0.created_at,
+        e1_0.evaluator_id,
+        e1_0.evaluator_type,
+        e1_0.letter_rating,
+        e1_0.numeric_rating,
+        e1_0.status,
+        e1_0.submitted_at,
+        e1_0.target_id,
+        e1_0.target_type,
+        e1_0.updated_at 
+    from
+        evaluations e1_0 
+    where
+        e1_0.target_type=? 
+        and e1_0.target_id=? 
+        and e1_0.status=?
+2026-03-11 10:25:01.087 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [DEPARTMENT]
+2026-03-11 10:25:01.087 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (2:UUID) <- [4dd0dec7-9ba7-4340-814a-1a22df2c16b4]
+2026-03-11 10:25:01.087 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (3:ENUM) <- [SUBMITTED]
+2026-03-11 10:25:01.087 INFO  [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Found 0 submitted evaluations for targetId=4dd0dec7-9ba7-4340-814a-1a22df2c16b4
+2026-03-11 10:25:01.087 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Часы менторинга за квартал (ч)': actual=25.0, type=HIGHER_BETTER, thresholds=[below=5.0, meets=10.0, good=20.0, veryGood=30.0, exceptional=40.0]
+2026-03-11 10:25:01.087 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Часы менторинга за квартал (ч)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.087 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Часы менторинга за квартал (ч)': actual=25.0, type=HIGHER_BETTER, thresholds=[below=5.0, meets=10.0, good=20.0, veryGood=30.0, exceptional=40.0]
+2026-03-11 10:25:01.087 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Часы менторинга за квартал (ч)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.087 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Проведение стратегических сессий с командой (кол-во)': actual=5.0, type=HIGHER_BETTER, thresholds=[below=1.0, meets=2.0, good=4.0, veryGood=6.0, exceptional=8.0]
+2026-03-11 10:25:01.087 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Проведение стратегических сессий с командой (кол-во)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.088 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Удовлетворённость команды руководством (%)': actual=75.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=60.0, good=70.0, veryGood=80.0, exceptional=90.0]
+2026-03-11 10:25:01.088 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Удовлетворённость команды руководством (%)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.088 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Проведение стратегических сессий с командой (кол-во)': actual=5.0, type=HIGHER_BETTER, thresholds=[below=1.0, meets=2.0, good=4.0, veryGood=6.0, exceptional=8.0]
+2026-03-11 10:25:01.088 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Проведение стратегических сессий с командой (кол-во)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.088 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Удовлетворённость команды руководством (%)': actual=75.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=60.0, good=70.0, veryGood=80.0, exceptional=90.0]
+2026-03-11 10:25:01.088 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Удовлетворённость команды руководством (%)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.088 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Качество описания бизнес-процессов (% ошибок)': actual=11.0, type=LOWER_BETTER, thresholds=[below=20.0, meets=15.0, good=10.0, veryGood=5.0, exceptional=0.0]
+2026-03-11 10:25:01.088 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Качество описания бизнес-процессов (% ошибок)' score result: score=0.47, level=ниже_ожиданий
+2026-03-11 10:25:01.088 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Уровень автоматизации процессов (%)': actual=71.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=65.0, good=78.0, veryGood=90.0, exceptional=100.0]
+2026-03-11 10:25:01.088 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Уровень автоматизации процессов (%)' score result: score=0.4, level=ниже_ожиданий
+2026-03-11 10:25:01.088 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Качество описания бизнес-процессов (% ошибок)': actual=11.0, type=LOWER_BETTER, thresholds=[below=20.0, meets=15.0, good=10.0, veryGood=5.0, exceptional=0.0]
+2026-03-11 10:25:01.088 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Качество описания бизнес-процессов (% ошибок)' score result: score=0.47, level=ниже_ожиданий
+2026-03-11 10:25:01.091 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Уровень автоматизации процессов (%)': actual=71.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=65.0, good=78.0, veryGood=90.0, exceptional=100.0]
+2026-03-11 10:25:01.091 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Уровень автоматизации процессов (%)' score result: score=0.4, level=ниже_ожиданий
+2026-03-11 10:25:01.091 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Переносы сроков задач (% от общего кол-ва)': actual=12.0, type=LOWER_BETTER, thresholds=[below=30.0, meets=20.0, good=15.0, veryGood=5.0, exceptional=0.0]
+2026-03-11 10:25:01.091 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Переносы сроков задач (% от общего кол-ва)' score result: score=0.62, level=на_уровне_ожиданий
+2026-03-11 10:25:01.091 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Задачи в JIRA, завершённые в срок (%)': actual=82.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=65.0, good=80.0, veryGood=95.0, exceptional=100.0]
+2026-03-11 10:25:01.091 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Задачи в JIRA, завершённые в срок (%)' score result: score=0.56, level=на_уровне_ожиданий
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Проекты завершённые в срок (% от кол-ва)': actual=78.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=60.0, good=80.0, veryGood=100.0, exceptional=100.0]
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Проекты завершённые в срок (% от кол-ва)' score result: score=0.49, level=ниже_ожиданий
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Переносы сроков задач (% от общего кол-ва)': actual=12.0, type=LOWER_BETTER, thresholds=[below=30.0, meets=20.0, good=15.0, veryGood=5.0, exceptional=0.0]
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Переносы сроков задач (% от общего кол-ва)' score result: score=0.62, level=на_уровне_ожиданий
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Задачи в JIRA, завершённые в срок (%)': actual=82.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=65.0, good=80.0, veryGood=95.0, exceptional=100.0]
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Задачи в JIRA, завершённые в срок (%)' score result: score=0.56, level=на_уровне_ожиданий
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Проекты завершённые в срок (% от кол-ва)': actual=78.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=60.0, good=80.0, veryGood=100.0, exceptional=100.0]
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Проекты завершённые в срок (% от кол-ва)' score result: score=0.49, level=ниже_ожиданий
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Процент рисков с планами митигации (%)': actual=72.0, type=HIGHER_BETTER, thresholds=[below=20.0, meets=50.0, good=65.0, veryGood=80.0, exceptional=100.0]
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Процент рисков с планами митигации (%)' score result: score=0.67, level=на_уровне_ожиданий
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Неучтённые риски после начала проекта (кол-во)': actual=3.0, type=LOWER_BETTER, thresholds=[below=10.0, meets=5.0, good=2.0, veryGood=1.0, exceptional=0.0]
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Неучтённые риски после начала проекта (кол-во)' score result: score=0.44, level=ниже_ожиданий
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Точность оценки трудозатрат (%)': actual=68.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=60.0, good=75.0, veryGood=85.0, exceptional=100.0]
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Точность оценки трудозатрат (%)' score result: score=0.42, level=ниже_ожиданий
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Проекты в рамках бюджета (% без превышения)': actual=73.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=60.0, good=75.0, veryGood=90.0, exceptional=100.0]
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Проекты в рамках бюджета (% без превышения)' score result: score=0.48, level=ниже_ожиданий
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Процент рисков с планами митигации (%)': actual=72.0, type=HIGHER_BETTER, thresholds=[below=20.0, meets=50.0, good=65.0, veryGood=80.0, exceptional=100.0]
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Процент рисков с планами митигации (%)' score result: score=0.67, level=на_уровне_ожиданий
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Неучтённые риски после начала проекта (кол-во)': actual=3.0, type=LOWER_BETTER, thresholds=[below=10.0, meets=5.0, good=2.0, veryGood=1.0, exceptional=0.0]
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Неучтённые риски после начала проекта (кол-во)' score result: score=0.44, level=ниже_ожиданий
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Точность оценки трудозатрат (%)': actual=68.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=60.0, good=75.0, veryGood=85.0, exceptional=100.0]
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Точность оценки трудозатрат (%)' score result: score=0.42, level=ниже_ожиданий
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Проекты в рамках бюджета (% без превышения)': actual=73.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=60.0, good=75.0, veryGood=90.0, exceptional=100.0]
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Проекты в рамках бюджета (% без превышения)' score result: score=0.48, level=ниже_ожиданий
+2026-03-11 10:25:01.092 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Сотрудники, прошедшие обучение Agile/Scrum (%)': actual=90.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=70.0, good=85.0, veryGood=95.0, exceptional=100.0]
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Сотрудники, прошедшие обучение Agile/Scrum (%)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Укомплектованность штата (%)': actual=83.0, type=HIGHER_BETTER, thresholds=[below=60.0, meets=75.0, good=85.0, veryGood=95.0, exceptional=100.0]
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Укомплектованность штата (%)' score result: score=0.47, level=ниже_ожиданий
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Сотрудники, прошедшие обучение Agile/Scrum (%)': actual=90.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=70.0, good=85.0, veryGood=95.0, exceptional=100.0]
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Сотрудники, прошедшие обучение Agile/Scrum (%)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Укомплектованность штата (%)': actual=83.0, type=HIGHER_BETTER, thresholds=[below=60.0, meets=75.0, good=85.0, veryGood=95.0, exceptional=100.0]
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Укомплектованность штата (%)' score result: score=0.47, level=ниже_ожиданий
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Часы менторинга за квартал (ч)': actual=25.0, type=HIGHER_BETTER, thresholds=[below=5.0, meets=10.0, good=20.0, veryGood=30.0, exceptional=40.0]
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Часы менторинга за квартал (ч)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Проведение стратегических сессий с командой (кол-во)': actual=5.0, type=HIGHER_BETTER, thresholds=[below=1.0, meets=2.0, good=4.0, veryGood=6.0, exceptional=8.0]
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Проведение стратегических сессий с командой (кол-во)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Удовлетворённость команды руководством (%)': actual=75.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=60.0, good=70.0, veryGood=80.0, exceptional=90.0]
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Удовлетворённость команды руководством (%)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Качество описания бизнес-процессов (% ошибок)': actual=11.0, type=LOWER_BETTER, thresholds=[below=20.0, meets=15.0, good=10.0, veryGood=5.0, exceptional=0.0]
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Качество описания бизнес-процессов (% ошибок)' score result: score=0.47, level=ниже_ожиданий
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Уровень автоматизации процессов (%)': actual=71.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=65.0, good=78.0, veryGood=90.0, exceptional=100.0]
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Уровень автоматизации процессов (%)' score result: score=0.4, level=ниже_ожиданий
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Переносы сроков задач (% от общего кол-ва)': actual=12.0, type=LOWER_BETTER, thresholds=[below=30.0, meets=20.0, good=15.0, veryGood=5.0, exceptional=0.0]
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Переносы сроков задач (% от общего кол-ва)' score result: score=0.62, level=на_уровне_ожиданий
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Задачи в JIRA, завершённые в срок (%)': actual=82.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=65.0, good=80.0, veryGood=95.0, exceptional=100.0]
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Задачи в JIRA, завершённые в срок (%)' score result: score=0.56, level=на_уровне_ожиданий
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Проекты завершённые в срок (% от кол-ва)': actual=78.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=60.0, good=80.0, veryGood=100.0, exceptional=100.0]
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Проекты завершённые в срок (% от кол-ва)' score result: score=0.49, level=ниже_ожиданий
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Процент рисков с планами митигации (%)': actual=72.0, type=HIGHER_BETTER, thresholds=[below=20.0, meets=50.0, good=65.0, veryGood=80.0, exceptional=100.0]
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Процент рисков с планами митигации (%)' score result: score=0.67, level=на_уровне_ожиданий
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Неучтённые риски после начала проекта (кол-во)': actual=3.0, type=LOWER_BETTER, thresholds=[below=10.0, meets=5.0, good=2.0, veryGood=1.0, exceptional=0.0]
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Неучтённые риски после начала проекта (кол-во)' score result: score=0.44, level=ниже_ожиданий
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Точность оценки трудозатрат (%)': actual=68.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=60.0, good=75.0, veryGood=85.0, exceptional=100.0]
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Точность оценки трудозатрат (%)' score result: score=0.42, level=ниже_ожиданий
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Проекты в рамках бюджета (% без превышения)': actual=73.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=60.0, good=75.0, veryGood=90.0, exceptional=100.0]
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Проекты в рамках бюджета (% без превышения)' score result: score=0.48, level=ниже_ожиданий
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Сотрудники, прошедшие обучение Agile/Scrum (%)': actual=90.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=70.0, good=85.0, veryGood=95.0, exceptional=100.0]
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Сотрудники, прошедшие обучение Agile/Scrum (%)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Укомплектованность штата (%)': actual=83.0, type=HIGHER_BETTER, thresholds=[below=60.0, meets=75.0, good=85.0, veryGood=95.0, exceptional=100.0]
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Укомплектованность штата (%)' score result: score=0.47, level=ниже_ожиданий
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Часы менторинга за квартал (ч)': actual=25.0, type=HIGHER_BETTER, thresholds=[below=5.0, meets=10.0, good=20.0, veryGood=30.0, exceptional=40.0]
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Часы менторинга за квартал (ч)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Проведение стратегических сессий с командой (кол-во)': actual=5.0, type=HIGHER_BETTER, thresholds=[below=1.0, meets=2.0, good=4.0, veryGood=6.0, exceptional=8.0]
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Проведение стратегических сессий с командой (кол-во)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.093 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Удовлетворённость команды руководством (%)': actual=75.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=60.0, good=70.0, veryGood=80.0, exceptional=90.0]
+2026-03-11 10:25:01.094 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Удовлетворённость команды руководством (%)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.094 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Качество описания бизнес-процессов (% ошибок)': actual=11.0, type=LOWER_BETTER, thresholds=[below=20.0, meets=15.0, good=10.0, veryGood=5.0, exceptional=0.0]
+2026-03-11 10:25:01.094 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Качество описания бизнес-процессов (% ошибок)' score result: score=0.47, level=ниже_ожиданий
+2026-03-11 10:25:01.094 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Уровень автоматизации процессов (%)': actual=71.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=65.0, good=78.0, veryGood=90.0, exceptional=100.0]
+2026-03-11 10:25:01.094 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Уровень автоматизации процессов (%)' score result: score=0.4, level=ниже_ожиданий
+2026-03-11 10:25:01.094 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Переносы сроков задач (% от общего кол-ва)': actual=12.0, type=LOWER_BETTER, thresholds=[below=30.0, meets=20.0, good=15.0, veryGood=5.0, exceptional=0.0]
+2026-03-11 10:25:01.094 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Переносы сроков задач (% от общего кол-ва)' score result: score=0.62, level=на_уровне_ожиданий
+2026-03-11 10:25:01.094 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Задачи в JIRA, завершённые в срок (%)': actual=82.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=65.0, good=80.0, veryGood=95.0, exceptional=100.0]
+2026-03-11 10:25:01.094 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Задачи в JIRA, завершённые в срок (%)' score result: score=0.56, level=на_уровне_ожиданий
+2026-03-11 10:25:01.094 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Проекты завершённые в срок (% от кол-ва)': actual=78.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=60.0, good=80.0, veryGood=100.0, exceptional=100.0]
+2026-03-11 10:25:01.094 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Проекты завершённые в срок (% от кол-ва)' score result: score=0.49, level=ниже_ожиданий
+2026-03-11 10:25:01.094 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Процент рисков с планами митигации (%)': actual=72.0, type=HIGHER_BETTER, thresholds=[below=20.0, meets=50.0, good=65.0, veryGood=80.0, exceptional=100.0]
+2026-03-11 10:25:01.094 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Процент рисков с планами митигации (%)' score result: score=0.67, level=на_уровне_ожиданий
+2026-03-11 10:25:01.094 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Неучтённые риски после начала проекта (кол-во)': actual=3.0, type=LOWER_BETTER, thresholds=[below=10.0, meets=5.0, good=2.0, veryGood=1.0, exceptional=0.0]
+2026-03-11 10:25:01.094 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Неучтённые риски после начала проекта (кол-во)' score result: score=0.44, level=ниже_ожиданий
+2026-03-11 10:25:01.094 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Точность оценки трудозатрат (%)': actual=68.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=60.0, good=75.0, veryGood=85.0, exceptional=100.0]
+2026-03-11 10:25:01.094 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Точность оценки трудозатрат (%)' score result: score=0.42, level=ниже_ожиданий
+2026-03-11 10:25:01.094 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Проекты в рамках бюджета (% без превышения)': actual=73.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=60.0, good=75.0, veryGood=90.0, exceptional=100.0]
+2026-03-11 10:25:01.094 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Проекты в рамках бюджета (% без превышения)' score result: score=0.48, level=ниже_ожиданий
+2026-03-11 10:25:01.094 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Сотрудники, прошедшие обучение Agile/Scrum (%)': actual=90.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=70.0, good=85.0, veryGood=95.0, exceptional=100.0]
+2026-03-11 10:25:01.094 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Сотрудники, прошедшие обучение Agile/Scrum (%)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.094 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Укомплектованность штата (%)': actual=83.0, type=HIGHER_BETTER, thresholds=[below=60.0, meets=75.0, good=85.0, veryGood=95.0, exceptional=100.0]
+2026-03-11 10:25:01.094 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Укомплектованность штата (%)' score result: score=0.47, level=ниже_ожиданий
+2026-03-11 10:25:01.094 INFO  [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Fetching evaluations for targetType=DEPARTMENT, targetId=5f461bc5-e3d9-4bb3-94cd-9d9473939ef1
+2026-03-11 10:25:01.094 DEBUG [http-nio-8080-exec-7] org.hibernate.SQL - 
+    select
+        e1_0.id,
+        e1_0.comment,
+        e1_0.created_at,
+        e1_0.evaluator_id,
+        e1_0.evaluator_type,
+        e1_0.letter_rating,
+        e1_0.numeric_rating,
+        e1_0.status,
+        e1_0.submitted_at,
+        e1_0.target_id,
+        e1_0.target_type,
+        e1_0.updated_at 
+    from
+        evaluations e1_0 
+    where
+        e1_0.target_type=? 
+        and e1_0.target_id=? 
+        and e1_0.status=?
+2026-03-11 10:25:01.094 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [DEPARTMENT]
+2026-03-11 10:25:01.094 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (2:UUID) <- [5f461bc5-e3d9-4bb3-94cd-9d9473939ef1]
+2026-03-11 10:25:01.094 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (3:ENUM) <- [SUBMITTED]
+2026-03-11 10:25:01.095 INFO  [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Found 0 submitted evaluations for targetId=5f461bc5-e3d9-4bb3-94cd-9d9473939ef1
+2026-03-11 10:25:01.095 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доходы от РКО (млрд сум)': actual=28.0, type=HIGHER_BETTER, thresholds=[below=10.0, meets=15.0, good=20.0, veryGood=27.0, exceptional=35.0]
+2026-03-11 10:25:01.095 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доходы от РКО (млрд сум)' score result: score=0.88, level=превышает_ожидания
+2026-03-11 10:25:01.095 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Количество активных корпоративных счетов': actual=415.0, type=HIGHER_BETTER, thresholds=[below=200.0, meets=280.0, good=360.0, veryGood=440.0, exceptional=520.0]
+2026-03-11 10:25:01.095 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Количество активных корпоративных счетов' score result: score=0.75, level=на_уровне_ожиданий
+2026-03-11 10:25:01.095 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доходы от РКО (млрд сум)': actual=28.0, type=HIGHER_BETTER, thresholds=[below=10.0, meets=15.0, good=20.0, veryGood=27.0, exceptional=35.0]
+2026-03-11 10:25:01.095 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доходы от РКО (млрд сум)' score result: score=0.88, level=превышает_ожидания
+2026-03-11 10:25:01.095 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Количество активных корпоративных счетов': actual=415.0, type=HIGHER_BETTER, thresholds=[below=200.0, meets=280.0, good=360.0, veryGood=440.0, exceptional=520.0]
+2026-03-11 10:25:01.095 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Количество активных корпоративных счетов' score result: score=0.75, level=на_уровне_ожиданий
+2026-03-11 10:25:01.095 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Объём корпоративных кредитов (трлн сум)': actual=2.7, type=HIGHER_BETTER, thresholds=[below=1.0, meets=1.5, good=2.0, veryGood=2.5, exceptional=3.0]
+2026-03-11 10:25:01.095 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Объём корпоративных кредитов (трлн сум)' score result: score=0.92, level=превышает_ожидания
+2026-03-11 10:25:01.095 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля NPL в корпоративном портфеле (%)': actual=0.9, type=LOWER_BETTER, thresholds=[below=6.0, meets=4.0, good=2.5, veryGood=1.0, exceptional=0.5]
+2026-03-11 10:25:01.095 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля NPL в корпоративном портфеле (%)' score result: score=0.89, level=превышает_ожидания
+2026-03-11 10:25:01.095 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Количество новых корпоративных клиентов': actual=35.0, type=HIGHER_BETTER, thresholds=[below=10.0, meets=18.0, good=25.0, veryGood=32.0, exceptional=40.0]
+2026-03-11 10:25:01.095 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Количество новых корпоративных клиентов' score result: score=0.91, level=превышает_ожидания
+2026-03-11 10:25:01.095 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Объём корпоративных кредитов (трлн сум)': actual=2.7, type=HIGHER_BETTER, thresholds=[below=1.0, meets=1.5, good=2.0, veryGood=2.5, exceptional=3.0]
+2026-03-11 10:25:01.095 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Объём корпоративных кредитов (трлн сум)' score result: score=0.92, level=превышает_ожидания
+2026-03-11 10:25:01.095 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля NPL в корпоративном портфеле (%)': actual=0.9, type=LOWER_BETTER, thresholds=[below=6.0, meets=4.0, good=2.5, veryGood=1.0, exceptional=0.5]
+2026-03-11 10:25:01.095 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля NPL в корпоративном портфеле (%)' score result: score=0.89, level=превышает_ожидания
+2026-03-11 10:25:01.095 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Количество новых корпоративных клиентов': actual=35.0, type=HIGHER_BETTER, thresholds=[below=10.0, meets=18.0, good=25.0, veryGood=32.0, exceptional=40.0]
+2026-03-11 10:25:01.095 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Количество новых корпоративных клиентов' score result: score=0.91, level=превышает_ожидания
+2026-03-11 10:25:01.095 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Новые продукты выведены на рынок (шт)': actual=4.0, type=HIGHER_BETTER, thresholds=[below=1.0, meets=2.0, good=3.0, veryGood=4.0, exceptional=5.0]
+2026-03-11 10:25:01.095 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Новые продукты выведены на рынок (шт)' score result: score=0.86, level=превышает_ожидания
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Новые продукты выведены на рынок (шт)': actual=4.0, type=HIGHER_BETTER, thresholds=[below=1.0, meets=2.0, good=3.0, veryGood=4.0, exceptional=5.0]
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Новые продукты выведены на рынок (шт)' score result: score=0.86, level=превышает_ожидания
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Объём сделок с личными ключевыми клиентами (млрд)': actual=1.3, type=HIGHER_BETTER, thresholds=[below=0.2, meets=0.5, good=0.8, veryGood=1.2, exceptional=1.8]
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Объём сделок с личными ключевыми клиентами (млрд)' score result: score=0.88, level=превышает_ожидания
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'NPS ключевых клиентов под личным ведением': actual=68.0, type=HIGHER_BETTER, thresholds=[below=20.0, meets=35.0, good=50.0, veryGood=65.0, exceptional=80.0]
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'NPS ключевых клиентов под личным ведением' score result: score=0.89, level=превышает_ожидания
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Объём сделок с личными ключевыми клиентами (млрд)': actual=1.3, type=HIGHER_BETTER, thresholds=[below=0.2, meets=0.5, good=0.8, veryGood=1.2, exceptional=1.8]
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Объём сделок с личными ключевыми клиентами (млрд)' score result: score=0.88, level=превышает_ожидания
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'NPS ключевых клиентов под личным ведением': actual=68.0, type=HIGHER_BETTER, thresholds=[below=20.0, meets=35.0, good=50.0, veryGood=65.0, exceptional=80.0]
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'NPS ключевых клиентов под личным ведением' score result: score=0.89, level=превышает_ожидания
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доходы от РКО (млрд сум)': actual=28.0, type=HIGHER_BETTER, thresholds=[below=10.0, meets=15.0, good=20.0, veryGood=27.0, exceptional=35.0]
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доходы от РКО (млрд сум)' score result: score=0.88, level=превышает_ожидания
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Количество активных корпоративных счетов': actual=415.0, type=HIGHER_BETTER, thresholds=[below=200.0, meets=280.0, good=360.0, veryGood=440.0, exceptional=520.0]
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Количество активных корпоративных счетов' score result: score=0.75, level=на_уровне_ожиданий
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Объём корпоративных кредитов (трлн сум)': actual=2.7, type=HIGHER_BETTER, thresholds=[below=1.0, meets=1.5, good=2.0, veryGood=2.5, exceptional=3.0]
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Объём корпоративных кредитов (трлн сум)' score result: score=0.92, level=превышает_ожидания
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля NPL в корпоративном портфеле (%)': actual=0.9, type=LOWER_BETTER, thresholds=[below=6.0, meets=4.0, good=2.5, veryGood=1.0, exceptional=0.5]
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля NPL в корпоративном портфеле (%)' score result: score=0.89, level=превышает_ожидания
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Количество новых корпоративных клиентов': actual=35.0, type=HIGHER_BETTER, thresholds=[below=10.0, meets=18.0, good=25.0, veryGood=32.0, exceptional=40.0]
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Количество новых корпоративных клиентов' score result: score=0.91, level=превышает_ожидания
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Новые продукты выведены на рынок (шт)': actual=4.0, type=HIGHER_BETTER, thresholds=[below=1.0, meets=2.0, good=3.0, veryGood=4.0, exceptional=5.0]
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Новые продукты выведены на рынок (шт)' score result: score=0.86, level=превышает_ожидания
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Объём сделок с личными ключевыми клиентами (млрд)': actual=1.3, type=HIGHER_BETTER, thresholds=[below=0.2, meets=0.5, good=0.8, veryGood=1.2, exceptional=1.8]
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Объём сделок с личными ключевыми клиентами (млрд)' score result: score=0.88, level=превышает_ожидания
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'NPS ключевых клиентов под личным ведением': actual=68.0, type=HIGHER_BETTER, thresholds=[below=20.0, meets=35.0, good=50.0, veryGood=65.0, exceptional=80.0]
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'NPS ключевых клиентов под личным ведением' score result: score=0.89, level=превышает_ожидания
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доходы от РКО (млрд сум)': actual=28.0, type=HIGHER_BETTER, thresholds=[below=10.0, meets=15.0, good=20.0, veryGood=27.0, exceptional=35.0]
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доходы от РКО (млрд сум)' score result: score=0.88, level=превышает_ожидания
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Количество активных корпоративных счетов': actual=415.0, type=HIGHER_BETTER, thresholds=[below=200.0, meets=280.0, good=360.0, veryGood=440.0, exceptional=520.0]
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Количество активных корпоративных счетов' score result: score=0.75, level=на_уровне_ожиданий
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Объём корпоративных кредитов (трлн сум)': actual=2.7, type=HIGHER_BETTER, thresholds=[below=1.0, meets=1.5, good=2.0, veryGood=2.5, exceptional=3.0]
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Объём корпоративных кредитов (трлн сум)' score result: score=0.92, level=превышает_ожидания
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля NPL в корпоративном портфеле (%)': actual=0.9, type=LOWER_BETTER, thresholds=[below=6.0, meets=4.0, good=2.5, veryGood=1.0, exceptional=0.5]
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля NPL в корпоративном портфеле (%)' score result: score=0.89, level=превышает_ожидания
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Количество новых корпоративных клиентов': actual=35.0, type=HIGHER_BETTER, thresholds=[below=10.0, meets=18.0, good=25.0, veryGood=32.0, exceptional=40.0]
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Количество новых корпоративных клиентов' score result: score=0.91, level=превышает_ожидания
+2026-03-11 10:25:01.096 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Новые продукты выведены на рынок (шт)': actual=4.0, type=HIGHER_BETTER, thresholds=[below=1.0, meets=2.0, good=3.0, veryGood=4.0, exceptional=5.0]
+2026-03-11 10:25:01.097 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Новые продукты выведены на рынок (шт)' score result: score=0.86, level=превышает_ожидания
+2026-03-11 10:25:01.097 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Объём сделок с личными ключевыми клиентами (млрд)': actual=1.3, type=HIGHER_BETTER, thresholds=[below=0.2, meets=0.5, good=0.8, veryGood=1.2, exceptional=1.8]
+2026-03-11 10:25:01.097 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Объём сделок с личными ключевыми клиентами (млрд)' score result: score=0.88, level=превышает_ожидания
+2026-03-11 10:25:01.097 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'NPS ключевых клиентов под личным ведением': actual=68.0, type=HIGHER_BETTER, thresholds=[below=20.0, meets=35.0, good=50.0, veryGood=65.0, exceptional=80.0]
+2026-03-11 10:25:01.097 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'NPS ключевых клиентов под личным ведением' score result: score=0.89, level=превышает_ожидания
+2026-03-11 10:25:01.097 INFO  [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Fetching evaluations for targetType=DEPARTMENT, targetId=7222fd30-343b-4427-9f65-e091632e5276
+2026-03-11 10:25:01.097 DEBUG [http-nio-8080-exec-7] org.hibernate.SQL - 
+    select
+        e1_0.id,
+        e1_0.comment,
+        e1_0.created_at,
+        e1_0.evaluator_id,
+        e1_0.evaluator_type,
+        e1_0.letter_rating,
+        e1_0.numeric_rating,
+        e1_0.status,
+        e1_0.submitted_at,
+        e1_0.target_id,
+        e1_0.target_type,
+        e1_0.updated_at 
+    from
+        evaluations e1_0 
+    where
+        e1_0.target_type=? 
+        and e1_0.target_id=? 
+        and e1_0.status=?
+2026-03-11 10:25:01.097 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [DEPARTMENT]
+2026-03-11 10:25:01.097 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (2:UUID) <- [7222fd30-343b-4427-9f65-e091632e5276]
+2026-03-11 10:25:01.097 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (3:ENUM) <- [SUBMITTED]
+2026-03-11 10:25:01.097 INFO  [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Found 0 submitted evaluations for targetId=7222fd30-343b-4427-9f65-e091632e5276
+2026-03-11 10:25:01.097 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'kr1': actual=0.0, type=HIGHER_BETTER, thresholds=[below=0.0, meets=25.0, good=50.0, veryGood=75.0, exceptional=100.0]
+2026-03-11 10:25:01.097 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'kr1' score result: score=0.0, level=не_соответствует
+2026-03-11 10:25:01.097 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'kr1': actual=0.0, type=HIGHER_BETTER, thresholds=[below=0.0, meets=25.0, good=50.0, veryGood=75.0, exceptional=100.0]
+2026-03-11 10:25:01.097 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'kr1' score result: score=0.0, level=не_соответствует
+2026-03-11 10:25:01.097 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'kr1': actual=0.0, type=HIGHER_BETTER, thresholds=[below=0.0, meets=25.0, good=50.0, veryGood=75.0, exceptional=100.0]
+2026-03-11 10:25:01.097 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'kr1' score result: score=0.0, level=не_соответствует
+2026-03-11 10:25:01.097 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'kr1': actual=0.0, type=HIGHER_BETTER, thresholds=[below=0.0, meets=25.0, good=50.0, veryGood=75.0, exceptional=100.0]
+2026-03-11 10:25:01.097 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'kr1' score result: score=0.0, level=не_соответствует
+2026-03-11 10:25:01.097 INFO  [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Fetching evaluations for targetType=DEPARTMENT, targetId=723bde27-9e9c-488b-8e0f-bb9920e699d5
+2026-03-11 10:25:01.097 DEBUG [http-nio-8080-exec-7] org.hibernate.SQL - 
+    select
+        e1_0.id,
+        e1_0.comment,
+        e1_0.created_at,
+        e1_0.evaluator_id,
+        e1_0.evaluator_type,
+        e1_0.letter_rating,
+        e1_0.numeric_rating,
+        e1_0.status,
+        e1_0.submitted_at,
+        e1_0.target_id,
+        e1_0.target_type,
+        e1_0.updated_at 
+    from
+        evaluations e1_0 
+    where
+        e1_0.target_type=? 
+        and e1_0.target_id=? 
+        and e1_0.status=?
+2026-03-11 10:25:01.098 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [DEPARTMENT]
+2026-03-11 10:25:01.098 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (2:UUID) <- [723bde27-9e9c-488b-8e0f-bb9920e699d5]
+2026-03-11 10:25:01.098 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (3:ENUM) <- [SUBMITTED]
+2026-03-11 10:25:01.098 INFO  [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Found 0 submitted evaluations for targetId=723bde27-9e9c-488b-8e0f-bb9920e699d5
+2026-03-11 10:25:01.098 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Обучение сотрудников по AML/CFT (%)': actual=51.0, type=HIGHER_BETTER, thresholds=[below=40.0, meets=58.0, good=72.0, veryGood=86.0, exceptional=100.0]
+2026-03-11 10:25:01.098 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Обучение сотрудников по AML/CFT (%)' score result: score=0.19, level=не_соответствует
+2026-03-11 10:25:01.098 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Сдача регуляторных отчётов в срок (%)': actual=66.0, type=HIGHER_BETTER, thresholds=[below=60.0, meets=72.0, good=83.0, veryGood=93.0, exceptional=100.0]
+2026-03-11 10:25:01.098 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Сдача регуляторных отчётов в срок (%)' score result: score=0.16, level=не_соответствует
+2026-03-11 10:25:01.098 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Нарушения нормативных актов (кол-во)': actual=15.0, type=LOWER_BETTER, thresholds=[below=20.0, meets=12.0, good=6.0, veryGood=2.0, exceptional=0.0]
+2026-03-11 10:25:01.098 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Нарушения нормативных актов (кол-во)' score result: score=0.19, level=не_соответствует
+2026-03-11 10:25:01.098 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Обучение сотрудников по AML/CFT (%)': actual=51.0, type=HIGHER_BETTER, thresholds=[below=40.0, meets=58.0, good=72.0, veryGood=86.0, exceptional=100.0]
+2026-03-11 10:25:01.098 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Обучение сотрудников по AML/CFT (%)' score result: score=0.19, level=не_соответствует
+2026-03-11 10:25:01.098 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Сдача регуляторных отчётов в срок (%)': actual=66.0, type=HIGHER_BETTER, thresholds=[below=60.0, meets=72.0, good=83.0, veryGood=93.0, exceptional=100.0]
+2026-03-11 10:25:01.098 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Сдача регуляторных отчётов в срок (%)' score result: score=0.16, level=не_соответствует
+2026-03-11 10:25:01.098 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Нарушения нормативных актов (кол-во)': actual=15.0, type=LOWER_BETTER, thresholds=[below=20.0, meets=12.0, good=6.0, veryGood=2.0, exceptional=0.0]
+2026-03-11 10:25:01.098 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Нарушения нормативных актов (кол-во)' score result: score=0.19, level=не_соответствует
+2026-03-11 10:25:01.098 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Рекомендации аудита, выполненные в срок (%)': actual=58.0, type=HIGHER_BETTER, thresholds=[below=40.0, meets=55.0, good=70.0, veryGood=85.0, exceptional=100.0]
+2026-03-11 10:25:01.098 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Рекомендации аудита, выполненные в срок (%)' score result: score=0.35, level=ниже_ожиданий
+2026-03-11 10:25:01.098 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Рекомендации аудита, выполненные в срок (%)': actual=58.0, type=HIGHER_BETTER, thresholds=[below=40.0, meets=55.0, good=70.0, veryGood=85.0, exceptional=100.0]
+2026-03-11 10:25:01.098 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Рекомендации аудита, выполненные в срок (%)' score result: score=0.35, level=ниже_ожиданий
+2026-03-11 10:25:01.098 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Подозрительные транзакции, рассмотренные в срок (%)': actual=62.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=65.0, good=78.0, veryGood=90.0, exceptional=100.0]
+2026-03-11 10:25:01.098 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Подозрительные транзакции, рассмотренные в срок (%)' score result: score=0.25, level=не_соответствует
+2026-03-11 10:25:01.098 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Ложноположительные срабатывания AML-фильтров (%)': actual=24.0, type=LOWER_BETTER, thresholds=[below=30.0, meets=22.0, good=15.0, veryGood=8.0, exceptional=3.0]
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Ложноположительные срабатывания AML-фильтров (%)' score result: score=0.23, level=не_соответствует
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Подозрительные транзакции, рассмотренные в срок (%)': actual=62.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=65.0, good=78.0, veryGood=90.0, exceptional=100.0]
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Подозрительные транзакции, рассмотренные в срок (%)' score result: score=0.25, level=не_соответствует
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Ложноположительные срабатывания AML-фильтров (%)': actual=24.0, type=LOWER_BETTER, thresholds=[below=30.0, meets=22.0, good=15.0, veryGood=8.0, exceptional=3.0]
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Ложноположительные срабатывания AML-фильтров (%)' score result: score=0.23, level=не_соответствует
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Обучение сотрудников по AML/CFT (%)': actual=51.0, type=HIGHER_BETTER, thresholds=[below=40.0, meets=58.0, good=72.0, veryGood=86.0, exceptional=100.0]
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Обучение сотрудников по AML/CFT (%)' score result: score=0.19, level=не_соответствует
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Сдача регуляторных отчётов в срок (%)': actual=66.0, type=HIGHER_BETTER, thresholds=[below=60.0, meets=72.0, good=83.0, veryGood=93.0, exceptional=100.0]
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Сдача регуляторных отчётов в срок (%)' score result: score=0.16, level=не_соответствует
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Нарушения нормативных актов (кол-во)': actual=15.0, type=LOWER_BETTER, thresholds=[below=20.0, meets=12.0, good=6.0, veryGood=2.0, exceptional=0.0]
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Нарушения нормативных актов (кол-во)' score result: score=0.19, level=не_соответствует
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Рекомендации аудита, выполненные в срок (%)': actual=58.0, type=HIGHER_BETTER, thresholds=[below=40.0, meets=55.0, good=70.0, veryGood=85.0, exceptional=100.0]
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Рекомендации аудита, выполненные в срок (%)' score result: score=0.35, level=ниже_ожиданий
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Подозрительные транзакции, рассмотренные в срок (%)': actual=62.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=65.0, good=78.0, veryGood=90.0, exceptional=100.0]
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Подозрительные транзакции, рассмотренные в срок (%)' score result: score=0.25, level=не_соответствует
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Ложноположительные срабатывания AML-фильтров (%)': actual=24.0, type=LOWER_BETTER, thresholds=[below=30.0, meets=22.0, good=15.0, veryGood=8.0, exceptional=3.0]
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Ложноположительные срабатывания AML-фильтров (%)' score result: score=0.23, level=не_соответствует
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Обучение сотрудников по AML/CFT (%)': actual=51.0, type=HIGHER_BETTER, thresholds=[below=40.0, meets=58.0, good=72.0, veryGood=86.0, exceptional=100.0]
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Обучение сотрудников по AML/CFT (%)' score result: score=0.19, level=не_соответствует
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Сдача регуляторных отчётов в срок (%)': actual=66.0, type=HIGHER_BETTER, thresholds=[below=60.0, meets=72.0, good=83.0, veryGood=93.0, exceptional=100.0]
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Сдача регуляторных отчётов в срок (%)' score result: score=0.16, level=не_соответствует
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Нарушения нормативных актов (кол-во)': actual=15.0, type=LOWER_BETTER, thresholds=[below=20.0, meets=12.0, good=6.0, veryGood=2.0, exceptional=0.0]
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Нарушения нормативных актов (кол-во)' score result: score=0.19, level=не_соответствует
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Рекомендации аудита, выполненные в срок (%)': actual=58.0, type=HIGHER_BETTER, thresholds=[below=40.0, meets=55.0, good=70.0, veryGood=85.0, exceptional=100.0]
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Рекомендации аудита, выполненные в срок (%)' score result: score=0.35, level=ниже_ожиданий
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Подозрительные транзакции, рассмотренные в срок (%)': actual=62.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=65.0, good=78.0, veryGood=90.0, exceptional=100.0]
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Подозрительные транзакции, рассмотренные в срок (%)' score result: score=0.25, level=не_соответствует
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Ложноположительные срабатывания AML-фильтров (%)': actual=24.0, type=LOWER_BETTER, thresholds=[below=30.0, meets=22.0, good=15.0, veryGood=8.0, exceptional=3.0]
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Ложноположительные срабатывания AML-фильтров (%)' score result: score=0.23, level=не_соответствует
+2026-03-11 10:25:01.099 INFO  [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Fetching evaluations for targetType=DEPARTMENT, targetId=817abc8c-69ce-48d8-aa97-b7c8635a7640
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] org.hibernate.SQL - 
+    select
+        e1_0.id,
+        e1_0.comment,
+        e1_0.created_at,
+        e1_0.evaluator_id,
+        e1_0.evaluator_type,
+        e1_0.letter_rating,
+        e1_0.numeric_rating,
+        e1_0.status,
+        e1_0.submitted_at,
+        e1_0.target_id,
+        e1_0.target_type,
+        e1_0.updated_at 
+    from
+        evaluations e1_0 
+    where
+        e1_0.target_type=? 
+        and e1_0.target_id=? 
+        and e1_0.status=?
+2026-03-11 10:25:01.099 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [DEPARTMENT]
+2026-03-11 10:25:01.099 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (2:UUID) <- [817abc8c-69ce-48d8-aa97-b7c8635a7640]
+2026-03-11 10:25:01.099 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (3:ENUM) <- [SUBMITTED]
+2026-03-11 10:25:01.099 INFO  [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Found 0 submitted evaluations for targetId=817abc8c-69ce-48d8-aa97-b7c8635a7640
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Кредиты, выявленные на ранних стадиях дефолта (%)': actual=78.0, type=HIGHER_BETTER, thresholds=[below=40.0, meets=55.0, good=70.0, veryGood=85.0, exceptional=100.0]
+2026-03-11 10:25:01.099 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Кредиты, выявленные на ранних стадиях дефолта (%)' score result: score=0.7, level=на_уровне_ожиданий
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Время реагирования на тревожные сигналы (дни)': actual=3.0, type=LOWER_BETTER, thresholds=[below=10.0, meets=7.0, good=4.0, veryGood=2.0, exceptional=1.0]
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Время реагирования на тревожные сигналы (дни)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Кредиты, выявленные на ранних стадиях дефолта (%)': actual=78.0, type=HIGHER_BETTER, thresholds=[below=40.0, meets=55.0, good=70.0, veryGood=85.0, exceptional=100.0]
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Кредиты, выявленные на ранних стадиях дефолта (%)' score result: score=0.7, level=на_уровне_ожиданий
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Время реагирования на тревожные сигналы (дни)': actual=3.0, type=LOWER_BETTER, thresholds=[below=10.0, meets=7.0, good=4.0, veryGood=2.0, exceptional=1.0]
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Время реагирования на тревожные сигналы (дни)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Средний скоринговый балл новых заёмщиков': actual=705.0, type=HIGHER_BETTER, thresholds=[below=550.0, meets=620.0, good=680.0, veryGood=730.0, exceptional=780.0]
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Средний скоринговый балл новых заёмщиков' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля NPL в совокупном портфеле (%)': actual=2.1, type=LOWER_BETTER, thresholds=[below=8.0, meets=5.0, good=3.0, veryGood=1.5, exceptional=0.5]
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля NPL в совокупном портфеле (%)' score result: score=0.72, level=на_уровне_ожиданий
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Коэффициент покрытия резервами (%)': actual=108.0, type=HIGHER_BETTER, thresholds=[below=80.0, meets=90.0, good=100.0, veryGood=110.0, exceptional=120.0]
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Коэффициент покрытия резервами (%)' score result: score=0.79, level=на_уровне_ожиданий
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Средний скоринговый балл новых заёмщиков': actual=705.0, type=HIGHER_BETTER, thresholds=[below=550.0, meets=620.0, good=680.0, veryGood=730.0, exceptional=780.0]
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Средний скоринговый балл новых заёмщиков' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля NPL в совокупном портфеле (%)': actual=2.1, type=LOWER_BETTER, thresholds=[below=8.0, meets=5.0, good=3.0, veryGood=1.5, exceptional=0.5]
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля NPL в совокупном портфеле (%)' score result: score=0.72, level=на_уровне_ожиданий
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Коэффициент покрытия резервами (%)': actual=108.0, type=HIGHER_BETTER, thresholds=[below=80.0, meets=90.0, good=100.0, veryGood=110.0, exceptional=120.0]
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Коэффициент покрытия резервами (%)' score result: score=0.79, level=на_уровне_ожиданий
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Стресс-тесты проведены по плану (%)': actual=90.0, type=HIGHER_BETTER, thresholds=[below=60.0, meets=75.0, good=88.0, veryGood=95.0, exceptional=100.0]
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Стресс-тесты проведены по плану (%)' score result: score=0.61, level=на_уровне_ожиданий
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Точность предсказательных моделей (%)': actual=87.0, type=HIGHER_BETTER, thresholds=[below=65.0, meets=75.0, good=83.0, veryGood=90.0, exceptional=95.0]
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Точность предсказательных моделей (%)' score result: score=0.71, level=на_уровне_ожиданий
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Стресс-тесты проведены по плану (%)': actual=90.0, type=HIGHER_BETTER, thresholds=[below=60.0, meets=75.0, good=88.0, veryGood=95.0, exceptional=100.0]
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Стресс-тесты проведены по плану (%)' score result: score=0.61, level=на_уровне_ожиданий
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Точность предсказательных моделей (%)': actual=87.0, type=HIGHER_BETTER, thresholds=[below=65.0, meets=75.0, good=83.0, veryGood=90.0, exceptional=95.0]
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Точность предсказательных моделей (%)' score result: score=0.71, level=на_уровне_ожиданий
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Кредиты, выявленные на ранних стадиях дефолта (%)': actual=78.0, type=HIGHER_BETTER, thresholds=[below=40.0, meets=55.0, good=70.0, veryGood=85.0, exceptional=100.0]
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Кредиты, выявленные на ранних стадиях дефолта (%)' score result: score=0.7, level=на_уровне_ожиданий
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Время реагирования на тревожные сигналы (дни)': actual=3.0, type=LOWER_BETTER, thresholds=[below=10.0, meets=7.0, good=4.0, veryGood=2.0, exceptional=1.0]
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Время реагирования на тревожные сигналы (дни)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Средний скоринговый балл новых заёмщиков': actual=705.0, type=HIGHER_BETTER, thresholds=[below=550.0, meets=620.0, good=680.0, veryGood=730.0, exceptional=780.0]
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Средний скоринговый балл новых заёмщиков' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля NPL в совокупном портфеле (%)': actual=2.1, type=LOWER_BETTER, thresholds=[below=8.0, meets=5.0, good=3.0, veryGood=1.5, exceptional=0.5]
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля NPL в совокупном портфеле (%)' score result: score=0.72, level=на_уровне_ожиданий
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Коэффициент покрытия резервами (%)': actual=108.0, type=HIGHER_BETTER, thresholds=[below=80.0, meets=90.0, good=100.0, veryGood=110.0, exceptional=120.0]
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Коэффициент покрытия резервами (%)' score result: score=0.79, level=на_уровне_ожиданий
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Стресс-тесты проведены по плану (%)': actual=90.0, type=HIGHER_BETTER, thresholds=[below=60.0, meets=75.0, good=88.0, veryGood=95.0, exceptional=100.0]
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Стресс-тесты проведены по плану (%)' score result: score=0.61, level=на_уровне_ожиданий
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Точность предсказательных моделей (%)': actual=87.0, type=HIGHER_BETTER, thresholds=[below=65.0, meets=75.0, good=83.0, veryGood=90.0, exceptional=95.0]
+2026-03-11 10:25:01.100 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Точность предсказательных моделей (%)' score result: score=0.71, level=на_уровне_ожиданий
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Кредиты, выявленные на ранних стадиях дефолта (%)': actual=78.0, type=HIGHER_BETTER, thresholds=[below=40.0, meets=55.0, good=70.0, veryGood=85.0, exceptional=100.0]
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Кредиты, выявленные на ранних стадиях дефолта (%)' score result: score=0.7, level=на_уровне_ожиданий
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Время реагирования на тревожные сигналы (дни)': actual=3.0, type=LOWER_BETTER, thresholds=[below=10.0, meets=7.0, good=4.0, veryGood=2.0, exceptional=1.0]
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Время реагирования на тревожные сигналы (дни)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Средний скоринговый балл новых заёмщиков': actual=705.0, type=HIGHER_BETTER, thresholds=[below=550.0, meets=620.0, good=680.0, veryGood=730.0, exceptional=780.0]
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Средний скоринговый балл новых заёмщиков' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля NPL в совокупном портфеле (%)': actual=2.1, type=LOWER_BETTER, thresholds=[below=8.0, meets=5.0, good=3.0, veryGood=1.5, exceptional=0.5]
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля NPL в совокупном портфеле (%)' score result: score=0.72, level=на_уровне_ожиданий
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Коэффициент покрытия резервами (%)': actual=108.0, type=HIGHER_BETTER, thresholds=[below=80.0, meets=90.0, good=100.0, veryGood=110.0, exceptional=120.0]
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Коэффициент покрытия резервами (%)' score result: score=0.79, level=на_уровне_ожиданий
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Стресс-тесты проведены по плану (%)': actual=90.0, type=HIGHER_BETTER, thresholds=[below=60.0, meets=75.0, good=88.0, veryGood=95.0, exceptional=100.0]
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Стресс-тесты проведены по плану (%)' score result: score=0.61, level=на_уровне_ожиданий
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Точность предсказательных моделей (%)': actual=87.0, type=HIGHER_BETTER, thresholds=[below=65.0, meets=75.0, good=83.0, veryGood=90.0, exceptional=95.0]
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Точность предсказательных моделей (%)' score result: score=0.71, level=на_уровне_ожиданий
+2026-03-11 10:25:01.101 INFO  [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Fetching evaluations for targetType=DEPARTMENT, targetId=964a50f0-4abd-4995-8aff-3bb7b0869ce8
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] org.hibernate.SQL - 
+    select
+        e1_0.id,
+        e1_0.comment,
+        e1_0.created_at,
+        e1_0.evaluator_id,
+        e1_0.evaluator_type,
+        e1_0.letter_rating,
+        e1_0.numeric_rating,
+        e1_0.status,
+        e1_0.submitted_at,
+        e1_0.target_id,
+        e1_0.target_type,
+        e1_0.updated_at 
+    from
+        evaluations e1_0 
+    where
+        e1_0.target_type=? 
+        and e1_0.target_id=? 
+        and e1_0.status=?
+2026-03-11 10:25:01.101 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [DEPARTMENT]
+2026-03-11 10:25:01.101 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (2:UUID) <- [964a50f0-4abd-4995-8aff-3bb7b0869ce8]
+2026-03-11 10:25:01.101 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (3:ENUM) <- [SUBMITTED]
+2026-03-11 10:25:01.101 INFO  [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Found 0 submitted evaluations for targetId=964a50f0-4abd-4995-8aff-3bb7b0869ce8
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Проведение архитектурных ревью (кол-во)': actual=7.0, type=HIGHER_BETTER, thresholds=[below=1.0, meets=2.0, good=4.0, veryGood=6.0, exceptional=8.0]
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Проведение архитектурных ревью (кол-во)' score result: score=0.93, level=превышает_ожидания
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Среднее время ревью pull-request (ч)': actual=2.5, type=LOWER_BETTER, thresholds=[below=24.0, meets=12.0, good=6.0, veryGood=3.0, exceptional=1.0]
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Среднее время ревью pull-request (ч)' score result: score=0.9, level=превышает_ожидания
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Документирование ключевых технических решений (%)': actual=88.0, type=HIGHER_BETTER, thresholds=[below=40.0, meets=55.0, good=70.0, veryGood=85.0, exceptional=100.0]
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Документирование ключевых технических решений (%)' score result: score=0.89, level=превышает_ожидания
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Проведение архитектурных ревью (кол-во)': actual=7.0, type=HIGHER_BETTER, thresholds=[below=1.0, meets=2.0, good=4.0, veryGood=6.0, exceptional=8.0]
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Проведение архитектурных ревью (кол-во)' score result: score=0.93, level=превышает_ожидания
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Среднее время ревью pull-request (ч)': actual=2.5, type=LOWER_BETTER, thresholds=[below=24.0, meets=12.0, good=6.0, veryGood=3.0, exceptional=1.0]
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Среднее время ревью pull-request (ч)' score result: score=0.9, level=превышает_ожидания
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Документирование ключевых технических решений (%)': actual=88.0, type=HIGHER_BETTER, thresholds=[below=40.0, meets=55.0, good=70.0, veryGood=85.0, exceptional=100.0]
+2026-03-11 10:25:01.101 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Документирование ключевых технических решений (%)' score result: score=0.89, level=превышает_ожидания
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Критические уязвимости, устранённые в срок (%)': actual=97.0, type=HIGHER_BETTER, thresholds=[below=60.0, meets=75.0, good=88.0, veryGood=95.0, exceptional=100.0]
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Критические уязвимости, устранённые в срок (%)' score result: score=0.92, level=превышает_ожидания
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Покрытие кода автотестами (%)': actual=82.0, type=HIGHER_BETTER, thresholds=[below=40.0, meets=55.0, good=68.0, veryGood=80.0, exceptional=90.0]
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Покрытие кода автотестами (%)' score result: score=0.89, level=превышает_ожидания
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Критические уязвимости, устранённые в срок (%)': actual=97.0, type=HIGHER_BETTER, thresholds=[below=60.0, meets=75.0, good=88.0, veryGood=95.0, exceptional=100.0]
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Критические уязвимости, устранённые в срок (%)' score result: score=0.92, level=превышает_ожидания
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Покрытие кода автотестами (%)': actual=82.0, type=HIGHER_BETTER, thresholds=[below=40.0, meets=55.0, good=68.0, veryGood=80.0, exceptional=90.0]
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Покрытие кода автотестами (%)' score result: score=0.89, level=превышает_ожидания
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Аптайм систем (%)': actual=99.7, type=HIGHER_BETTER, thresholds=[below=95.0, meets=97.0, good=99.0, veryGood=99.5, exceptional=99.9]
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Аптайм систем (%)' score result: score=0.93, level=превышает_ожидания
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Время деплоя новой версии (ч)': actual=1.2, type=LOWER_BETTER, thresholds=[below=8.0, meets=4.0, good=2.0, veryGood=1.0, exceptional=0.5]
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Время деплоя новой версии (ч)' score result: score=0.79, level=на_уровне_ожиданий
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Новые цифровые фичи выпущены в продакшн (шт)': actual=22.0, type=HIGHER_BETTER, thresholds=[below=5.0, meets=10.0, good=15.0, veryGood=20.0, exceptional=25.0]
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Новые цифровые фичи выпущены в продакшн (шт)' score result: score=0.92, level=превышает_ожидания
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Аптайм систем (%)': actual=99.7, type=HIGHER_BETTER, thresholds=[below=95.0, meets=97.0, good=99.0, veryGood=99.5, exceptional=99.9]
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Аптайм систем (%)' score result: score=0.93, level=превышает_ожидания
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Время деплоя новой версии (ч)': actual=1.2, type=LOWER_BETTER, thresholds=[below=8.0, meets=4.0, good=2.0, veryGood=1.0, exceptional=0.5]
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Время деплоя новой версии (ч)' score result: score=0.79, level=на_уровне_ожиданий
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Новые цифровые фичи выпущены в продакшн (шт)': actual=22.0, type=HIGHER_BETTER, thresholds=[below=5.0, meets=10.0, good=15.0, veryGood=20.0, exceptional=25.0]
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Новые цифровые фичи выпущены в продакшн (шт)' score result: score=0.92, level=превышает_ожидания
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Ежемесячные активные пользователи (тыс.)': actual=195.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=80.0, good=120.0, veryGood=170.0, exceptional=220.0]
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Ежемесячные активные пользователи (тыс.)' score result: score=0.93, level=превышает_ожидания
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Среднее время загрузки страницы (сек)': actual=0.8, type=LOWER_BETTER, thresholds=[below=5.0, meets=3.0, good=2.0, veryGood=1.0, exceptional=0.5]
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Среднее время загрузки страницы (сек)' score result: score=0.92, level=превышает_ожидания
+2026-03-11 10:25:01.102 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Рейтинг мобильного приложения (App Store / GP)': actual=4.6, type=HIGHER_BETTER, thresholds=[below=3.5, meets=3.8, good=4.2, veryGood=4.5, exceptional=4.8]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Рейтинг мобильного приложения (App Store / GP)' score result: score=0.91, level=превышает_ожидания
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Ежемесячные активные пользователи (тыс.)': actual=195.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=80.0, good=120.0, veryGood=170.0, exceptional=220.0]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Ежемесячные активные пользователи (тыс.)' score result: score=0.93, level=превышает_ожидания
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Среднее время загрузки страницы (сек)': actual=0.8, type=LOWER_BETTER, thresholds=[below=5.0, meets=3.0, good=2.0, veryGood=1.0, exceptional=0.5]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Среднее время загрузки страницы (сек)' score result: score=0.92, level=превышает_ожидания
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Рейтинг мобильного приложения (App Store / GP)': actual=4.6, type=HIGHER_BETTER, thresholds=[below=3.5, meets=3.8, good=4.2, veryGood=4.5, exceptional=4.8]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Рейтинг мобильного приложения (App Store / GP)' score result: score=0.91, level=превышает_ожидания
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Проведение tech-talk сессий (кол-во)': actual=5.0, type=HIGHER_BETTER, thresholds=[below=1.0, meets=2.0, good=4.0, veryGood=6.0, exceptional=8.0]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Проведение tech-talk сессий (кол-во)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Проведение tech-talk сессий (кол-во)': actual=5.0, type=HIGHER_BETTER, thresholds=[below=1.0, meets=2.0, good=4.0, veryGood=6.0, exceptional=8.0]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Проведение tech-talk сессий (кол-во)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Проведение архитектурных ревью (кол-во)': actual=7.0, type=HIGHER_BETTER, thresholds=[below=1.0, meets=2.0, good=4.0, veryGood=6.0, exceptional=8.0]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Проведение архитектурных ревью (кол-во)' score result: score=0.93, level=превышает_ожидания
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Среднее время ревью pull-request (ч)': actual=2.5, type=LOWER_BETTER, thresholds=[below=24.0, meets=12.0, good=6.0, veryGood=3.0, exceptional=1.0]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Среднее время ревью pull-request (ч)' score result: score=0.9, level=превышает_ожидания
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Документирование ключевых технических решений (%)': actual=88.0, type=HIGHER_BETTER, thresholds=[below=40.0, meets=55.0, good=70.0, veryGood=85.0, exceptional=100.0]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Документирование ключевых технических решений (%)' score result: score=0.89, level=превышает_ожидания
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Критические уязвимости, устранённые в срок (%)': actual=97.0, type=HIGHER_BETTER, thresholds=[below=60.0, meets=75.0, good=88.0, veryGood=95.0, exceptional=100.0]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Критические уязвимости, устранённые в срок (%)' score result: score=0.92, level=превышает_ожидания
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Покрытие кода автотестами (%)': actual=82.0, type=HIGHER_BETTER, thresholds=[below=40.0, meets=55.0, good=68.0, veryGood=80.0, exceptional=90.0]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Покрытие кода автотестами (%)' score result: score=0.89, level=превышает_ожидания
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Аптайм систем (%)': actual=99.7, type=HIGHER_BETTER, thresholds=[below=95.0, meets=97.0, good=99.0, veryGood=99.5, exceptional=99.9]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Аптайм систем (%)' score result: score=0.93, level=превышает_ожидания
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Время деплоя новой версии (ч)': actual=1.2, type=LOWER_BETTER, thresholds=[below=8.0, meets=4.0, good=2.0, veryGood=1.0, exceptional=0.5]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Время деплоя новой версии (ч)' score result: score=0.79, level=на_уровне_ожиданий
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Новые цифровые фичи выпущены в продакшн (шт)': actual=22.0, type=HIGHER_BETTER, thresholds=[below=5.0, meets=10.0, good=15.0, veryGood=20.0, exceptional=25.0]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Новые цифровые фичи выпущены в продакшн (шт)' score result: score=0.92, level=превышает_ожидания
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Ежемесячные активные пользователи (тыс.)': actual=195.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=80.0, good=120.0, veryGood=170.0, exceptional=220.0]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Ежемесячные активные пользователи (тыс.)' score result: score=0.93, level=превышает_ожидания
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Среднее время загрузки страницы (сек)': actual=0.8, type=LOWER_BETTER, thresholds=[below=5.0, meets=3.0, good=2.0, veryGood=1.0, exceptional=0.5]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Среднее время загрузки страницы (сек)' score result: score=0.92, level=превышает_ожидания
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Рейтинг мобильного приложения (App Store / GP)': actual=4.6, type=HIGHER_BETTER, thresholds=[below=3.5, meets=3.8, good=4.2, veryGood=4.5, exceptional=4.8]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Рейтинг мобильного приложения (App Store / GP)' score result: score=0.91, level=превышает_ожидания
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Проведение tech-talk сессий (кол-во)': actual=5.0, type=HIGHER_BETTER, thresholds=[below=1.0, meets=2.0, good=4.0, veryGood=6.0, exceptional=8.0]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Проведение tech-talk сессий (кол-во)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Проведение архитектурных ревью (кол-во)': actual=7.0, type=HIGHER_BETTER, thresholds=[below=1.0, meets=2.0, good=4.0, veryGood=6.0, exceptional=8.0]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Проведение архитектурных ревью (кол-во)' score result: score=0.93, level=превышает_ожидания
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Среднее время ревью pull-request (ч)': actual=2.5, type=LOWER_BETTER, thresholds=[below=24.0, meets=12.0, good=6.0, veryGood=3.0, exceptional=1.0]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Среднее время ревью pull-request (ч)' score result: score=0.9, level=превышает_ожидания
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Документирование ключевых технических решений (%)': actual=88.0, type=HIGHER_BETTER, thresholds=[below=40.0, meets=55.0, good=70.0, veryGood=85.0, exceptional=100.0]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Документирование ключевых технических решений (%)' score result: score=0.89, level=превышает_ожидания
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Критические уязвимости, устранённые в срок (%)': actual=97.0, type=HIGHER_BETTER, thresholds=[below=60.0, meets=75.0, good=88.0, veryGood=95.0, exceptional=100.0]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Критические уязвимости, устранённые в срок (%)' score result: score=0.92, level=превышает_ожидания
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Покрытие кода автотестами (%)': actual=82.0, type=HIGHER_BETTER, thresholds=[below=40.0, meets=55.0, good=68.0, veryGood=80.0, exceptional=90.0]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Покрытие кода автотестами (%)' score result: score=0.89, level=превышает_ожидания
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Аптайм систем (%)': actual=99.7, type=HIGHER_BETTER, thresholds=[below=95.0, meets=97.0, good=99.0, veryGood=99.5, exceptional=99.9]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Аптайм систем (%)' score result: score=0.93, level=превышает_ожидания
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Время деплоя новой версии (ч)': actual=1.2, type=LOWER_BETTER, thresholds=[below=8.0, meets=4.0, good=2.0, veryGood=1.0, exceptional=0.5]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Время деплоя новой версии (ч)' score result: score=0.79, level=на_уровне_ожиданий
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Новые цифровые фичи выпущены в продакшн (шт)': actual=22.0, type=HIGHER_BETTER, thresholds=[below=5.0, meets=10.0, good=15.0, veryGood=20.0, exceptional=25.0]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Новые цифровые фичи выпущены в продакшн (шт)' score result: score=0.92, level=превышает_ожидания
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Ежемесячные активные пользователи (тыс.)': actual=195.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=80.0, good=120.0, veryGood=170.0, exceptional=220.0]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Ежемесячные активные пользователи (тыс.)' score result: score=0.93, level=превышает_ожидания
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Среднее время загрузки страницы (сек)': actual=0.8, type=LOWER_BETTER, thresholds=[below=5.0, meets=3.0, good=2.0, veryGood=1.0, exceptional=0.5]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Среднее время загрузки страницы (сек)' score result: score=0.92, level=превышает_ожидания
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Рейтинг мобильного приложения (App Store / GP)': actual=4.6, type=HIGHER_BETTER, thresholds=[below=3.5, meets=3.8, good=4.2, veryGood=4.5, exceptional=4.8]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Рейтинг мобильного приложения (App Store / GP)' score result: score=0.91, level=превышает_ожидания
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Проведение tech-talk сессий (кол-во)': actual=5.0, type=HIGHER_BETTER, thresholds=[below=1.0, meets=2.0, good=4.0, veryGood=6.0, exceptional=8.0]
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Проведение tech-talk сессий (кол-во)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.103 INFO  [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Fetching evaluations for targetType=DEPARTMENT, targetId=d24084ee-4af0-4131-bf32-33626547641c
+2026-03-11 10:25:01.103 DEBUG [http-nio-8080-exec-7] org.hibernate.SQL - 
+    select
+        e1_0.id,
+        e1_0.comment,
+        e1_0.created_at,
+        e1_0.evaluator_id,
+        e1_0.evaluator_type,
+        e1_0.letter_rating,
+        e1_0.numeric_rating,
+        e1_0.status,
+        e1_0.submitted_at,
+        e1_0.target_id,
+        e1_0.target_type,
+        e1_0.updated_at 
+    from
+        evaluations e1_0 
+    where
+        e1_0.target_type=? 
+        and e1_0.target_id=? 
+        and e1_0.status=?
+2026-03-11 10:25:01.103 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [DEPARTMENT]
+2026-03-11 10:25:01.103 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (2:UUID) <- [d24084ee-4af0-4131-bf32-33626547641c]
+2026-03-11 10:25:01.103 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (3:ENUM) <- [SUBMITTED]
+2026-03-11 10:25:01.103 INFO  [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Found 0 submitted evaluations for targetId=d24084ee-4af0-4131-bf32-33626547641c
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля продаж через мобильное приложение (%)': actual=58.0, type=HIGHER_BETTER, thresholds=[below=20.0, meets=35.0, good=50.0, veryGood=65.0, exceptional=80.0]
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля продаж через мобильное приложение (%)' score result: score=0.7, level=на_уровне_ожиданий
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Конверсия заявок на кредит онлайн (%)': actual=33.0, type=HIGHER_BETTER, thresholds=[below=15.0, meets=22.0, good=30.0, veryGood=38.0, exceptional=45.0]
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Конверсия заявок на кредит онлайн (%)' score result: score=0.64, level=на_уровне_ожиданий
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Время обработки заявки на кредит (часы)': actual=4.0, type=LOWER_BETTER, thresholds=[below=24.0, meets=12.0, good=6.0, veryGood=3.0, exceptional=1.0]
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Время обработки заявки на кредит (часы)' score result: score=0.74, level=на_уровне_ожиданий
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля продаж через мобильное приложение (%)': actual=58.0, type=HIGHER_BETTER, thresholds=[below=20.0, meets=35.0, good=50.0, veryGood=65.0, exceptional=80.0]
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля продаж через мобильное приложение (%)' score result: score=0.7, level=на_уровне_ожиданий
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Конверсия заявок на кредит онлайн (%)': actual=33.0, type=HIGHER_BETTER, thresholds=[below=15.0, meets=22.0, good=30.0, veryGood=38.0, exceptional=45.0]
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Конверсия заявок на кредит онлайн (%)' score result: score=0.64, level=на_уровне_ожиданий
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Время обработки заявки на кредит (часы)': actual=4.0, type=LOWER_BETTER, thresholds=[below=24.0, meets=12.0, good=6.0, veryGood=3.0, exceptional=1.0]
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Время обработки заявки на кредит (часы)' score result: score=0.74, level=на_уровне_ожиданий
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Конверсия личных переговоров в сделки (%)': actual=45.0, type=HIGHER_BETTER, thresholds=[below=20.0, meets=30.0, good=40.0, veryGood=50.0, exceptional=65.0]
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Конверсия личных переговоров в сделки (%)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Личный объём проведённых переговоров с клиентами': actual=22.0, type=HIGHER_BETTER, thresholds=[below=5.0, meets=10.0, good=18.0, veryGood=25.0, exceptional=35.0]
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Личный объём проведённых переговоров с клиентами' score result: score=0.71, level=на_уровне_ожиданий
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Конверсия личных переговоров в сделки (%)': actual=45.0, type=HIGHER_BETTER, thresholds=[below=20.0, meets=30.0, good=40.0, veryGood=50.0, exceptional=65.0]
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Конверсия личных переговоров в сделки (%)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Личный объём проведённых переговоров с клиентами': actual=22.0, type=HIGHER_BETTER, thresholds=[below=5.0, meets=10.0, good=18.0, veryGood=25.0, exceptional=35.0]
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Личный объём проведённых переговоров с клиентами' score result: score=0.71, level=на_уровне_ожиданий
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Индекс вовлечённости сотрудников (опрос, %)': actual=78.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=62.0, good=72.0, veryGood=82.0, exceptional=92.0]
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Индекс вовлечённости сотрудников (опрос, %)' score result: score=0.72, level=на_уровне_ожиданий
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Текучесть кадров в отделе (%)': actual=7.0, type=LOWER_BETTER, thresholds=[below=20.0, meets=15.0, good=10.0, veryGood=5.0, exceptional=2.0]
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Текучесть кадров в отделе (%)' score result: score=0.72, level=на_уровне_ожиданий
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Индекс вовлечённости сотрудников (опрос, %)': actual=78.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=62.0, good=72.0, veryGood=82.0, exceptional=92.0]
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Индекс вовлечённости сотрудников (опрос, %)' score result: score=0.72, level=на_уровне_ожиданий
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Текучесть кадров в отделе (%)': actual=7.0, type=LOWER_BETTER, thresholds=[below=20.0, meets=15.0, good=10.0, veryGood=5.0, exceptional=2.0]
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Текучесть кадров в отделе (%)' score result: score=0.72, level=на_уровне_ожиданий
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Уровень удержания клиентов (%)': actual=91.0, type=HIGHER_BETTER, thresholds=[below=70.0, meets=80.0, good=88.0, veryGood=94.0, exceptional=100.0]
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Уровень удержания клиентов (%)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Новые активные клиенты (тыс. чел)': actual=7.2, type=HIGHER_BETTER, thresholds=[below=2.0, meets=3.5, good=5.0, veryGood=7.0, exceptional=10.0]
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Новые активные клиенты (тыс. чел)' score result: score=0.87, level=превышает_ожидания
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Уровень удержания клиентов (%)': actual=91.0, type=HIGHER_BETTER, thresholds=[below=70.0, meets=80.0, good=88.0, veryGood=94.0, exceptional=100.0]
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Уровень удержания клиентов (%)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Новые активные клиенты (тыс. чел)': actual=7.2, type=HIGHER_BETTER, thresholds=[below=2.0, meets=3.5, good=5.0, veryGood=7.0, exceptional=10.0]
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Новые активные клиенты (тыс. чел)' score result: score=0.87, level=превышает_ожидания
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Объём выданных потребительских кредитов (млрд сум)': actual=118.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=70.0, good=90.0, veryGood=110.0, exceptional=130.0]
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Объём выданных потребительских кредитов (млрд сум)' score result: score=0.92, level=превышает_ожидания
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Количество новых заёмщиков за квартал': actual=1350.0, type=HIGHER_BETTER, thresholds=[below=500.0, meets=800.0, good=1100.0, veryGood=1400.0, exceptional=1700.0]
+2026-03-11 10:25:01.104 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Количество новых заёмщиков за квартал' score result: score=0.8, level=на_уровне_ожиданий
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля просроченной задолженности (%)': actual=1.8, type=LOWER_BETTER, thresholds=[below=8.0, meets=5.0, good=3.0, veryGood=1.5, exceptional=0.5]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля просроченной задолженности (%)' score result: score=0.79, level=на_уровне_ожиданий
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Объём выданных потребительских кредитов (млрд сум)': actual=118.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=70.0, good=90.0, veryGood=110.0, exceptional=130.0]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Объём выданных потребительских кредитов (млрд сум)' score result: score=0.92, level=превышает_ожидания
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Количество новых заёмщиков за квартал': actual=1350.0, type=HIGHER_BETTER, thresholds=[below=500.0, meets=800.0, good=1100.0, veryGood=1400.0, exceptional=1700.0]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Количество новых заёмщиков за квартал' score result: score=0.8, level=на_уровне_ожиданий
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля просроченной задолженности (%)': actual=1.8, type=LOWER_BETTER, thresholds=[below=8.0, meets=5.0, good=3.0, veryGood=1.5, exceptional=0.5]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля просроченной задолженности (%)' score result: score=0.79, level=на_уровне_ожиданий
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля продаж через мобильное приложение (%)': actual=58.0, type=HIGHER_BETTER, thresholds=[below=20.0, meets=35.0, good=50.0, veryGood=65.0, exceptional=80.0]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля продаж через мобильное приложение (%)' score result: score=0.7, level=на_уровне_ожиданий
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Конверсия заявок на кредит онлайн (%)': actual=33.0, type=HIGHER_BETTER, thresholds=[below=15.0, meets=22.0, good=30.0, veryGood=38.0, exceptional=45.0]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Конверсия заявок на кредит онлайн (%)' score result: score=0.64, level=на_уровне_ожиданий
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Время обработки заявки на кредит (часы)': actual=4.0, type=LOWER_BETTER, thresholds=[below=24.0, meets=12.0, good=6.0, veryGood=3.0, exceptional=1.0]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Время обработки заявки на кредит (часы)' score result: score=0.74, level=на_уровне_ожиданий
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Конверсия личных переговоров в сделки (%)': actual=45.0, type=HIGHER_BETTER, thresholds=[below=20.0, meets=30.0, good=40.0, veryGood=50.0, exceptional=65.0]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Конверсия личных переговоров в сделки (%)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Личный объём проведённых переговоров с клиентами': actual=22.0, type=HIGHER_BETTER, thresholds=[below=5.0, meets=10.0, good=18.0, veryGood=25.0, exceptional=35.0]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Личный объём проведённых переговоров с клиентами' score result: score=0.71, level=на_уровне_ожиданий
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Индекс вовлечённости сотрудников (опрос, %)': actual=78.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=62.0, good=72.0, veryGood=82.0, exceptional=92.0]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Индекс вовлечённости сотрудников (опрос, %)' score result: score=0.72, level=на_уровне_ожиданий
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Текучесть кадров в отделе (%)': actual=7.0, type=LOWER_BETTER, thresholds=[below=20.0, meets=15.0, good=10.0, veryGood=5.0, exceptional=2.0]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Текучесть кадров в отделе (%)' score result: score=0.72, level=на_уровне_ожиданий
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Уровень удержания клиентов (%)': actual=91.0, type=HIGHER_BETTER, thresholds=[below=70.0, meets=80.0, good=88.0, veryGood=94.0, exceptional=100.0]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Уровень удержания клиентов (%)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Новые активные клиенты (тыс. чел)': actual=7.2, type=HIGHER_BETTER, thresholds=[below=2.0, meets=3.5, good=5.0, veryGood=7.0, exceptional=10.0]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Новые активные клиенты (тыс. чел)' score result: score=0.87, level=превышает_ожидания
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Объём выданных потребительских кредитов (млрд сум)': actual=118.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=70.0, good=90.0, veryGood=110.0, exceptional=130.0]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Объём выданных потребительских кредитов (млрд сум)' score result: score=0.92, level=превышает_ожидания
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Количество новых заёмщиков за квартал': actual=1350.0, type=HIGHER_BETTER, thresholds=[below=500.0, meets=800.0, good=1100.0, veryGood=1400.0, exceptional=1700.0]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Количество новых заёмщиков за квартал' score result: score=0.8, level=на_уровне_ожиданий
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля просроченной задолженности (%)': actual=1.8, type=LOWER_BETTER, thresholds=[below=8.0, meets=5.0, good=3.0, veryGood=1.5, exceptional=0.5]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля просроченной задолженности (%)' score result: score=0.79, level=на_уровне_ожиданий
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля продаж через мобильное приложение (%)': actual=58.0, type=HIGHER_BETTER, thresholds=[below=20.0, meets=35.0, good=50.0, veryGood=65.0, exceptional=80.0]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля продаж через мобильное приложение (%)' score result: score=0.7, level=на_уровне_ожиданий
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Конверсия заявок на кредит онлайн (%)': actual=33.0, type=HIGHER_BETTER, thresholds=[below=15.0, meets=22.0, good=30.0, veryGood=38.0, exceptional=45.0]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Конверсия заявок на кредит онлайн (%)' score result: score=0.64, level=на_уровне_ожиданий
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Время обработки заявки на кредит (часы)': actual=4.0, type=LOWER_BETTER, thresholds=[below=24.0, meets=12.0, good=6.0, veryGood=3.0, exceptional=1.0]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Время обработки заявки на кредит (часы)' score result: score=0.74, level=на_уровне_ожиданий
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Конверсия личных переговоров в сделки (%)': actual=45.0, type=HIGHER_BETTER, thresholds=[below=20.0, meets=30.0, good=40.0, veryGood=50.0, exceptional=65.0]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Конверсия личных переговоров в сделки (%)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Личный объём проведённых переговоров с клиентами': actual=22.0, type=HIGHER_BETTER, thresholds=[below=5.0, meets=10.0, good=18.0, veryGood=25.0, exceptional=35.0]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Личный объём проведённых переговоров с клиентами' score result: score=0.71, level=на_уровне_ожиданий
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Индекс вовлечённости сотрудников (опрос, %)': actual=78.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=62.0, good=72.0, veryGood=82.0, exceptional=92.0]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Индекс вовлечённости сотрудников (опрос, %)' score result: score=0.72, level=на_уровне_ожиданий
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Текучесть кадров в отделе (%)': actual=7.0, type=LOWER_BETTER, thresholds=[below=20.0, meets=15.0, good=10.0, veryGood=5.0, exceptional=2.0]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Текучесть кадров в отделе (%)' score result: score=0.72, level=на_уровне_ожиданий
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Уровень удержания клиентов (%)': actual=91.0, type=HIGHER_BETTER, thresholds=[below=70.0, meets=80.0, good=88.0, veryGood=94.0, exceptional=100.0]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Уровень удержания клиентов (%)' score result: score=0.69, level=на_уровне_ожиданий
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Новые активные клиенты (тыс. чел)': actual=7.2, type=HIGHER_BETTER, thresholds=[below=2.0, meets=3.5, good=5.0, veryGood=7.0, exceptional=10.0]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Новые активные клиенты (тыс. чел)' score result: score=0.87, level=превышает_ожидания
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Объём выданных потребительских кредитов (млрд сум)': actual=118.0, type=HIGHER_BETTER, thresholds=[below=50.0, meets=70.0, good=90.0, veryGood=110.0, exceptional=130.0]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Объём выданных потребительских кредитов (млрд сум)' score result: score=0.92, level=превышает_ожидания
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Количество новых заёмщиков за квартал': actual=1350.0, type=HIGHER_BETTER, thresholds=[below=500.0, meets=800.0, good=1100.0, veryGood=1400.0, exceptional=1700.0]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Количество новых заёмщиков за квартал' score result: score=0.8, level=на_уровне_ожиданий
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Calculating score for KR 'Доля просроченной задолженности (%)': actual=1.8, type=LOWER_BETTER, thresholds=[below=8.0, meets=5.0, good=3.0, veryGood=1.5, exceptional=0.5]
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - KR 'Доля просроченной задолженности (%)' score result: score=0.79, level=на_уровне_ожиданий
+2026-03-11 10:25:01.105 INFO  [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Fetching evaluations for targetType=DEPARTMENT, targetId=d2d13f8d-fb31-4019-8dbf-5ec5ce975992
+2026-03-11 10:25:01.105 DEBUG [http-nio-8080-exec-7] org.hibernate.SQL - 
+    select
+        e1_0.id,
+        e1_0.comment,
+        e1_0.created_at,
+        e1_0.evaluator_id,
+        e1_0.evaluator_type,
+        e1_0.letter_rating,
+        e1_0.numeric_rating,
+        e1_0.status,
+        e1_0.submitted_at,
+        e1_0.target_id,
+        e1_0.target_type,
+        e1_0.updated_at 
+    from
+        evaluations e1_0 
+    where
+        e1_0.target_type=? 
+        and e1_0.target_id=? 
+        and e1_0.status=?
+2026-03-11 10:25:01.105 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [DEPARTMENT]
+2026-03-11 10:25:01.105 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (2:UUID) <- [d2d13f8d-fb31-4019-8dbf-5ec5ce975992]
+2026-03-11 10:25:01.105 TRACE [http-nio-8080-exec-7] org.hibernate.orm.jdbc.bind - binding parameter (3:ENUM) <- [SUBMITTED]
+2026-03-11 10:25:01.105 INFO  [http-nio-8080-exec-7] u.g.o.s.ScoreCalculationService - Found 0 submitted evaluations for targetId=d2d13f8d-fb31-4019-8dbf-5ec5ce975992
+2026-03-11 10:25:01.116 INFO  [http-nio-8080-exec-7] u.g.o.config.RequestLoggingFilter - GET /api/departments 200 (71ms)
+2026-03-11 10:25:08.185 INFO  [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2026-03-11 10:25:08.189 INFO  [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
