@@ -26,10 +26,10 @@ public class DataInitializer implements CommandLineRunner{
 
     @Override
     public void run(String... args) {
-        // Create admin user if no users exist
-        if (userRepository.count() == 0) {
+        // Ensure admin user exists
+        if (!userRepository.existsByUsername("admin")) {
             System.out.println("=".repeat(80));
-            System.out.println("NO USERS FOUND - CREATING DEFAULT ADMIN USER");
+            System.out.println("ADMIN USER NOT FOUND - CREATING DEFAULT ADMIN USER");
             System.out.println("=".repeat(80));
 
             String encodedPassword = passwordEncoder.encode("admin123");
@@ -54,7 +54,7 @@ public class DataInitializer implements CommandLineRunner{
             System.out.println("\nYou can now log in and click 'Demo' button to load sample data.");
             System.out.println("=".repeat(80));
         } else {
-            log.info("Users already exist in database, count: {}", userRepository.count());
+            log.info("Admin user already exists, skipping creation. Total users: {}", userRepository.count());
         }
 
         // Seed default platform settings if they don't exist
