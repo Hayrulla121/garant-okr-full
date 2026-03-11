@@ -81,6 +81,8 @@ tags:
 - name: Export
   description: Data export operations. Currently supports Excel (.xlsx) export of
     all OKR data.
+- name: Import
+  description: "Data import operations. Import departments, objectives, and key results from Excel (.xlsx) files. Upserts by name: existing entities are updated, new ones are created. Requires ADMIN role."
 paths:
   /api/users/{id}:
     get:
@@ -1206,6 +1208,78 @@ paths:
         "500":
           description: Export failed
       security: []
+  /api/okr/import/excel:
+    post:
+      tags:
+      - Import
+      summary: Import OKRs from Excel
+      description: |
+        Import departments, objectives, and key results from an Excel (.xlsx) file.
+
+        **Behavior:**
+        - Upserts by name — existing entities are updated, new ones are created
+        - Supports multi-sheet files (one department per sheet) and single-sheet exports
+        - Returns a summary with counts of imported entities and any warnings
+
+        **Excel format:** Use the same format produced by `GET /api/export/excel`.
+
+        **Requires ADMIN role.**
+      operationId: importFromExcel
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: "Excel file (.xlsx) to import. Only `.xlsx` format is supported."
+      responses:
+        "200":
+          description: Import completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportResultDTO"
+              example:
+                success: true
+                message: "Import completed successfully"
+                warnings: []
+                departmentsImported: 3
+                objectivesImported: 12
+                keyResultsImported: 45
+        "400":
+          description: "Invalid file (empty file or non-.xlsx format)"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportResultDTO"
+              example:
+                success: false
+                message: "Поддерживается только формат .xlsx"
+                warnings: null
+                departmentsImported: 0
+                objectivesImported: 0
+                keyResultsImported: 0
+        "403":
+          description: Only ADMIN can import
+        "500":
+          description: Import failed due to server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportResultDTO"
+              example:
+                success: false
+                message: "Ошибка импорта: ..."
+                warnings: null
+                departmentsImported: 0
+                objectivesImported: 0
+                keyResultsImported: 0
   /api/evaluations/target/{type}/{id}:
     get:
       tags:
@@ -2489,6 +2563,37 @@ components:
           type: string
           format: date-time
           description: When the Business Block evaluation was last updated
+    ImportResultDTO:
+      type: object
+      description: Result of an Excel import operation
+      properties:
+        success:
+          type: boolean
+          description: Whether the import completed successfully
+          example: true
+        message:
+          type: string
+          description: Summary message describing the outcome
+          example: "Import completed successfully"
+        warnings:
+          type: array
+          description: Warning messages for partial issues (e.g. skipped rows, missing fields)
+          items:
+            type: string
+          example:
+          - "Row 5: missing objective weight, defaulted to 0"
+        departmentsImported:
+          type: integer
+          description: Number of departments imported or updated
+          example: 3
+        objectivesImported:
+          type: integer
+          description: Number of objectives imported or updated
+          example: 12
+        keyResultsImported:
+          type: integer
+          description: Number of key results imported or updated
+          example: 45
   securitySchemes:
     Bearer Authentication:
       type: http
