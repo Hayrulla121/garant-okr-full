@@ -43,6 +43,7 @@ const EvaluationPanel: React.FC<Props> = ({ targetType, targetId, onEvaluationSa
 
     useEffect(() => {
         fetchEvaluations();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [targetType, targetId]);
 
     const handleEvaluationSaved = () => {
@@ -85,7 +86,7 @@ const EvaluationPanel: React.FC<Props> = ({ targetType, targetId, onEvaluationSa
 
 
     // Determine if user can evaluate based on role
-    const canEvaluateAsDirector = user.role === Role.DIRECTOR || user.role === Role.ADMIN;
+    const canEvaluateAsDirector = user.role === Role.DIRECTOR || user.role === Role.ADMIN || user.role === Role.DEPARTMENT_LEADER;
     const canEvaluateAsHR = user.role === Role.HR || user.role === Role.ADMIN;
     const canEvaluateAsBusinessBlock = user.role === Role.BUSINESS_BLOCK || user.role === Role.ADMIN;
 
@@ -153,6 +154,7 @@ const EvaluationPanel: React.FC<Props> = ({ targetType, targetId, onEvaluationSa
                         submittedAt={directorEvaluation?.submittedAt}
                         updatedAt={directorEvaluation?.updatedAt}
                         onSave={handleEvaluationSaved}
+                        titleOverride={user.role === Role.DEPARTMENT_LEADER ? t.leaderEvaluation : undefined}
                     />
                 )}
 

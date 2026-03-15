@@ -3,10 +3,12 @@ package uz.garantbank.okrTrackingSystem.service;
 
 import uz.garantbank.okrTrackingSystem.dto.*;
 import uz.garantbank.okrTrackingSystem.dto.user.*;
+import uz.garantbank.okrTrackingSystem.dto.user.GroupSummaryDTO;
 import uz.garantbank.okrTrackingSystem.entity.*;
 import uz.garantbank.okrTrackingSystem.repository.DepartmentRepository;
 import uz.garantbank.okrTrackingSystem.repository.DivisionRepository;
 import uz.garantbank.okrTrackingSystem.repository.EvaluationRepository;
+import uz.garantbank.okrTrackingSystem.repository.GroupRepository;
 import uz.garantbank.okrTrackingSystem.repository.ObjectiveRepository;
 import uz.garantbank.okrTrackingSystem.repository.ScoreLevelRepository;
 import uz.garantbank.okrTrackingSystem.repository.UserRepository;
@@ -33,6 +35,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
     private final DivisionRepository divisionRepository;
+    private final GroupRepository groupRepository;
     private final ObjectiveRepository objectiveRepository;
     private final ScoreLevelRepository scoreLevelRepository;
     private final PasswordEncoder passwordEncoder;
@@ -87,8 +90,12 @@ public class UserService {
 
         user = userRepository.save(user);
 
-        // Assign departments if specified
-        if (request.getAssignedDepartmentIds() != null && !request.getAssignedDepartmentIds().isEmpty()) {
+        // Assign groups if specified (auto-derives departments)
+        if (request.getAssignedGroupIds() != null && !request.getAssignedGroupIds().isEmpty()) {
+            assignGroupsInternal(user, request.getAssignedGroupIds());
+        }
+        // Fallback: assign departments directly if no groups but department IDs provided
+        else if (request.getAssignedDepartmentIds() != null && !request.getAssignedDepartmentIds().isEmpty()) {
             assignDepartmentsInternal(user, request.getAssignedDepartmentIds());
         }
 
@@ -149,11 +156,13 @@ public class UserService {
                         }
                     }
                 }
-                // If changing TO DEPARTMENT_LEADER, set as leader for assigned departments
+                // If changing TO DEPARTMENT_LEADER, set as leader for assigned departments (if no leader set yet)
                 if (user.getRole() != Role.DEPARTMENT_LEADER && request.getRole() == Role.DEPARTMENT_LEADER) {
                     for (Department dept : user.getAssignedDepartments()) {
-                        dept.setDepartmentLeader(user);
-                        departmentRepository.save(dept);
+                        if (dept.getDepartmentLeader() == null) {
+                            dept.setDepartmentLeader(user);
+                            departmentRepository.save(dept);
+                        }
                     }
                 }
                 user.setRole(request.getRole());
@@ -162,8 +171,14 @@ public class UserService {
                 log.info("Setting isActive from {} to {}", user.isActive(), request.getIsActive());
                 user.setActive(request.getIsActive());
             }
-            if (request.getAssignedDepartmentIds() != null) {
-                // Clear existing and reassign
+            if (request.getAssignedGroupIds() != null) {
+                // Clear old group memberships
+                clearUserGroups(user);
+                // Clear existing departments and re-derive from groups
+                user.getAssignedDepartments().clear();
+                assignGroupsInternal(user, request.getAssignedGroupIds());
+            } else if (request.getAssignedDepartmentIds() != null) {
+                // Fallback: direct department assignment
                 user.getAssignedDepartments().clear();
                 assignDepartmentsInternal(user, request.getAssignedDepartmentIds());
             }
@@ -226,7 +241,10 @@ public class UserService {
         List<Evaluation> targetEvaluations = evaluationRepository.findByTargetTypeAndTargetId("EMPLOYEE", id);
         evaluationRepository.deleteAll(targetEvaluations);
 
-        // 6. Clear department assignments
+        // 6. Clear group memberships
+        clearUserGroups(user);
+
+        // 7. Clear department assignments
         user.getAssignedDepartments().clear();
         userRepository.save(user);
 
@@ -410,6 +428,36 @@ public class UserService {
     }
 
     /**
+     * Internal helper to assign groups to a user and auto-derive department membership
+     */
+    private void assignGroupsInternal(User user, List<String> groupIds) {
+        Set<String> derivedDepartmentIds = new HashSet<>();
+        for (String groupId : groupIds) {
+            OrgGroup group = groupRepository.findByIdWithMembers(groupId)
+                    .orElseThrow(() -> new EntityNotFoundException("Group not found: " + groupId));
+            group.getMembers().add(user);
+            groupRepository.save(group);
+            derivedDepartmentIds.add(group.getDepartment().getId());
+        }
+        // Auto-assign derived departments
+        assignDepartmentsInternal(user, new ArrayList<>(derivedDepartmentIds));
+    }
+
+    /**
+     * Clear all group memberships for a user
+     */
+    private void clearUserGroups(User user) {
+        Set<OrgGroup> currentGroups = new HashSet<>(user.getAssignedGroups());
+        for (OrgGroup group : currentGroups) {
+            OrgGroup g = groupRepository.findByIdWithMembers(group.getId()).orElse(null);
+            if (g != null) {
+                g.getMembers().remove(user);
+                groupRepository.save(g);
+            }
+        }
+    }
+
+    /**
      * Internal helper to assign departments to a user
      */
     private void assignDepartmentsInternal(User user, List<String> departmentIds) {
@@ -418,8 +466,8 @@ public class UserService {
                     .orElseThrow(() -> new EntityNotFoundException("Department not found: " + deptId));
             user.getAssignedDepartments().add(dept);
 
-            // Automatically set as department leader if user has DEPARTMENT_LEADER role
-            if (user.getRole() == Role.DEPARTMENT_LEADER) {
+            // Set as department leader if user has DEPARTMENT_LEADER role and no leader is set yet
+            if (user.getRole() == Role.DEPARTMENT_LEADER && dept.getDepartmentLeader() == null) {
                 dept.setDepartmentLeader(user);
                 departmentRepository.save(dept);
             }
@@ -440,6 +488,21 @@ public class UserService {
                     .collect(Collectors.toList());
         }
 
+        List<GroupSummaryDTO> groupSummaries = new ArrayList<>();
+        try {
+            if (user.getAssignedGroups() != null) {
+                groupSummaries = user.getAssignedGroups().stream()
+                        .map(g -> GroupSummaryDTO.builder()
+                                .id(g.getId())
+                                .name(g.getName())
+                                .departmentId(g.getDepartment().getId())
+                                .build())
+                        .collect(Collectors.toList());
+            }
+        } catch (Exception e) {
+            // Lazy loading may fail if session is closed; use empty list
+        }
+
         return UserDTO.builder()
                 .id(user.getId())
                 .username(user.getUsername())
@@ -455,6 +518,7 @@ public class UserService {
                 .readOnly(user.isReadOnly())
                 .lastLogin(user.getLastLogin())
                 .assignedDepartments(deptSummaries)
+                .assignedGroups(groupSummaries)
                 .createdAt(user.getCreatedAt())
                 .build();
     }

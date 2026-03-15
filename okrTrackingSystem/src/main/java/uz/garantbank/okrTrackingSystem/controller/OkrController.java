@@ -24,6 +24,7 @@ import uz.garantbank.okrTrackingSystem.dto.DepartmentScoreResult;
 import uz.garantbank.okrTrackingSystem.dto.ImportResultDTO;
 import uz.garantbank.okrTrackingSystem.dto.KeyResultDTO;
 import uz.garantbank.okrTrackingSystem.dto.ObjectiveDTO;
+import uz.garantbank.okrTrackingSystem.entity.ScoreSnapshot;
 import uz.garantbank.okrTrackingSystem.entity.User;
 import uz.garantbank.okrTrackingSystem.repository.KeyResultRepository;
 import uz.garantbank.okrTrackingSystem.repository.ObjectiveRepository;
@@ -31,6 +32,7 @@ import uz.garantbank.okrTrackingSystem.service.DepartmentAccessService;
 import uz.garantbank.okrTrackingSystem.service.ExcelExportService;
 import uz.garantbank.okrTrackingSystem.service.ExcelImportService;
 import uz.garantbank.okrTrackingSystem.service.OkrService;
+import uz.garantbank.okrTrackingSystem.service.ScoreSnapshotService;
 
 import java.util.List;
 
@@ -47,6 +49,7 @@ public class OkrController {
     private final DepartmentAccessService accessService;
     private final ObjectiveRepository objectiveRepository;
     private final KeyResultRepository keyResultRepository;
+    private final ScoreSnapshotService scoreSnapshotService;
 
     // ==================== DEPARTMENTS ====================
 
@@ -71,7 +74,7 @@ public class OkrController {
     })
     @GetMapping("/departments/{id}")
     public ResponseEntity<DepartmentDTO> getDepartment(
-            @Parameter(description = "Department ID", required = true) @PathVariable String id) {
+            @Parameter(description = "Department ID", required = true) @PathVariable("id") String id) {
         return ResponseEntity.ok(okrService.getDepartment(id));
     }
 
@@ -102,7 +105,7 @@ public class OkrController {
     })
     @PutMapping("/departments/{id}")
     public ResponseEntity<DepartmentDTO> updateDepartment(
-            @Parameter(description = "Department ID", required = true) @PathVariable String id,
+            @Parameter(description = "Department ID", required = true) @PathVariable("id") String id,
             @RequestBody DepartmentDTO dto) {
         User currentUser = accessService.getCurrentUser();
         if (!accessService.canEditDepartment(currentUser, id)) {
@@ -121,7 +124,7 @@ public class OkrController {
     @DeleteMapping("/departments/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteDepartment(
-            @Parameter(description = "Department ID", required = true) @PathVariable String id) {
+            @Parameter(description = "Department ID", required = true) @PathVariable("id") String id) {
         log.info("Deleting department: {}", id);
         accessService.requireWriteAccess(accessService.getCurrentUser());
         okrService.deleteDepartment(id);
@@ -139,7 +142,7 @@ public class OkrController {
     })
     @GetMapping("/departments/{id}/scores")
     public ResponseEntity<DepartmentScoreResult> getDepartmentScores(
-            @Parameter(description = "Department ID", required = true) @PathVariable String id) {
+            @Parameter(description = "Department ID", required = true) @PathVariable("id") String id) {
         return ResponseEntity.ok(okrService.getDepartmentScoreWithEvaluations(id));
     }
 
@@ -157,7 +160,7 @@ public class OkrController {
     })
     @PostMapping("/departments/{departmentId}/objectives")
     public ResponseEntity<ObjectiveDTO> createObjective(
-            @Parameter(description = "Department ID", required = true) @PathVariable String departmentId,
+            @Parameter(description = "Department ID", required = true) @PathVariable("departmentId") String departmentId,
             @RequestBody ObjectiveDTO dto) {
         User currentUser = accessService.getCurrentUser();
         if (!accessService.canEditDepartment(currentUser, departmentId)) {
@@ -181,7 +184,7 @@ public class OkrController {
     })
     @PostMapping("/departments/{departmentId}/leader-objectives")
     public ResponseEntity<ObjectiveDTO> createLeaderObjective(
-            @Parameter(description = "Department ID", required = true) @PathVariable String departmentId,
+            @Parameter(description = "Department ID", required = true) @PathVariable("departmentId") String departmentId,
             @RequestBody ObjectiveDTO dto) {
         User currentUser = accessService.getCurrentUser();
         if (!accessService.canEditDepartment(currentUser, departmentId)) {
@@ -200,7 +203,7 @@ public class OkrController {
     })
     @PutMapping("/objectives/{id}")
     public ResponseEntity<ObjectiveDTO> updateObjective(
-            @Parameter(description = "Objective ID", required = true) @PathVariable String id,
+            @Parameter(description = "Objective ID", required = true) @PathVariable("id") String id,
             @RequestBody ObjectiveDTO dto) {
         String departmentId = getDepartmentIdFromObjective(id);
         User currentUser = accessService.getCurrentUser();
@@ -219,7 +222,7 @@ public class OkrController {
     })
     @DeleteMapping("/objectives/{id}")
     public ResponseEntity<Void> deleteObjective(
-            @Parameter(description = "Objective ID", required = true) @PathVariable String id) {
+            @Parameter(description = "Objective ID", required = true) @PathVariable("id") String id) {
         String departmentId = getDepartmentIdFromObjective(id);
         User currentUser = accessService.getCurrentUser();
         if (!accessService.canEditDepartment(currentUser, departmentId)) {
@@ -243,7 +246,7 @@ public class OkrController {
     })
     @PostMapping("/objectives/{objectiveId}/key-results")
     public ResponseEntity<KeyResultDTO> createKeyResult(
-            @Parameter(description = "Objective ID", required = true) @PathVariable String objectiveId,
+            @Parameter(description = "Objective ID", required = true) @PathVariable("objectiveId") String objectiveId,
             @RequestBody KeyResultDTO dto) {
         String departmentId = getDepartmentIdFromObjective(objectiveId);
         User currentUser = accessService.getCurrentUser();
@@ -263,7 +266,7 @@ public class OkrController {
     })
     @PutMapping("/key-results/{id}")
     public ResponseEntity<KeyResultDTO> updateKeyResult(
-            @Parameter(description = "Key Result ID", required = true) @PathVariable String id,
+            @Parameter(description = "Key Result ID", required = true) @PathVariable("id") String id,
             @RequestBody KeyResultDTO dto) {
         String departmentId = getDepartmentIdFromKeyResult(id);
         User currentUser = accessService.getCurrentUser();
@@ -290,7 +293,7 @@ public class OkrController {
     @PutMapping(value = "/key-results/{id}/actual-value",
                 consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<KeyResultDTO> updateKeyResultActualValue(
-            @Parameter(description = "Key Result ID", required = true) @PathVariable String id,
+            @Parameter(description = "Key Result ID", required = true) @PathVariable("id") String id,
             @Parameter(description = "The new actual value") @RequestParam("actualValue") String actualValue,
             @Parameter(description = "Proof/basis attachment file (PDF, DOC, DOCX, XLS, XLSX, images)")
             @RequestParam(value = "file", required = false) MultipartFile file) {
@@ -315,7 +318,7 @@ public class OkrController {
     })
     @PutMapping("/key-results/{id}/progress")
     public ResponseEntity<KeyResultDTO> updateKeyResultProgress(
-            @Parameter(description = "Key Result ID", required = true) @PathVariable String id,
+            @Parameter(description = "Key Result ID", required = true) @PathVariable("id") String id,
             @RequestBody java.util.Map<String, Integer> body) {
         String departmentId = getDepartmentIdFromKeyResult(id);
         User currentUser = accessService.getCurrentUser();
@@ -334,7 +337,7 @@ public class OkrController {
     })
     @DeleteMapping("/key-results/{id}")
     public ResponseEntity<Void> deleteKeyResult(
-            @Parameter(description = "Key Result ID", required = true) @PathVariable String id) {
+            @Parameter(description = "Key Result ID", required = true) @PathVariable("id") String id) {
         String departmentId = getDepartmentIdFromKeyResult(id);
         User currentUser = accessService.getCurrentUser();
         if (!accessService.canEditDepartment(currentUser, departmentId)) {
@@ -342,6 +345,27 @@ public class OkrController {
         }
         okrService.deleteKeyResult(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @Tag(name = "Key Results")
+    @Operation(summary = "Toggle key result active status",
+            description = "Activate or deactivate a key result. Inactive KRs are excluded from score calculation.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "KR active status updated",
+                    content = @Content(schema = @Schema(implementation = KeyResultDTO.class))),
+            @ApiResponse(responseCode = "403", description = "No edit permission", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Key result not found", content = @Content)
+    })
+    @PutMapping("/key-results/{id}/active")
+    public ResponseEntity<KeyResultDTO> toggleKeyResultActive(
+            @Parameter(description = "Key Result ID", required = true) @PathVariable("id") String id,
+            @RequestBody java.util.Map<String, Boolean> body) {
+        String departmentId = getDepartmentIdFromKeyResult(id);
+        User currentUser = accessService.getCurrentUser();
+        if (!accessService.canEditDepartment(currentUser, departmentId)) {
+            throw new AccessDeniedException("You do not have permission to edit key results in this department");
+        }
+        return ResponseEntity.ok(okrService.toggleKeyResultActive(id, body.getOrDefault("active", true)));
     }
 
     // ==================== EXPORT ====================
@@ -441,17 +465,50 @@ public class OkrController {
         return ResponseEntity.ok(okrService.loadDemoData());
     }
 
+    // ==================== SCORE HISTORY ====================
+
+    @Tag(name = "Score History")
+    @Operation(summary = "Get score history", description = "Returns historical score snapshots for departments (or divisions). Used for the quarterly line chart.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "List of score snapshots",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ScoreSnapshot.class))))
+    })
+    @GetMapping("/okr/score-history")
+    public ResponseEntity<List<ScoreSnapshot>> getScoreHistory(
+            @Parameter(description = "Target type: DEPARTMENT or DIVISION", example = "DEPARTMENT")
+            @RequestParam(value = "type", defaultValue = "DEPARTMENT") ScoreSnapshot.TargetType type) {
+        return ResponseEntity.ok(scoreSnapshotService.getHistory(type));
+    }
+
+    @Tag(name = "Score History")
+    @Operation(summary = "Close the month", description = "Close the current month: saves a score snapshot for all departments with the current date. **Requires ADMIN role.**")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Month closed and snapshot saved"),
+            @ApiResponse(responseCode = "403", description = "Only ADMIN can close the month", content = @Content)
+    })
+    @PostMapping("/okr/score-history/snapshot")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> closeMonth() {
+        scoreSnapshotService.takeSnapshot();
+        return ResponseEntity.ok().build();
+    }
+
     // ==================== HELPER METHODS ====================
 
     private String getDepartmentIdFromObjective(String objectiveId) {
         return objectiveRepository.findById(objectiveId)
-                .map(obj -> obj.getDepartment().getId())
+                .map(obj -> obj.getDepartment() != null ? obj.getDepartment().getId() : null)
                 .orElseThrow(() -> new EntityNotFoundException("Objective not found: " + objectiveId));
     }
 
     private String getDepartmentIdFromKeyResult(String keyResultId) {
         return keyResultRepository.findById(keyResultId)
-                .map(kr -> kr.getObjective().getDepartment().getId())
+                .map(kr -> {
+                    if (kr.getObjective() != null && kr.getObjective().getDepartment() != null) {
+                        return kr.getObjective().getDepartment().getId();
+                    }
+                    return null;
+                })
                 .orElseThrow(() -> new EntityNotFoundException("Key Result not found: " + keyResultId));
     }
 }

@@ -46,4 +46,19 @@ public class DepartmentDTO {
 
     @Schema(description = "UUID of the assigned department leader")
     private String leaderId;
+
+    @Schema(description = "All leaders assigned to this department")
+    private List<LeaderInfo> leaders;
+
+    @Schema(description = "Groups within this department")
+    private List<GroupDTO> groups;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class LeaderInfo {
+        private String id;
+        private String fullName;
+    }
 }

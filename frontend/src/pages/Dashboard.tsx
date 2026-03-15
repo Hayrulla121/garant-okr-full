@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Department, ScoreResult } from '../types/okr';
+import { Department, Division, ScoreResult } from '../types/okr';
 import { Role } from '../types/auth';
-import { departmentApi, demoApi, evaluationApi, importApi } from '../services/api';
+import { departmentApi, divisionApi, demoApi, evaluationApi, importApi, scoreHistoryApi } from '../services/api';
 import Speedometer from '../components/Speedometer';
 import DepartmentCard from '../components/DepartmentCard';
 import SettingsModal from '../components/SettingsModal';
 import DepartmentModal from '../components/DepartmentModal';
 import DepartmentDetailView from '../components/DepartmentDetailView';
 import OrgScoreChart from '../components/OrgScoreChart';
-import ObjectiveScoreChart from '../components/ObjectiveScoreChart';
+
 import LanguageSelector from '../components/LanguageSelector';
 import DisciplinaryBadge from '../components/DisciplinaryBadge';
 import { useLanguage } from '../i18n';
@@ -19,7 +19,7 @@ import { EmployeeEvaluationSummary, DisciplinaryStatus } from '../types/evaluati
 
 function Dashboard() {
   const { t } = useLanguage();
-  const { user, logout } = useAuth();
+  const { user, logout, serverOffline } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { scoreLevels } = useScoreLevels();
@@ -33,6 +33,15 @@ function Dashboard() {
   const [importing, setImporting] = useState(false);
   const importFileRef = React.useRef<HTMLInputElement>(null);
   const [myEvalSummary, setMyEvalSummary] = useState<EmployeeEvaluationSummary | null>(null);
+  const [divisions, setDivisions] = useState<Division[]>([]);
+  const [expandedDivisions, setExpandedDivisions] = useState<Set<string>>(new Set());
+  const [expandedDepartments, setExpandedDepartments] = useState<Set<string>>(new Set());
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [selectedDivision, setSelectedDivision] = useState<Division | null>(null);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [objectiveTab, setObjectiveTab] = useState<'none' | 'division' | 'department' | 'group' | 'leader'>('none');
+  const [chartRefreshKey, setChartRefreshKey] = useState(0);
+  const [closingMonth, setClosingMonth] = useState(false);
 
   const selectDepartment = (dept: Department | null) => {
     setSelectedDepartment(dept);
@@ -76,6 +85,20 @@ function Dashboard() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCloseMonth = async () => {
+    if (!window.confirm(t.closeMonthConfirm || 'Close the current month and save scores? This action will snapshot all department scores.')) return;
+    setClosingMonth(true);
+    try {
+      await scoreHistoryApi.closeMonth();
+      setChartRefreshKey(k => k + 1);
+      await fetchDepartments();
+    } catch (err) {
+      console.error('Failed to close month', err);
+    } finally {
+      setClosingMonth(false);
     }
   };
 
@@ -141,6 +164,8 @@ function Dashboard() {
     try {
       const response = await demoApi.loadDemoData();
       setDepartments(response.data);
+      setChartRefreshKey(k => k + 1);
+      fetchDivisions();
       alert(t.demoDataLoaded);
     } catch (err) {
       console.error('Failed to load demo data:', err);
@@ -148,18 +173,61 @@ function Dashboard() {
     }
   };
 
+  const fetchDivisions = async () => {
+    try {
+      const response = await divisionApi.getAll();
+      setDivisions(response.data);
+      // Auto-expand all divisions on first load
+      if (expandedDivisions.size === 0 && response.data.length > 0) {
+        setExpandedDivisions(new Set(response.data.map(d => d.id)));
+      }
+    } catch (err) {
+      console.error('Failed to load divisions:', err);
+    }
+  };
+
+  const toggleDivision = (divId: string) => {
+    setExpandedDivisions(prev => {
+      const next = new Set(prev);
+      if (next.has(divId)) next.delete(divId);
+      else next.add(divId);
+      return next;
+    });
+  };
+
+  const toggleGroupExpand = (groupId: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(groupId)) next.delete(groupId);
+      else next.add(groupId);
+      return next;
+    });
+  };
+
+  const toggleDepartmentExpand = (deptId: string) => {
+    setExpandedDepartments(prev => {
+      const next = new Set(prev);
+      if (next.has(deptId)) next.delete(deptId);
+      else next.add(deptId);
+      return next;
+    });
+  };
+
   const refreshAllData = () => {
     fetchDepartments();
+    fetchDivisions();
   };
 
   useEffect(() => {
     fetchDepartments();
+    fetchDivisions();
     // Fetch current user's disciplinary summary
     if (user?.id) {
       evaluationApi.getEmployeeSummary(user.id)
         .then(res => setMyEvalSummary(res.data))
         .catch(() => setMyEvalSummary(null));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Helper to get the best available score for a department (finalScore if available, otherwise OKR score)
@@ -232,40 +300,172 @@ function Dashboard() {
         <div className="bg-white text-slate-800 p-6 shadow-md flex-shrink-0 flex flex-col justify-center items-center border-b border-slate-200">
           <img src="/logo_garantbank.png" alt="Garant Bank" className="h-12 w-auto object-contain mb-3 drop-shadow-sm transition-transform hover:scale-105" />
           <h2 className="text-sm font-bold tracking-wide text-slate-800">{t.controlPanel}</h2>
-          <p className="text-primary text-xs font-bold uppercase tracking-widest mt-1 opacity-90">{t.departments}</p>
+          <p className="text-primary text-xs font-bold uppercase tracking-widest mt-1 opacity-90">STRUCTURE</p>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-1.5 min-h-0 custom-scrollbar">
-          {departments.map((dept) => {
-            const displayScore = getDepartmentDisplayScore(dept);
+        <div className="flex-1 overflow-y-auto p-3 space-y-1 min-h-0 custom-scrollbar">
+          {divisions.map((div) => {
+            const isExpanded = expandedDivisions.has(div.id);
+            const divDepts = departments.filter(d => d.division?.id === div.id);
             return (
-              <button
-                key={dept.id}
-                onClick={() => selectDepartment(dept)}
-                className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 border-2 ${selectedDepartment?.id === dept.id
-                  ? 'bg-gradient-to-r from-primary to-primary-dark text-white border-transparent shadow-lg shadow-primary/30'
-                  : 'bg-transparent text-slate-600 border-transparent hover:bg-slate-50 hover:text-slate-900 hover:border-slate-100'
+              <div key={div.id}>
+                {/* Division node */}
+                <button
+                  onClick={() => toggleDivision(div.id)}
+                  className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
+                    selectedDivision?.id === div.id && !selectedDepartment
+                      ? 'bg-purple-100 text-purple-800 border border-purple-300'
+                      : 'hover:bg-slate-50 text-slate-700'
                   }`}
-              >
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-sm truncate flex-1">{dept.name}</h3>
-                  {displayScore && (
-                    <span
-                      className="text-xs font-bold ml-1"
-                      style={{ color: selectedDepartment?.id === dept.id ? 'white' : displayScore.color }}
-                    >
-                      {displayScore.score.toFixed(2)}
+                >
+                  <svg className={`w-3 h-3 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                  </svg>
+                  <div className="w-2 h-2 rounded-full bg-purple-500 flex-shrink-0" />
+                  <span className="font-semibold text-xs truncate flex-1">{div.name}</span>
+                  {div.score && (
+                    <span className="text-[10px] font-bold" style={{ color: div.score.color }}>
+                      {div.score.score.toFixed(2)}
                     </span>
                   )}
-                </div>
-                {dept.finalScore && (
-                  <div className="text-xs opacity-75 mt-0.5">{t.evaluated}</div>
+                </button>
+                {/* Departments under division */}
+                {isExpanded && (
+                  <div className="ml-4 space-y-0.5 mt-0.5">
+                    {divDepts.map((dept) => {
+                      const displayScore = getDepartmentDisplayScore(dept);
+                      const isDeptExpanded = expandedDepartments.has(dept.id);
+                      const hasGroups = dept.groups && dept.groups.length > 0;
+                      return (
+                        <div key={dept.id}>
+                          <button
+                            onClick={() => {
+                              selectDepartment(dept);
+                              setSelectedDivision(null);
+                              setSelectedGroupId(null);
+                              if (hasGroups) toggleDepartmentExpand(dept.id);
+                            }}
+                            className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
+                              selectedDepartment?.id === dept.id && !selectedGroupId
+                                ? 'bg-gradient-to-r from-primary to-primary-dark text-white shadow-md'
+                                : 'hover:bg-slate-50 text-slate-600'
+                            }`}
+                          >
+                            {hasGroups && (
+                              <svg className={`w-3 h-3 transition-transform flex-shrink-0 ${isDeptExpanded ? 'rotate-90' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                            <div className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />
+                            <span className="font-medium text-xs truncate flex-1">{dept.name}</span>
+                            {displayScore && (
+                              <span
+                                className="text-[10px] font-bold ml-1"
+                                style={{ color: selectedDepartment?.id === dept.id && !selectedGroupId ? 'white' : displayScore.color }}
+                              >
+                                {displayScore.score.toFixed(2)}
+                              </span>
+                            )}
+                          </button>
+                          {/* Groups under department */}
+                          {isDeptExpanded && hasGroups && (
+                            <div className="ml-5 space-y-0.5 mt-0.5">
+                              {dept.groups!.map((group) => {
+                                const hasMembers = group.members && group.members.length > 0;
+                                const isGroupExpanded = expandedGroups.has(group.id);
+                                return (
+                                  <div key={group.id}>
+                                    <button
+                                      onClick={() => {
+                                        selectDepartment(dept);
+                                        setSelectedGroupId(group.id);
+                                        setSelectedDivision(null);
+                                        if (hasMembers) toggleGroupExpand(group.id);
+                                      }}
+                                      className={`w-full text-left px-3 py-1.5 rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
+                                        selectedGroupId === group.id
+                                          ? 'bg-teal-100 text-teal-800 border border-teal-300'
+                                          : 'hover:bg-slate-50 text-slate-500'
+                                      }`}
+                                    >
+                                      {hasMembers && (
+                                        <svg className={`w-3 h-3 transition-transform flex-shrink-0 ${isGroupExpanded ? 'rotate-90' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                                          <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                      )}
+                                      <div className="w-1.5 h-1.5 rounded-full bg-teal-500 flex-shrink-0" />
+                                      <span className="font-medium text-xs truncate flex-1">{group.name}</span>
+                                      {group.score && (
+                                        <span className="text-[10px] font-bold" style={{ color: group.score.color }}>
+                                          {group.score.score.toFixed(2)}
+                                        </span>
+                                      )}
+                                    </button>
+                                    {/* Members under group */}
+                                    {isGroupExpanded && hasMembers && (
+                                      <div className="ml-5 space-y-0.5 mt-0.5">
+                                        {group.members!.map((member) => (
+                                          <div
+                                            key={member.id}
+                                            className="flex items-center gap-1.5 px-3 py-1 text-slate-400 cursor-default"
+                                          >
+                                            <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                            <span className="text-[11px] truncate">{member.fullName}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
-              </button>
+              </div>
             );
           })}
 
-          {departments.length === 0 && (
+          {/* Unassigned departments (not in any division) */}
+          {(() => {
+            const assignedDeptIds = new Set(divisions.flatMap(d => d.departments?.map(dp => dp.id) || []));
+            const unassigned = departments.filter(d => !d.division?.id || !assignedDeptIds.has(d.id));
+            if (unassigned.length === 0) return null;
+            return (
+              <div className="mt-2 pt-2 border-t border-slate-200">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-1">Unassigned</p>
+                {unassigned.map((dept) => {
+                  const displayScore = getDepartmentDisplayScore(dept);
+                  return (
+                    <button
+                      key={dept.id}
+                      onClick={() => { selectDepartment(dept); setSelectedDivision(null); setSelectedGroupId(null); }}
+                      className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
+                        selectedDepartment?.id === dept.id
+                          ? 'bg-gradient-to-r from-primary to-primary-dark text-white shadow-md'
+                          : 'hover:bg-slate-50 text-slate-600'
+                      }`}
+                    >
+                      <div className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />
+                      <span className="font-medium text-xs truncate flex-1">{dept.name}</span>
+                      {displayScore && (
+                        <span className="text-[10px] font-bold ml-1" style={{ color: selectedDepartment?.id === dept.id ? 'white' : displayScore.color }}>
+                          {displayScore.score.toFixed(2)}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })()}
+
+          {departments.length === 0 && divisions.length === 0 && (
             <div className="text-center py-6 text-slate-400">
               <p className="text-xs">{t.noDepartments}</p>
             </div>
@@ -442,6 +642,23 @@ function Dashboard() {
           </div>
         </header>
 
+        {serverOffline && (
+          <div className="mx-6 mt-4 bg-orange-50 border-l-4 border-orange-500 text-orange-800 p-3 rounded text-sm flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 010 12.728M15.536 8.464a5 5 0 010 7.072M12 12h.01M6.343 17.657a9 9 0 010-12.728M3.515 19.485a13 13 0 010-18.97" />
+              </svg>
+              <span>Сервер недоступен. Обновите страницу или подождите восстановления соединения.</span>
+            </div>
+            <button
+              onClick={() => window.location.reload()}
+              className="ml-4 px-3 py-1 bg-orange-600 text-white rounded text-xs font-semibold hover:bg-orange-700 flex-shrink-0"
+            >
+              Обновить
+            </button>
+          </div>
+        )}
+
         {error && (
           <div className="mx-6 mt-4 bg-red-50 border-l-4 border-red-500 text-red-700 p-3 rounded text-sm">
             <div className="flex items-center">
@@ -533,12 +750,23 @@ function Dashboard() {
                 <div className="lg:col-span-2 bg-white rounded-2xl shadow-md p-6 border border-slate-100 transition-all hover:shadow-lg">
                   <div className="flex items-center justify-between mb-2">
                     <h2 className="text-sm font-bold text-slate-800">{t.organizationScoreBreakdown}</h2>
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <span className="w-3 h-0.5 rounded" style={{ backgroundColor: overallScore.color }}></span>
-                      <span>{t.orgAverage}</span>
+                    <div className="flex items-center gap-3">
+                      {user?.role === 'ADMIN' && (
+                        <button
+                          onClick={handleCloseMonth}
+                          disabled={closingMonth}
+                          className="px-3 py-1 text-xs font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                        >
+                          {closingMonth ? (t.closing || 'Closing...') : (t.closeMonth || 'Close the Month')}
+                        </button>
+                      )}
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <span className="w-3 h-0.5 rounded" style={{ backgroundColor: overallScore.color }}></span>
+                        <span>{t.orgAverage}</span>
+                      </div>
                     </div>
                   </div>
-                  <OrgScoreChart departments={departments} overallScore={overallScore} height={180} />
+                  <OrgScoreChart height={180} refreshKey={chartRefreshKey} />
                 </div>
               </div>
 
@@ -567,47 +795,250 @@ function Dashboard() {
                 </div>
               </div>
 
-              {departments.length > 0 && (
-                <div className="bg-white rounded-3xl shadow-md p-6 mt-6 border border-slate-100">
-                  <h2 className="text-lg font-bold text-slate-800 mb-4 ml-2">{t.allDepartments}</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                    {departments.map((dept) => {
-                      const displayScore = getDepartmentDisplayScore(dept);
-                      return (
-                        <div
-                          key={dept.id}
-                          onClick={() => setModalDepartment(dept)}
-                          className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 shadow-sm hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 transition-all duration-300 cursor-pointer group flex flex-col items-center justify-between"
-                        >
-                          <div className="text-center mb-4 w-full">
-                            <h3 className="font-bold text-slate-800 text-sm truncate group-hover:text-primary transition-colors">
-                              {dept.name}
-                            </h3>
-                            <p className="text-xs font-semibold text-slate-500 mt-1 uppercase tracking-wider">
-                              {dept.objectives.length} {t.objectives}
-                              {dept.finalScore && <span className="ml-1.5 text-emerald-500"><svg className="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg></span>}
-                            </p>
+              {/* Objective Category Tabs */}
+              <div className="flex flex-wrap gap-2 mt-6">
+                {([
+                  { key: 'none' as const, label: t.allDepartments, color: 'slate' },
+                  { key: 'division' as const, label: t.divisionObjectives, color: 'purple' },
+                  { key: 'department' as const, label: t.departmentObjectives, color: 'red' },
+                  { key: 'group' as const, label: t.groupObjectives, color: 'teal' },
+                  { key: 'leader' as const, label: t.leaderObjectives, color: 'amber' },
+                ]).map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setObjectiveTab(tab.key)}
+                    className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 border ${
+                      objectiveTab === tab.key
+                        ? tab.color === 'slate' ? 'bg-slate-800 text-white border-slate-800 shadow-md'
+                        : tab.color === 'purple' ? 'bg-purple-600 text-white border-purple-600 shadow-md'
+                        : tab.color === 'red' ? 'bg-red-500 text-white border-red-500 shadow-md'
+                        : tab.color === 'teal' ? 'bg-teal-600 text-white border-teal-600 shadow-md'
+                        : 'bg-amber-500 text-white border-amber-500 shadow-md'
+                        : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Tab Content */}
+              {objectiveTab === 'none' && (
+                <>
+                  {departments.length > 0 ? (
+                    <div className="bg-white rounded-3xl shadow-md p-6 mt-4 border border-slate-100">
+                      <h2 className="text-lg font-bold text-slate-800 mb-4 ml-2">{t.allDepartments}</h2>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                        {departments.map((dept) => {
+                          const displayScore = getDepartmentDisplayScore(dept);
+                          return (
+                            <div
+                              key={dept.id}
+                              onClick={() => setModalDepartment(dept)}
+                              className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 shadow-sm hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 transition-all duration-300 cursor-pointer group flex flex-col items-center justify-between"
+                            >
+                              <div className="text-center mb-4 w-full">
+                                <h3 className="font-bold text-slate-800 text-sm truncate group-hover:text-primary transition-colors">
+                                  {dept.name}
+                                </h3>
+                                <p className="text-xs font-semibold text-slate-500 mt-1 uppercase tracking-wider">
+                                  {dept.objectives.length} {t.objectives}
+                                  {dept.finalScore && <span className="ml-1.5 text-emerald-500"><svg className="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg></span>}
+                                </p>
+                              </div>
+                              <Speedometer
+                                score={displayScore || defaultScore}
+                                size="sm"
+                                compact={true}
+                                showLabel={true}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-white rounded-xl shadow-lg p-8 border border-slate-200 text-center mt-4">
+                      <svg className="w-10 h-10 text-slate-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                      <h3 className="text-base font-semibold text-slate-600 mb-1">{t.noObjectivesYet}</h3>
+                      <p className="text-slate-400 text-xs">{t.addObjectivesFromSettings}</p>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Division Objectives Tab */}
+              {objectiveTab === 'division' && (
+                <div className="space-y-4 mt-4">
+                  {divisions.filter(div => div.objectives && div.objectives.length > 0).length > 0 ? (
+                    divisions.filter(div => div.objectives && div.objectives.length > 0).map((div) => (
+                      <div key={div.id} className="bg-white rounded-3xl shadow-md border border-slate-100 overflow-hidden">
+                        <div className="px-6 py-4 bg-gradient-to-r from-purple-50 to-white border-b border-purple-100 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-2 h-8 rounded-full bg-purple-500"></div>
+                            <h3 className="text-base font-bold text-slate-800">{div.name}</h3>
+                            <span className="text-xs font-medium text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">
+                              {div.objectives!.length} {t.objectives}
+                            </span>
                           </div>
-                          <Speedometer
-                            score={displayScore || defaultScore}
-                            size="sm"
-                            compact={true}
-                            showLabel={true}
-                          />
+                          {div.score && (
+                            <Speedometer score={div.score} size="sm" compact={true} showLabel={true} />
+                          )}
                         </div>
-                      );
-                    })}
-                  </div>
+                        <div className="p-4 space-y-2">
+                          {div.objectives!.map((obj, idx) => (
+                            <DepartmentCard
+                              key={obj.id}
+                              department={{ id: div.id, name: div.name, objectives: div.objectives! } as Department}
+                              objective={obj}
+                              index={idx + 1}
+                              onUpdate={refreshAllData}
+                              canEditOverride={false}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="bg-white rounded-xl shadow-md p-8 border border-slate-200 text-center">
+                      <p className="text-slate-500 text-sm">{t.noObjectivesFound}</p>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {departments.length === 0 && (
-                <div className="bg-white rounded-xl shadow-lg p-8 border border-slate-200 text-center">
-                  <svg className="w-10 h-10 text-slate-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                  <h3 className="text-base font-semibold text-slate-600 mb-1">{t.noObjectivesYet}</h3>
-                  <p className="text-slate-400 text-xs">{t.addObjectivesFromSettings}</p>
+              {/* Department Objectives Tab */}
+              {objectiveTab === 'department' && (
+                <div className="space-y-4 mt-4">
+                  {departments.filter(d => d.objectives.length > 0).length > 0 ? (
+                    departments.filter(d => d.objectives.length > 0).map((dept) => (
+                      <div key={dept.id} className="bg-white rounded-3xl shadow-md border border-slate-100 overflow-hidden">
+                        <div className="px-6 py-4 bg-gradient-to-r from-red-50 to-white border-b border-red-100 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-2 h-8 rounded-full bg-red-500"></div>
+                            <h3 className="text-base font-bold text-slate-800">{dept.name}</h3>
+                            <span className="text-xs font-medium text-red-600 bg-red-100 px-2 py-0.5 rounded-full">
+                              {dept.objectives.length} {t.objectives}
+                            </span>
+                          </div>
+                          {getDepartmentDisplayScore(dept) && (
+                            <Speedometer score={getDepartmentDisplayScore(dept)!} size="sm" compact={true} showLabel={true} />
+                          )}
+                        </div>
+                        <div className="p-4 space-y-2">
+                          {dept.objectives.map((obj, idx) => (
+                            <DepartmentCard
+                              key={obj.id}
+                              department={dept}
+                              objective={obj}
+                              index={idx + 1}
+                              onUpdate={refreshAllData}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="bg-white rounded-xl shadow-md p-8 border border-slate-200 text-center">
+                      <p className="text-slate-500 text-sm">{t.noObjectivesFound}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Group Objectives Tab */}
+              {objectiveTab === 'group' && (
+                <div className="space-y-4 mt-4">
+                  {departments.filter(d => d.groups?.some(g => g.objectives && g.objectives.length > 0)).length > 0 ? (
+                    departments.filter(d => d.groups?.some(g => g.objectives && g.objectives.length > 0)).map((dept) => (
+                      <div key={dept.id} className="space-y-3">
+                        {dept.groups!.filter(g => g.objectives && g.objectives.length > 0).map((group) => (
+                          <div key={group.id} className="bg-white rounded-3xl shadow-md border border-slate-100 overflow-hidden">
+                            <div className="px-6 py-4 bg-gradient-to-r from-teal-50 to-white border-b border-teal-100 flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-2 h-8 rounded-full bg-teal-500"></div>
+                                <div>
+                                  <h3 className="text-base font-bold text-slate-800">{group.name}</h3>
+                                  <p className="text-xs text-slate-500">{dept.name}</p>
+                                </div>
+                                <span className="text-xs font-medium text-teal-600 bg-teal-100 px-2 py-0.5 rounded-full">
+                                  {group.objectives!.length} {t.objectives}
+                                </span>
+                              </div>
+                              {group.score && (
+                                <Speedometer score={group.score} size="sm" compact={true} showLabel={true} />
+                              )}
+                            </div>
+                            <div className="p-4 space-y-2">
+                              {group.objectives!.map((obj, idx) => (
+                                <DepartmentCard
+                                  key={obj.id}
+                                  department={dept}
+                                  objective={obj}
+                                  index={idx + 1}
+                                  onUpdate={refreshAllData}
+                                  canEditOverride={false}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="bg-white rounded-xl shadow-md p-8 border border-slate-200 text-center">
+                      <p className="text-slate-500 text-sm">{t.noObjectivesFound}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Leader Objectives Tab */}
+              {objectiveTab === 'leader' && (
+                <div className="space-y-4 mt-4">
+                  {departments.filter(d => d.leaderObjectives && d.leaderObjectives.length > 0).length > 0 ? (
+                    departments.filter(d => d.leaderObjectives && d.leaderObjectives.length > 0).map((dept) => (
+                      <div key={dept.id} className="bg-white rounded-3xl shadow-md border border-slate-100 overflow-hidden">
+                        <div className="px-6 py-4 bg-gradient-to-r from-amber-50 to-white border-b border-amber-100 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-2 h-8 rounded-full bg-amber-500"></div>
+                            <div>
+                              <h3 className="text-base font-bold text-slate-800">{dept.leaderName || dept.name}</h3>
+                              <p className="text-xs text-slate-500">{dept.name}</p>
+                            </div>
+                            <span className="text-xs font-medium text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">
+                              {dept.leaderObjectives!.length} {t.objectives}
+                            </span>
+                          </div>
+                          {dept.leaderScore && (
+                            <Speedometer score={dept.leaderScore} size="sm" compact={true} showLabel={true} />
+                          )}
+                        </div>
+                        <div className="p-4 space-y-2">
+                          {dept.leaderObjectives!.map((obj, idx) => (
+                            <DepartmentCard
+                              key={obj.id}
+                              department={dept}
+                              objective={obj}
+                              index={idx + 1}
+                              onUpdate={refreshAllData}
+                              canEditOverride={
+                                user?.role === Role.ADMIN ||
+                                user?.role === Role.DIRECTOR ||
+                                user?.id === dept.leaderId
+                              }
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="bg-white rounded-xl shadow-md p-8 border border-slate-200 text-center">
+                      <p className="text-slate-500 text-sm">{t.noObjectivesFound}</p>
+                    </div>
+                  )}
                 </div>
               )}
             </>
@@ -625,14 +1056,16 @@ function Dashboard() {
                 </button>
               </div>
 
-              {/* Department Detail View with Multi-Speedometer and Evaluation Panel */}
-              <DepartmentDetailView
-                department={selectedDepartment}
-                onUpdate={refreshAllData}
-              />
+              {/* Department Detail View — hidden when a group is selected */}
+              {!selectedGroupId && (
+                <DepartmentDetailView
+                  department={selectedDepartment}
+                  onUpdate={refreshAllData}
+                />
+              )}
 
-              {/* ── Leader Objectives Section ─────────────────────────── */}
-              {selectedDepartment.leaderObjectives && selectedDepartment.leaderObjectives.length > 0 && (
+              {/* ── Leader Objectives Section (only when no group selected) ── */}
+              {!selectedGroupId && selectedDepartment.leaderObjectives && selectedDepartment.leaderObjectives.length > 0 && (
                 <div className="mt-6 mb-2">
                   {/* Leader header */}
                   <div className="bg-gradient-to-r from-red-100 to-gray-100 rounded-xl p-4 mb-3 shadow-md flex items-center justify-between">
@@ -664,11 +1097,12 @@ function Dashboard() {
 
                   {/* Leader's objective cards */}
                   <div className="space-y-4">
-                    {selectedDepartment.leaderObjectives.map((objective) => (
+                    {selectedDepartment.leaderObjectives.map((objective, idx) => (
                       <DepartmentCard
                         key={objective.id}
                         department={selectedDepartment}
                         objective={objective}
+                        index={idx + 1}
                         onUpdate={refreshAllData}
                         canEditOverride={
                           user?.role === Role.ADMIN ||
@@ -719,6 +1153,58 @@ function Dashboard() {
                 </div>
               </div>
 
+              {/* ── Group Objectives Section (when a group is selected) ── */}
+              {selectedGroupId && (() => {
+                const selectedGroup = selectedDepartment.groups?.find(g => g.id === selectedGroupId);
+                const groupObjectives = selectedGroup?.objectives || [];
+                return (
+                  <div className="mb-6">
+                    <div className="bg-gradient-to-r from-teal-100 to-gray-100 rounded-xl p-4 mb-3 shadow-md flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-white/50 flex items-center justify-center">
+                          <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="text-teal-700 text-xs font-semibold uppercase tracking-wide">{t.groupObjectives || 'Group Objectives'}</p>
+                          <h3 className="text-slate-800 font-bold text-base">{selectedGroup?.name}</h3>
+                        </div>
+                      </div>
+                      {selectedGroup?.score && (
+                        <Speedometer score={selectedGroup.score} size="sm" compact={true} showLabel={true} />
+                      )}
+                    </div>
+                    {groupObjectives.length > 0 ? (
+                      <div className="space-y-4">
+                        {groupObjectives.map((objective, idx) => (
+                          <DepartmentCard
+                            key={objective.id}
+                            department={selectedDepartment}
+                            objective={objective}
+                            index={idx + 1}
+                            onUpdate={refreshAllData}
+                            canEditOverride={false}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="bg-white rounded-xl shadow-lg p-8 border border-slate-200 text-center">
+                        <p className="text-slate-400 text-sm">{t.noObjectivesYet}</p>
+                      </div>
+                    )}
+
+                    {/* Separator before department objectives */}
+                    <div className="relative my-6 text-center">
+                      <div className="h-0.5 bg-gradient-to-r from-teal-400 via-slate-300 to-teal-400 rounded-full" />
+                      <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-50 px-4 text-xs font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                        {t.departmentGoals || 'Department Goals'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* ── Department Objectives Section ─────────────────────── */}
               {selectedDepartment.objectives.length === 0 ? (
                 <div className="bg-white rounded-xl shadow-lg p-12 border border-slate-200 text-center">
@@ -730,11 +1216,12 @@ function Dashboard() {
                 </div>
               ) : viewMode === 'list' ? (
                 <div className="space-y-4">
-                  {selectedDepartment.objectives.map((objective) => (
+                  {selectedDepartment.objectives.map((objective, idx) => (
                     <DepartmentCard
                       key={objective.id}
                       department={selectedDepartment}
                       objective={objective}
+                      index={idx + 1}
                       onUpdate={refreshAllData}
                     />
                   ))}

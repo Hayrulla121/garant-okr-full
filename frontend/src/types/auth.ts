@@ -32,6 +32,7 @@ export interface User {
   canEditAssignedDepartments: boolean;
   lastLogin?: string;
   assignedDepartments: DepartmentSummary[];
+  assignedGroups?: { id: string; name: string; departmentId: string }[];
   createdAt?: string;
 }
 
@@ -74,6 +75,7 @@ export interface CreateUserRequest {
   fullName: string;
   role: Role;
   assignedDepartmentIds?: string[];
+  assignedGroupIds?: string[];
   jobTitle?: string;
   phoneNumber?: string;
   bio?: string;
@@ -90,6 +92,7 @@ export interface UpdateUserRequest {
   bio?: string;
   role?: Role;                         // ADMIN only
   assignedDepartmentIds?: string[];    // ADMIN only
+  assignedGroupIds?: string[];         // ADMIN only
   isActive?: boolean;                  // ADMIN only
   canEditAssignedDepartments?: boolean; // ADMIN only
   password?: string;                   // Password change

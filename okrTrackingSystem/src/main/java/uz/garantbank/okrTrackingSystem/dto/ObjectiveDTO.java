@@ -31,4 +31,10 @@ public class ObjectiveDTO {
 
     @Schema(description = "Computed score based on key result achievements")
     private ScoreResult score;
+
+    @Schema(description = "Optional employee ID for leader objectives (selects which leader to assign)")
+    private String employeeId;
+
+    @Schema(description = "Full name of the assigned employee (read-only, populated for leader objectives)")
+    private String employeeName;
 }

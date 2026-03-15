@@ -1,4 +1,5 @@
 package uz.garantbank.okrTrackingSystem.service;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
@@ -14,6 +15,7 @@ import uz.garantbank.okrTrackingSystem.security.UserDetailsImpl;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
 /**
  * Service for managing department-based access control.
  * Centralizes all permission logic for department data access.
@@ -54,7 +56,8 @@ public class DepartmentAccessService {
     }
 
     /**
-     * Check if the user has a high-level role (ADMIN, DIRECTOR, HR, or BUSINESS_BLOCK).
+     * Check if the user has a high-level role (ADMIN, DIRECTOR, HR, or
+     * BUSINESS_BLOCK).
      *
      * @param user the user to check
      * @return true if user has a high-level role
@@ -71,7 +74,7 @@ public class DepartmentAccessService {
      * Check if the user can view a specific department.
      * All authenticated users can view all departments.
      *
-     * @param user the user to check
+     * @param user         the user to check
      * @param departmentId the department ID
      * @return true (all authenticated users can view all departments)
      */
@@ -85,7 +88,7 @@ public class DepartmentAccessService {
      * - EMPLOYEE cannot edit any department (read-only)
      * - Other roles can only edit departments they are assigned to
      *
-     * @param user the user to check
+     * @param user         the user to check
      * @param departmentId the department ID
      * @return true if user can edit the department
      */
@@ -97,12 +100,18 @@ public class DepartmentAccessService {
             return false;
         }
 
-        // ADMIN can edit everything
-        if (user.getRole() == Role.ADMIN) {
+        // ADMIN, HR, and BUSINESS_BLOCK can edit everything
+        if (user.getRole() == Role.ADMIN || user.getRole() == Role.HR || user.getRole() == Role.BUSINESS_BLOCK) {
             return true;
         }
 
-        // EMPLOYEE is normally read-only, but can edit if canEditAssignedDepartments is enabled
+        // Null departmentId (e.g., division/group objectives) — only ADMIN/DIRECTOR
+        if (departmentId == null) {
+            return user.getRole() == Role.DIRECTOR;
+        }
+
+        // EMPLOYEE is normally read-only, but can edit if canEditAssignedDepartments is
+        // enabled
         if (user.getRole() == Role.EMPLOYEE) {
             if (user.isCanEditAssignedDepartments()) {
                 return isDepartmentAssigned(user, departmentId);
@@ -118,14 +127,14 @@ public class DepartmentAccessService {
      * Check if the user can edit threshold/score level values for a department.
      * Only ADMIN can edit score levels.
      *
-     * @param user the user to check
+     * @param user         the user to check
      * @param departmentId the department ID
      * @return true if user can edit thresholds/score levels
      */
     @Transactional(readOnly = true)
     public boolean canEditThresholds(User user, String departmentId) {
-        // Only ADMIN can edit score levels/thresholds
-        return user.getRole() == Role.ADMIN;
+        // ADMIN, HR, and BUSINESS_BLOCK can edit score levels/thresholds
+        return user.getRole() == Role.ADMIN || user.getRole() == Role.HR || user.getRole() == Role.BUSINESS_BLOCK;
     }
 
     /**
@@ -136,14 +145,14 @@ public class DepartmentAccessService {
      * @return true if user can edit score levels
      */
     public boolean canEditScoreLevels(User user) {
-        return user.getRole() == Role.ADMIN;
+        return user.getRole() == Role.ADMIN || user.getRole() == Role.HR || user.getRole() == Role.BUSINESS_BLOCK;
     }
 
     /**
      * Check if the user can edit actual values for a department.
      * Same rules as canEditDepartment.
      *
-     * @param user the user to check
+     * @param user         the user to check
      * @param departmentId the department ID
      * @return true if user can edit actual values
      */
@@ -155,7 +164,7 @@ public class DepartmentAccessService {
     /**
      * Check if a department is assigned to the user.
      *
-     * @param user the user to check
+     * @param user         the user to check
      * @param departmentId the department ID
      * @return true if the department is in the user's assigned departments
      */
@@ -185,7 +194,7 @@ public class DepartmentAccessService {
      * Check if the user can edit progress for a department's key results.
      * Only ADMIN or DEPARTMENT_LEADER assigned to the department can edit progress.
      *
-     * @param user the user to check
+     * @param user         the user to check
      * @param departmentId the department ID
      * @return true if user can edit progress
      */
@@ -194,7 +203,7 @@ public class DepartmentAccessService {
         if (user.isReadOnly()) {
             return false;
         }
-        if (user.getRole() == Role.ADMIN) {
+        if (user.getRole() == Role.ADMIN || user.getRole() == Role.HR || user.getRole() == Role.BUSINESS_BLOCK) {
             return true;
         }
         if (user.getRole() == Role.DEPARTMENT_LEADER) {
@@ -207,13 +216,13 @@ public class DepartmentAccessService {
      * Check if the user can view progress for a department's key results.
      * Only users assigned to the department or ADMIN can view progress.
      *
-     * @param user the user to check
+     * @param user         the user to check
      * @param departmentId the department ID
      * @return true if user can view progress
      */
     @Transactional(readOnly = true)
     public boolean canViewProgress(User user, String departmentId) {
-        if (user.getRole() == Role.ADMIN) {
+        if (user.getRole() == Role.ADMIN || user.getRole() == Role.HR || user.getRole() == Role.BUSINESS_BLOCK) {
             return true;
         }
         return isDepartmentAssigned(user, departmentId);
@@ -229,7 +238,7 @@ public class DepartmentAccessService {
     public void requireWriteAccess(User user) {
         if (user.isReadOnly()) {
             throw new AccessDeniedException(
-                "Your account is in read-only mode. Contact an administrator to enable write access.");
+                    "Your account is in read-only mode. Contact an administrator to enable write access.");
         }
     }
 

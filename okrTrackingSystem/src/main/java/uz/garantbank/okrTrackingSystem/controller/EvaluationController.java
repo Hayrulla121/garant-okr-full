@@ -56,7 +56,7 @@ public class EvaluationController {
             @ApiResponse(responseCode = "403", description = "Insufficient permissions", content = @Content)
     })
     @PostMapping
-    @PreAuthorize("hasAnyRole('DIRECTOR', 'HR', 'BUSINESS_BLOCK', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('DIRECTOR', 'HR', 'BUSINESS_BLOCK', 'ADMIN', 'DEPARTMENT_LEADER')")
     public ResponseEntity<EvaluationDTO> createEvaluation(
             @RequestBody EvaluationCreateRequest request,
             Authentication authentication) {
@@ -80,9 +80,9 @@ public class EvaluationController {
             @ApiResponse(responseCode = "404", description = "Evaluation not found", content = @Content)
     })
     @PostMapping("/{id}/submit")
-    @PreAuthorize("hasAnyRole('DIRECTOR', 'HR', 'BUSINESS_BLOCK', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('DIRECTOR', 'HR', 'BUSINESS_BLOCK', 'ADMIN', 'DEPARTMENT_LEADER')")
     public ResponseEntity<EvaluationDTO> submitEvaluation(
-            @Parameter(description = "Evaluation ID (UUID)", required = true) @PathVariable UUID id,
+            @Parameter(description = "Evaluation ID (UUID)", required = true) @PathVariable("id") UUID id,
             Authentication authentication) {
         accessService.requireWriteAccess(accessService.getCurrentUser());
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -102,9 +102,9 @@ public class EvaluationController {
             @ApiResponse(responseCode = "404", description = "Evaluation not found", content = @Content)
     })
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('DIRECTOR', 'HR', 'BUSINESS_BLOCK', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('DIRECTOR', 'HR', 'BUSINESS_BLOCK', 'ADMIN', 'DEPARTMENT_LEADER')")
     public ResponseEntity<EvaluationDTO> updateEvaluation(
-            @Parameter(description = "Evaluation ID (UUID)", required = true) @PathVariable UUID id,
+            @Parameter(description = "Evaluation ID (UUID)", required = true) @PathVariable("id") UUID id,
             @RequestBody EvaluationCreateRequest request,
             Authentication authentication) {
         accessService.requireWriteAccess(accessService.getCurrentUser());
@@ -125,8 +125,8 @@ public class EvaluationController {
     @GetMapping("/target/{type}/{id}")
     public ResponseEntity<List<EvaluationDTO>> getEvaluationsForTarget(
             @Parameter(description = "Target type", required = true, schema = @Schema(allowableValues = {"DEPARTMENT", "EMPLOYEE"}))
-            @PathVariable String type,
-            @Parameter(description = "Target ID (UUID)", required = true) @PathVariable UUID id) {
+            @PathVariable("type") String type,
+            @Parameter(description = "Target ID (UUID)", required = true) @PathVariable("id") UUID id) {
         List<EvaluationDTO> evaluations = evaluationService.getEvaluationsForTarget(type.toUpperCase(), id);
         return ResponseEntity.ok(evaluations);
     }
@@ -176,7 +176,7 @@ public class EvaluationController {
     })
     @GetMapping("/employee/{userId}/summary")
     public ResponseEntity<EmployeeEvaluationSummaryDTO> getEmployeeEvaluationSummary(
-            @Parameter(description = "Employee User ID (UUID)", required = true) @PathVariable UUID userId,
+            @Parameter(description = "Employee User ID (UUID)", required = true) @PathVariable("userId") UUID userId,
             Authentication authentication) {
         UserDetailsImpl currentUser = (UserDetailsImpl) authentication.getPrincipal();
         boolean isSelf = currentUser.getId().equals(userId);
@@ -185,7 +185,12 @@ public class EvaluationController {
             throw new org.springframework.security.access.AccessDeniedException(
                 "You can only view your own evaluation summary");
         }
-        return ResponseEntity.ok(evaluationService.getEmployeeEvaluationSummary(userId));
+        try {
+            return ResponseEntity.ok(evaluationService.getEmployeeEvaluationSummary(userId));
+        } catch (IllegalArgumentException e) {
+            // User not found — likely a stale session after DB reset; treat as unauthorized
+            return ResponseEntity.status(401).build();
+        }
     }
 
     @Operation(
@@ -216,9 +221,9 @@ public class EvaluationController {
             @ApiResponse(responseCode = "404", description = "Evaluation not found", content = @Content)
     })
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('DIRECTOR', 'HR', 'BUSINESS_BLOCK', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('DIRECTOR', 'HR', 'BUSINESS_BLOCK', 'ADMIN', 'DEPARTMENT_LEADER')")
     public ResponseEntity<Void> deleteEvaluation(
-            @Parameter(description = "Evaluation ID (UUID)", required = true) @PathVariable UUID id,
+            @Parameter(description = "Evaluation ID (UUID)", required = true) @PathVariable("id") UUID id,
             Authentication authentication) {
         accessService.requireWriteAccess(accessService.getCurrentUser());
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();

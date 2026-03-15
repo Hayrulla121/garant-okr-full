@@ -31,8 +31,13 @@ public class Department {
     private Division division;
 
     @OneToMany(mappedBy = "department", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("createdAt ASC")
     @Builder.Default
     private Set<Objective> objectives = new HashSet<>();
+
+    @OneToMany(mappedBy = "department", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private Set<OrgGroup> groups = new HashSet<>();
 
     /**
      * Department leader (user with DEPARTMENT_LEADER role)

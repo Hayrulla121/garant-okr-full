@@ -19,55 +19,60 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Exports OKR data to Excel with multi-sheet support and department leader objectives.
+ * Exports OKR data to Excel with multi-sheet support and department leader
+ * objectives.
  *
- * Columns: Division | Dept | Objective | Obj Weight | KR Name | KR Weight | Type | Actual | Unit |
- *          [Level Thresholds...] | Score | Performance Level
+ * Columns: Division | Dept | Objective | Obj Weight | KR Name | KR Weight |
+ * Type | Actual | Unit |
+ * [Level Thresholds...] | Score | Performance Level
  *
- * Multi-sheet mode: one sheet per department with leader objectives shown first.
+ * Multi-sheet mode: one sheet per department with leader objectives shown
+ * first.
  */
 @Slf4j
 @Service
 public class ExcelExportService {
 
     private final ScoreLevelRepository scoreLevelRepository;
+    private final DivisionService divisionService;
 
     // Column indices (0-based) — Division column added at position 0
-    private static final int COL_DIVISION  = 0;  // A
-    private static final int COL_DEPT      = 1;  // B
-    private static final int COL_OBJ       = 2;  // C
-    private static final int COL_OBJ_WT    = 3;  // D
-    private static final int COL_KR_NAME   = 4;  // E
-    private static final int COL_KR_WT     = 5;  // F
-    private static final int COL_TYPE      = 6;  // G
-    private static final int COL_ACTUAL    = 7;  // H
-    private static final int COL_UNIT      = 8;  // I
+    private static final int COL_DIVISION = 0; // A
+    private static final int COL_DEPT = 1; // B
+    private static final int COL_OBJ = 2; // C
+    private static final int COL_OBJ_WT = 3; // D
+    private static final int COL_KR_NAME = 4; // E
+    private static final int COL_KR_WT = 5; // F
+    private static final int COL_TYPE = 6; // G
+    private static final int COL_ACTUAL = 7; // H
+    private static final int COL_UNIT = 8; // I
     // Col 9+ = dynamic threshold columns
     // After thresholds: Score, Level
 
     // Colors
-    private static final String HEADER_COLOR    = "4472C4";
-    private static final String WEIGHT_BG       = "FFF2CC";
-    private static final String WEIGHT_FG       = "D97706";
-    private static final String OBJ_SUMMARY_BG  = "E2EFDA";
+    private static final String HEADER_COLOR = "4472C4";
+    private static final String WEIGHT_BG = "FFF2CC";
+    private static final String WEIGHT_FG = "D97706";
+    private static final String OBJ_SUMMARY_BG = "E2EFDA";
     private static final String DEPT_SUMMARY_BG = "1F3864";
-    private static final String LEADER_BG       = "E8E0F5";
-    private static final String LEADER_FG       = "4A2391";
-    private static final String LEADER_BORDER   = "6366F1";
+    private static final String LEADER_BG = "E8E0F5";
+    private static final String LEADER_FG = "4A2391";
+    private static final String LEADER_BORDER = "6366F1";
 
     private static final List<DefaultLevel> DEFAULT_LEVELS = List.of(
-            new DefaultLevel("Не соответствует", 0.0,  "#d9534f"),
-            new DefaultLevel("Ниже ожиданий",    0.31, "#f0ad4e"),
-            new DefaultLevel("На уровне ожиданий",0.51,"#5cb85c"),
-            new DefaultLevel("Превышает ожидания",0.86,"#28a745"),
-            new DefaultLevel("Исключительно",    0.98, "#1e7b34")
-    );
+            new DefaultLevel("Не соответствует", 0.0, "#d9534f"),
+            new DefaultLevel("Ниже ожиданий", 0.31, "#f0ad4e"),
+            new DefaultLevel("На уровне ожиданий", 0.51, "#5cb85c"),
+            new DefaultLevel("Превышает ожидания", 0.86, "#28a745"),
+            new DefaultLevel("Исключительно", 0.98, "#1e7b34"));
 
-    public ExcelExportService(ScoreLevelRepository scoreLevelRepository) {
+    public ExcelExportService(ScoreLevelRepository scoreLevelRepository, DivisionService divisionService) {
         this.scoreLevelRepository = scoreLevelRepository;
+        this.divisionService = divisionService;
     }
 
-    private record DefaultLevel(String name, double scoreValue, String color) {}
+    private record DefaultLevel(String name, double scoreValue, String color) {
+    }
 
     // ─── Public API ──────────────────────────────────────────────────────────
 
@@ -78,21 +83,22 @@ public class ExcelExportService {
     public byte[] exportToExcel(List<DepartmentDTO> departments, boolean multiSheet) {
         log.info("Exporting {} departments to Excel (multiSheet={})", departments.size(), multiSheet);
         try (XSSFWorkbook wb = new XSSFWorkbook();
-             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
             List<ScoreLevel> levels = getScoreLevels();
-            int numLevels   = levels.size();
-            int threshStart = 9;                        // column J (0-indexed)
-            int scoreCol    = threshStart + numLevels;
-            int levelCol    = scoreCol + 1;
-            int totalCols   = levelCol + 1;
+            int numLevels = levels.size();
+            int threshStart = 9; // column J (0-indexed)
+            int scoreCol = threshStart + numLevels;
+            int levelCol = scoreCol + 1;
+            int totalCols = levelCol + 1;
 
             Styles st = new Styles(wb, levels, numLevels);
 
             if (multiSheet) {
                 for (int i = 0; i < departments.size(); i++) {
                     DepartmentDTO dept = departments.get(i);
-                    if (dept == null) continue;
+                    if (dept == null)
+                        continue;
 
                     String sheetName = sanitizeSheetName(dept.getName() != null ? dept.getName() : "Sheet" + (i + 1));
                     XSSFSheet ws;
@@ -105,7 +111,8 @@ public class ExcelExportService {
                     setColumnWidths(ws, numLevels, scoreCol, levelCol);
 
                     int rowIdx = 1;
-                    rowIdx = writeDepartment(ws, dept, levels, numLevels, threshStart, scoreCol, levelCol, st, rowIdx, totalCols);
+                    rowIdx = writeDepartment(ws, dept, levels, numLevels, threshStart, scoreCol, levelCol, st, rowIdx,
+                            totalCols);
 
                     if (rowIdx > 1) {
                         applyConditionalFormatting(ws, rowIdx - 1, scoreCol, levelCol, levels);
@@ -118,8 +125,10 @@ public class ExcelExportService {
 
                 int rowIdx = 1;
                 for (DepartmentDTO dept : departments) {
-                    if (dept == null) continue;
-                    rowIdx = writeDepartment(ws, dept, levels, numLevels, threshStart, scoreCol, levelCol, st, rowIdx, totalCols);
+                    if (dept == null)
+                        continue;
+                    rowIdx = writeDepartment(ws, dept, levels, numLevels, threshStart, scoreCol, levelCol, st, rowIdx,
+                            totalCols);
                 }
 
                 if (rowIdx > 1) {
@@ -139,17 +148,180 @@ public class ExcelExportService {
     // ─── Department writer ───────────────────────────────────────────────────
 
     private int writeDepartment(XSSFSheet ws, DepartmentDTO dept,
-                                 List<ScoreLevel> levels, int numLevels,
-                                 int threshStart, int scoreCol, int levelCol,
-                                 Styles st, int startRow, int totalCols) {
-        int rowIdx       = startRow;
+            List<ScoreLevel> levels, int numLevels,
+            int threshStart, int scoreCol, int levelCol,
+            Styles st, int startRow, int totalCols) {
+        int rowIdx = startRow;
         int deptStartRow = rowIdx;
 
         String divisionName = dept.getDivision() != null && dept.getDivision().getName() != null
-                ? dept.getDivision().getName() : "";
+                ? dept.getDivision().getName()
+                : "";
 
         // Track objective-summary row positions for the dept SUMPRODUCT formula
         List<Integer> allObjSummaryRows = new ArrayList<>();
+
+        // ── Division Objectives Section ───────────────────────────────────
+        String divisionId = dept.getDivision() != null ? dept.getDivision().getId() : null;
+        List<ObjectiveDTO> divisionObjs = divisionId != null ? divisionService.getDivisionObjectives(divisionId) : null;
+        int divisionSectionStartRow = -1;
+        int divisionSectionEndRow = -1;
+        List<Integer> divObjSummaryRows = new ArrayList<>();
+
+        if (divisionObjs != null && !divisionObjs.isEmpty()) {
+            divisionSectionStartRow = rowIdx;
+
+            for (ObjectiveDTO obj : divisionObjs) {
+                if (obj == null || obj.getKeyResults() == null || obj.getKeyResults().isEmpty())
+                    continue;
+
+                int objStartRow = rowIdx;
+                List<KeyResultDTO> krs = obj.getKeyResults();
+                int objWeight = obj.getWeight() != null ? obj.getWeight() : 0;
+
+                for (KeyResultDTO kr : krs) {
+                    if (kr == null)
+                        continue;
+                    Row row = ws.createRow(rowIdx);
+                    int krWeight = kr.getWeight() != null ? kr.getWeight() : 0;
+
+                    if (rowIdx == deptStartRow) {
+                        Cell c = row.createCell(COL_DIVISION);
+                        c.setCellValue(divisionName);
+                        c.setCellStyle(st.deptLabelStyle);
+                    }
+
+                    if (rowIdx == divisionSectionStartRow) {
+                        Cell c = row.createCell(COL_DEPT);
+                        c.setCellValue("\uD83C\uDFDB Дивизион: " + divisionName);
+                        c.setCellStyle(st.leaderLabelStyle);
+                    }
+
+                    if (rowIdx == objStartRow) {
+                        Cell c = row.createCell(COL_OBJ);
+                        c.setCellValue(obj.getName() != null ? obj.getName() : "");
+                        c.setCellStyle(st.objNameStyle);
+
+                        Cell cWt = row.createCell(COL_OBJ_WT);
+                        cWt.setCellValue(objWeight);
+                        cWt.setCellStyle(st.weightStyle);
+                    }
+
+                    row.createCell(COL_KR_NAME).setCellValue(kr.getName() != null ? kr.getName() : "");
+                    Cell krWtCell = row.createCell(COL_KR_WT);
+                    krWtCell.setCellValue(krWeight);
+                    krWtCell.setCellStyle(st.weightStyle);
+                    row.createCell(COL_TYPE).setCellValue(metricTypeDisplay(kr.getMetricType()));
+
+                    Cell actualCell = row.createCell(COL_ACTUAL);
+                    actualCell.setCellStyle(st.centeredStyle);
+                    writeActualValue(actualCell, kr);
+
+                    row.createCell(COL_UNIT).setCellValue(kr.getUnit() != null ? kr.getUnit() : "");
+                    writeThresholds(row, kr, levels, numLevels, threshStart, st);
+
+                    int xlRow = rowIdx + 1;
+                    Cell scoreCell = row.createCell(scoreCol);
+                    writeScoreFormula(scoreCell, kr, xlRow, levels, threshStart, st);
+
+                    Cell levelCell = row.createCell(levelCol);
+                    writeLevelFormula(levelCell, kr, xlRow, scoreCol, levels, st);
+
+                    rowIdx++;
+                }
+
+                int objKrEndRow = rowIdx - 1;
+                if (!krs.isEmpty()) {
+                    Row sumRow = ws.createRow(rowIdx);
+                    Cell lblCell = sumRow.createCell(COL_KR_NAME);
+                    lblCell.setCellValue("\uD83D\uDCCA ВЗВЕШЕННАЯ ОЦЕНКА ЦЕЛИ (ДИВ)");
+                    lblCell.setCellStyle(st.objSummaryLabelStyle);
+
+                    for (int c = COL_KR_WT; c < threshStart + numLevels; c++) {
+                        sumRow.createCell(c).setCellStyle(st.objSummaryBgStyle);
+                    }
+
+                    String scoreColLetter = colLetter(scoreCol);
+                    String krWtColLetter = colLetter(COL_KR_WT);
+                    int xlObjStart = objStartRow + 1;
+                    int xlObjEnd = objKrEndRow + 1;
+                    String objScoreFormula = String.format(
+                            "IF(SUM(%s%d:%s%d)>0,SUMPRODUCT(%s%d:%s%d,%s%d:%s%d)/SUM(%s%d:%s%d),AVERAGE(%s%d:%s%d))",
+                            krWtColLetter, xlObjStart, krWtColLetter, xlObjEnd,
+                            scoreColLetter, xlObjStart, scoreColLetter, xlObjEnd,
+                            krWtColLetter, xlObjStart, krWtColLetter, xlObjEnd,
+                            krWtColLetter, xlObjStart, krWtColLetter, xlObjEnd,
+                            scoreColLetter, xlObjStart, scoreColLetter, xlObjEnd);
+                    Cell objScoreCell = sumRow.createCell(scoreCol);
+                    objScoreCell.setCellFormula(objScoreFormula);
+                    objScoreCell.setCellStyle(st.scoreSummaryStyle);
+
+                    Cell objLevelCell = sumRow.createCell(levelCol);
+                    objLevelCell.setCellFormula(levelFormula(rowIdx + 1, scoreCol, levels));
+                    objLevelCell.setCellStyle(st.levelSummaryStyle);
+
+                    divObjSummaryRows.add(rowIdx);
+                    allObjSummaryRows.add(rowIdx);
+                    applyBottomBorder(ws, rowIdx, totalCols, BorderStyle.MEDIUM, "000000");
+                    rowIdx++;
+                }
+
+                int objEndRow = rowIdx - 1;
+                if (objEndRow > objStartRow) {
+                    safeAddMerge(ws, objStartRow, objEndRow, COL_OBJ, COL_OBJ);
+                    safeAddMerge(ws, objStartRow, objEndRow, COL_OBJ_WT, COL_OBJ_WT);
+                    ws.getRow(objStartRow).getCell(COL_OBJ_WT).setCellStyle(st.weightSumStyle);
+                }
+            }
+
+            if (!divObjSummaryRows.isEmpty()) {
+                Row divSumRow = ws.createRow(rowIdx);
+
+                Cell divSumLbl = divSumRow.createCell(COL_KR_NAME);
+                divSumLbl.setCellValue("\uD83C\uDFDB ВЗВЕШЕННАЯ ОЦЕНКА ДИВИЗИОНА");
+                divSumLbl.setCellStyle(st.leaderSummaryLabelStyle);
+
+                for (int c = COL_KR_WT; c < threshStart + numLevels; c++) {
+                    divSumRow.createCell(c);
+                }
+
+                String scoreColLetter = colLetter(scoreCol);
+                String objWtColLetter = colLetter(COL_OBJ_WT);
+                StringBuilder scoreRefs = new StringBuilder();
+                StringBuilder weightRefs = new StringBuilder();
+                for (int i = 0; i < divObjSummaryRows.size(); i++) {
+                    int xlSumRow = divObjSummaryRows.get(i) + 1;
+                    if (i > 0) {
+                        scoreRefs.append(",");
+                        weightRefs.append(",");
+                    }
+                    scoreRefs.append(scoreColLetter).append(xlSumRow);
+                    weightRefs.append(objWtColLetter).append(xlSumRow);
+                }
+                String divScoreFormula = String.format(
+                        "IF(SUM(%s)>0,SUMPRODUCT(%s,%s)/SUM(%s),AVERAGE(%s))",
+                        weightRefs, scoreRefs, weightRefs, weightRefs, scoreRefs);
+
+                Cell leaderScoreCell = divSumRow.createCell(scoreCol);
+                leaderScoreCell.setCellFormula(divScoreFormula);
+                leaderScoreCell.setCellStyle(st.scoreSummaryStyle);
+
+                Cell leaderLevelCell = divSumRow.createCell(levelCol);
+                leaderLevelCell.setCellFormula(levelFormula(rowIdx + 1, scoreCol, levels));
+                leaderLevelCell.setCellStyle(st.levelSummaryStyle);
+
+                applyBottomBorder(ws, rowIdx, totalCols, BorderStyle.MEDIUM, LEADER_BORDER);
+                divisionSectionEndRow = rowIdx;
+                rowIdx++;
+            } else {
+                divisionSectionEndRow = rowIdx - 1;
+            }
+
+            if (divisionSectionStartRow >= 0 && divisionSectionEndRow > divisionSectionStartRow) {
+                safeAddMerge(ws, divisionSectionStartRow, divisionSectionEndRow, COL_DEPT, COL_DEPT);
+                ws.getRow(divisionSectionStartRow).getCell(COL_DEPT).setCellStyle(st.leaderLabelStyle);
+            }
+        }
 
         // ── Leader Objectives Section ─────────────────────────────────────
         List<ObjectiveDTO> leaderObjs = dept.getLeaderObjectives();
@@ -162,14 +334,16 @@ public class ExcelExportService {
             leaderSectionStartRow = rowIdx;
 
             for (ObjectiveDTO obj : leaderObjs) {
-                if (obj == null || obj.getKeyResults() == null || obj.getKeyResults().isEmpty()) continue;
+                if (obj == null || obj.getKeyResults() == null || obj.getKeyResults().isEmpty())
+                    continue;
 
                 int objStartRow = rowIdx;
                 List<KeyResultDTO> krs = obj.getKeyResults();
                 int objWeight = obj.getWeight() != null ? obj.getWeight() : 0;
 
                 for (KeyResultDTO kr : krs) {
-                    if (kr == null) continue;
+                    if (kr == null)
+                        continue;
                     Row row = ws.createRow(rowIdx);
                     int krWeight = kr.getWeight() != null ? kr.getWeight() : 0;
 
@@ -183,7 +357,8 @@ public class ExcelExportService {
                     // B: Leader label — only on first row of leader section
                     if (rowIdx == leaderSectionStartRow) {
                         Cell c = row.createCell(COL_DEPT);
-                        c.setCellValue("\uD83D\uDC64 Руководитель: " + leaderName + "\n(" + (dept.getName() != null ? dept.getName() : "") + ")");
+                        c.setCellValue("\uD83D\uDC64 Руководитель: " + leaderName + "\n("
+                                + (dept.getName() != null ? dept.getName() : "") + ")");
                         c.setCellStyle(st.leaderLabelStyle);
                     }
 
@@ -249,19 +424,18 @@ public class ExcelExportService {
                     }
 
                     String scoreColLetter = colLetter(scoreCol);
-                    String krWtColLetter  = colLetter(COL_KR_WT);
+                    String krWtColLetter = colLetter(COL_KR_WT);
                     int xlObjStart = objStartRow + 1;
-                    int xlObjEnd   = objKrEndRow + 1;
+                    int xlObjEnd = objKrEndRow + 1;
                     String objScoreFormula = String.format(
-                        "IF(SUM(%s%d:%s%d)>0," +
-                        "SUMPRODUCT(%s%d:%s%d,%s%d:%s%d)/SUM(%s%d:%s%d)," +
-                        "AVERAGE(%s%d:%s%d))",
-                        krWtColLetter, xlObjStart, krWtColLetter, xlObjEnd,
-                        scoreColLetter, xlObjStart, scoreColLetter, xlObjEnd,
-                        krWtColLetter,  xlObjStart, krWtColLetter,  xlObjEnd,
-                        krWtColLetter,  xlObjStart, krWtColLetter,  xlObjEnd,
-                        scoreColLetter, xlObjStart, scoreColLetter, xlObjEnd
-                    );
+                            "IF(SUM(%s%d:%s%d)>0," +
+                                    "SUMPRODUCT(%s%d:%s%d,%s%d:%s%d)/SUM(%s%d:%s%d)," +
+                                    "AVERAGE(%s%d:%s%d))",
+                            krWtColLetter, xlObjStart, krWtColLetter, xlObjEnd,
+                            scoreColLetter, xlObjStart, scoreColLetter, xlObjEnd,
+                            krWtColLetter, xlObjStart, krWtColLetter, xlObjEnd,
+                            krWtColLetter, xlObjStart, krWtColLetter, xlObjEnd,
+                            scoreColLetter, xlObjStart, scoreColLetter, xlObjEnd);
 
                     Cell objScoreCell = sumRow.createCell(scoreCol);
                     objScoreCell.setCellFormula(objScoreFormula);
@@ -305,14 +479,16 @@ public class ExcelExportService {
                 StringBuilder weightRefs = new StringBuilder();
                 for (int i = 0; i < leaderObjSummaryRows.size(); i++) {
                     int xlSumRow = leaderObjSummaryRows.get(i) + 1;
-                    if (i > 0) { scoreRefs.append(","); weightRefs.append(","); }
+                    if (i > 0) {
+                        scoreRefs.append(",");
+                        weightRefs.append(",");
+                    }
                     scoreRefs.append(scoreColLetter).append(xlSumRow);
                     weightRefs.append(objWtColLetter).append(xlSumRow);
                 }
                 String leaderScoreFormula = String.format(
-                    "IF(SUM(%s)>0,SUMPRODUCT(%s,%s)/SUM(%s),AVERAGE(%s))",
-                    weightRefs, scoreRefs, weightRefs, weightRefs, scoreRefs
-                );
+                        "IF(SUM(%s)>0,SUMPRODUCT(%s,%s)/SUM(%s),AVERAGE(%s))",
+                        weightRefs, scoreRefs, weightRefs, weightRefs, scoreRefs);
 
                 Cell leaderScoreCell = leaderSumRow.createCell(scoreCol);
                 leaderScoreCell.setCellFormula(leaderScoreFormula);
@@ -344,14 +520,16 @@ public class ExcelExportService {
         List<ObjectiveDTO> objectives = dept.getObjectives();
         if (objectives != null) {
             for (ObjectiveDTO obj : objectives) {
-                if (obj == null || obj.getKeyResults() == null || obj.getKeyResults().isEmpty()) continue;
+                if (obj == null || obj.getKeyResults() == null || obj.getKeyResults().isEmpty())
+                    continue;
 
                 int objStartRow = rowIdx;
                 List<KeyResultDTO> krs = obj.getKeyResults();
                 int objWeight = obj.getWeight() != null ? obj.getWeight() : 0;
 
                 for (KeyResultDTO kr : krs) {
-                    if (kr == null) continue;
+                    if (kr == null)
+                        continue;
                     Row row = ws.createRow(rowIdx);
                     int krWeight = kr.getWeight() != null ? kr.getWeight() : 0;
 
@@ -431,19 +609,18 @@ public class ExcelExportService {
                     }
 
                     String scoreColLetter = colLetter(scoreCol);
-                    String krWtColLetter  = colLetter(COL_KR_WT);
+                    String krWtColLetter = colLetter(COL_KR_WT);
                     int xlObjStart = objStartRow + 1;
-                    int xlObjEnd   = objKrEndRow + 1;
+                    int xlObjEnd = objKrEndRow + 1;
                     String objScoreFormula = String.format(
-                        "IF(SUM(%s%d:%s%d)>0," +
-                        "SUMPRODUCT(%s%d:%s%d,%s%d:%s%d)/SUM(%s%d:%s%d)," +
-                        "AVERAGE(%s%d:%s%d))",
-                        krWtColLetter, xlObjStart, krWtColLetter, xlObjEnd,
-                        scoreColLetter, xlObjStart, scoreColLetter, xlObjEnd,
-                        krWtColLetter,  xlObjStart, krWtColLetter,  xlObjEnd,
-                        krWtColLetter,  xlObjStart, krWtColLetter,  xlObjEnd,
-                        scoreColLetter, xlObjStart, scoreColLetter, xlObjEnd
-                    );
+                            "IF(SUM(%s%d:%s%d)>0," +
+                                    "SUMPRODUCT(%s%d:%s%d,%s%d:%s%d)/SUM(%s%d:%s%d)," +
+                                    "AVERAGE(%s%d:%s%d))",
+                            krWtColLetter, xlObjStart, krWtColLetter, xlObjEnd,
+                            scoreColLetter, xlObjStart, scoreColLetter, xlObjEnd,
+                            krWtColLetter, xlObjStart, krWtColLetter, xlObjEnd,
+                            krWtColLetter, xlObjStart, krWtColLetter, xlObjEnd,
+                            scoreColLetter, xlObjStart, scoreColLetter, xlObjEnd);
 
                     Cell objScoreCell = sumRow.createCell(scoreCol);
                     objScoreCell.setCellFormula(objScoreFormula);
@@ -480,6 +657,170 @@ public class ExcelExportService {
             }
         }
 
+        // ── Group Objectives Section ──────────────────────────────────────
+        if (dept.getGroups() != null && !dept.getGroups().isEmpty()) {
+            for (uz.garantbank.okrTrackingSystem.dto.GroupDTO group : dept.getGroups()) {
+                List<ObjectiveDTO> groupObjs = group.getObjectives();
+                if (groupObjs == null || groupObjs.isEmpty())
+                    continue;
+
+                int groupSectionStartRow = rowIdx;
+                int groupSectionEndRow = -1;
+                List<Integer> groupObjSummaryRows = new ArrayList<>();
+
+                for (ObjectiveDTO obj : groupObjs) {
+                    if (obj == null || obj.getKeyResults() == null || obj.getKeyResults().isEmpty())
+                        continue;
+
+                    int objStartRow = rowIdx;
+                    List<KeyResultDTO> krs = obj.getKeyResults();
+                    int objWeight = obj.getWeight() != null ? obj.getWeight() : 0;
+
+                    for (KeyResultDTO kr : krs) {
+                        if (kr == null)
+                            continue;
+                        Row row = ws.createRow(rowIdx);
+                        int krWeight = kr.getWeight() != null ? kr.getWeight() : 0;
+
+                        if (rowIdx == deptStartRow) {
+                            Cell c = row.createCell(COL_DIVISION);
+                            c.setCellValue(divisionName);
+                            c.setCellStyle(st.deptLabelStyle);
+                        }
+
+                        if (rowIdx == groupSectionStartRow) {
+                            Cell c = row.createCell(COL_DEPT);
+                            c.setCellValue("\uD83D\uDC65 Группа: " + (group.getName() != null ? group.getName() : ""));
+                            c.setCellStyle(st.deptLabelStyle);
+                        }
+
+                        if (rowIdx == objStartRow) {
+                            Cell c = row.createCell(COL_OBJ);
+                            c.setCellValue(obj.getName() != null ? obj.getName() : "");
+                            c.setCellStyle(st.objNameStyle);
+
+                            Cell cWt = row.createCell(COL_OBJ_WT);
+                            cWt.setCellValue(objWeight);
+                            cWt.setCellStyle(st.weightStyle);
+                        }
+
+                        row.createCell(COL_KR_NAME).setCellValue(kr.getName() != null ? kr.getName() : "");
+                        Cell krWtCell = row.createCell(COL_KR_WT);
+                        krWtCell.setCellValue(krWeight);
+                        krWtCell.setCellStyle(st.weightStyle);
+                        row.createCell(COL_TYPE).setCellValue(metricTypeDisplay(kr.getMetricType()));
+
+                        Cell actualCell = row.createCell(COL_ACTUAL);
+                        actualCell.setCellStyle(st.centeredStyle);
+                        writeActualValue(actualCell, kr);
+
+                        row.createCell(COL_UNIT).setCellValue(kr.getUnit() != null ? kr.getUnit() : "");
+                        writeThresholds(row, kr, levels, numLevels, threshStart, st);
+
+                        int xlRow = rowIdx + 1;
+                        Cell scoreCell = row.createCell(scoreCol);
+                        writeScoreFormula(scoreCell, kr, xlRow, levels, threshStart, st);
+
+                        Cell levelCell = row.createCell(levelCol);
+                        writeLevelFormula(levelCell, kr, xlRow, scoreCol, levels, st);
+
+                        rowIdx++;
+                    }
+
+                    int objKrEndRow = rowIdx - 1;
+                    if (!krs.isEmpty()) {
+                        Row sumRow = ws.createRow(rowIdx);
+                        Cell lblCell = sumRow.createCell(COL_KR_NAME);
+                        lblCell.setCellValue("\uD83D\uDCCA ВЗВЕШЕННАЯ ОЦЕНКА ЦЕЛИ (ГРУП)");
+                        lblCell.setCellStyle(st.objSummaryLabelStyle);
+
+                        for (int c = COL_KR_WT; c < threshStart + numLevels; c++) {
+                            sumRow.createCell(c).setCellStyle(st.objSummaryBgStyle);
+                        }
+
+                        String scoreColLetter = colLetter(scoreCol);
+                        String krWtColLetter = colLetter(COL_KR_WT);
+                        int xlObjStart = objStartRow + 1;
+                        int xlObjEnd = objKrEndRow + 1;
+                        String objScoreFormula = String.format(
+                                "IF(SUM(%s%d:%s%d)>0,SUMPRODUCT(%s%d:%s%d,%s%d:%s%d)/SUM(%s%d:%s%d),AVERAGE(%s%d:%s%d))",
+                                krWtColLetter, xlObjStart, krWtColLetter, xlObjEnd,
+                                scoreColLetter, xlObjStart, scoreColLetter, xlObjEnd,
+                                krWtColLetter, xlObjStart, krWtColLetter, xlObjEnd,
+                                krWtColLetter, xlObjStart, krWtColLetter, xlObjEnd,
+                                scoreColLetter, xlObjStart, scoreColLetter, xlObjEnd);
+                        Cell objScoreCell = sumRow.createCell(scoreCol);
+                        objScoreCell.setCellFormula(objScoreFormula);
+                        objScoreCell.setCellStyle(st.scoreSummaryStyle);
+
+                        Cell objLevelCell = sumRow.createCell(levelCol);
+                        objLevelCell.setCellFormula(levelFormula(rowIdx + 1, scoreCol, levels));
+                        objLevelCell.setCellStyle(st.levelSummaryStyle);
+
+                        groupObjSummaryRows.add(rowIdx);
+                        allObjSummaryRows.add(rowIdx);
+                        applyBottomBorder(ws, rowIdx, totalCols, BorderStyle.MEDIUM, "000000");
+                        rowIdx++;
+                    }
+
+                    int objEndRow = rowIdx - 1;
+                    if (objEndRow > objStartRow) {
+                        safeAddMerge(ws, objStartRow, objEndRow, COL_OBJ, COL_OBJ);
+                        safeAddMerge(ws, objStartRow, objEndRow, COL_OBJ_WT, COL_OBJ_WT);
+                        ws.getRow(objStartRow).getCell(COL_OBJ_WT).setCellStyle(st.weightSumStyle);
+                    }
+                }
+
+                if (!groupObjSummaryRows.isEmpty()) {
+                    Row grpSumRow = ws.createRow(rowIdx);
+
+                    Cell grpSumLbl = grpSumRow.createCell(COL_KR_NAME);
+                    grpSumLbl.setCellValue("\uD83D\uDC65 ВЗВЕШЕННАЯ ОЦЕНКА ГРУППЫ");
+                    grpSumLbl.setCellStyle(st.leaderSummaryLabelStyle);
+
+                    for (int c = COL_KR_WT; c < threshStart + numLevels; c++) {
+                        grpSumRow.createCell(c);
+                    }
+
+                    String scoreColLetter = colLetter(scoreCol);
+                    String objWtColLetter = colLetter(COL_OBJ_WT);
+                    StringBuilder scoreRefs = new StringBuilder();
+                    StringBuilder weightRefs = new StringBuilder();
+                    for (int i = 0; i < groupObjSummaryRows.size(); i++) {
+                        int xlSumRow = groupObjSummaryRows.get(i) + 1;
+                        if (i > 0) {
+                            scoreRefs.append(",");
+                            weightRefs.append(",");
+                        }
+                        scoreRefs.append(scoreColLetter).append(xlSumRow);
+                        weightRefs.append(objWtColLetter).append(xlSumRow);
+                    }
+                    String grpScoreFormula = String.format(
+                            "IF(SUM(%s)>0,SUMPRODUCT(%s,%s)/SUM(%s),AVERAGE(%s))",
+                            weightRefs, scoreRefs, weightRefs, weightRefs, scoreRefs);
+
+                    Cell grpScoreCell = grpSumRow.createCell(scoreCol);
+                    grpScoreCell.setCellFormula(grpScoreFormula);
+                    grpScoreCell.setCellStyle(st.scoreSummaryStyle);
+
+                    Cell grpLevelCell = grpSumRow.createCell(levelCol);
+                    grpLevelCell.setCellFormula(levelFormula(rowIdx + 1, scoreCol, levels));
+                    grpLevelCell.setCellStyle(st.levelSummaryStyle);
+
+                    applyBottomBorder(ws, rowIdx, totalCols, BorderStyle.MEDIUM, "000000");
+                    groupSectionEndRow = rowIdx;
+                    rowIdx++;
+                } else {
+                    groupSectionEndRow = rowIdx - 1;
+                }
+
+                if (groupSectionStartRow >= 0 && groupSectionEndRow > groupSectionStartRow) {
+                    safeAddMerge(ws, groupSectionStartRow, groupSectionEndRow, COL_DEPT, COL_DEPT);
+                    ws.getRow(groupSectionStartRow).getCell(COL_DEPT).setCellStyle(st.deptLabelStyle);
+                }
+            }
+        }
+
         // ── Department Summary Row ────────────────────────────────────────
         if (!allObjSummaryRows.isEmpty()) {
             Row deptSumRow = ws.createRow(rowIdx);
@@ -508,18 +849,20 @@ public class ExcelExportService {
             // SUMPRODUCT formula using ALL objective summary rows (leader + dept)
             String scoreColLetter = colLetter(scoreCol);
             String objWtColLetter = colLetter(COL_OBJ_WT);
-            StringBuilder scoreRefs  = new StringBuilder();
+            StringBuilder scoreRefs = new StringBuilder();
             StringBuilder weightRefs = new StringBuilder();
             for (int i = 0; i < allObjSummaryRows.size(); i++) {
                 int xlSumRow = allObjSummaryRows.get(i) + 1;
-                if (i > 0) { scoreRefs.append(","); weightRefs.append(","); }
+                if (i > 0) {
+                    scoreRefs.append(",");
+                    weightRefs.append(",");
+                }
                 scoreRefs.append(scoreColLetter).append(xlSumRow);
                 weightRefs.append(objWtColLetter).append(xlSumRow);
             }
             String deptScoreFormula = String.format(
-                "IF(SUM(%s)>0,SUMPRODUCT(%s,%s)/SUM(%s),AVERAGE(%s))",
-                weightRefs, scoreRefs, weightRefs, weightRefs, scoreRefs
-            );
+                    "IF(SUM(%s)>0,SUMPRODUCT(%s,%s)/SUM(%s),AVERAGE(%s))",
+                    weightRefs, scoreRefs, weightRefs, weightRefs, scoreRefs);
 
             Cell deptScoreCell = deptSumRow.createCell(scoreCol);
             deptScoreCell.setCellFormula(deptScoreFormula);
@@ -562,7 +905,7 @@ public class ExcelExportService {
     }
 
     private void writeScoreFormula(Cell scoreCell, KeyResultDTO kr, int xlRow,
-                                    List<ScoreLevel> levels, int threshStart, Styles st) {
+            List<ScoreLevel> levels, int threshStart, Styles st) {
         if (kr.getMetricType() == KeyResult.MetricType.QUALITATIVE) {
             scoreCell.setCellFormula(qualScoreFormula(xlRow, levels));
         } else if (kr.getThresholds() != null) {
@@ -574,7 +917,7 @@ public class ExcelExportService {
     }
 
     private void writeLevelFormula(Cell levelCell, KeyResultDTO kr, int xlRow,
-                                    int scoreCol, List<ScoreLevel> levels, Styles st) {
+            int scoreCol, List<ScoreLevel> levels, Styles st) {
         if (kr.getMetricType() == KeyResult.MetricType.QUALITATIVE) {
             levelCell.setCellFormula(qualLevelFormula(xlRow, levels));
         } else if (kr.getThresholds() != null) {
@@ -588,11 +931,11 @@ public class ExcelExportService {
     // ─── Header ──────────────────────────────────────────────────────────────
 
     private void writeHeaderRow(XSSFSheet ws, Styles st, List<ScoreLevel> levels,
-                                 int numLevels, int threshStart, int scoreCol, int levelCol) {
+            int numLevels, int threshStart, int scoreCol, int levelCol) {
         Row hdr = ws.createRow(0);
         String[] fixedHeaders = {
-            "Блок", "Департамент", "Цель", "Вес цели (%)", "Ключевой результат",
-            "Вес KR (%)", "Тип", "Факт", "Ед. изм."
+                "Блок", "Департамент", "Цель", "Вес цели (%)", "Ключевой результат",
+                "Вес KR (%)", "Тип", "Факт", "Ед. изм."
         };
         for (int i = 0; i < fixedHeaders.length; i++) {
             Cell c = hdr.createCell(i);
@@ -616,9 +959,11 @@ public class ExcelExportService {
     }
 
     private void setColumnWidths(XSSFSheet ws, int numLevels, int scoreCol, int levelCol) {
-        int[] widths = {18, 22, 32, 12, 38, 10, 18, 10, 10};
-        for (int i = 0; i < widths.length; i++) ws.setColumnWidth(i, widths[i] * 256);
-        for (int i = 0; i < numLevels; i++) ws.setColumnWidth(9 + i, 13 * 256);
+        int[] widths = { 18, 22, 32, 12, 38, 10, 18, 10, 10 };
+        for (int i = 0; i < widths.length; i++)
+            ws.setColumnWidth(i, widths[i] * 256);
+        for (int i = 0; i < numLevels; i++)
+            ws.setColumnWidth(9 + i, 13 * 256);
         ws.setColumnWidth(scoreCol, 10 * 256);
         ws.setColumnWidth(levelCol, 22 * 256);
     }
@@ -626,9 +971,9 @@ public class ExcelExportService {
     // ─── Threshold writing ───────────────────────────────────────────────────
 
     private void writeThresholds(Row row, KeyResultDTO kr, List<ScoreLevel> levels,
-                                  int numLevels, int threshStart, Styles st) {
+            int numLevels, int threshStart, Styles st) {
         if (kr.getMetricType() == KeyResult.MetricType.QUALITATIVE) {
-            String[] grades = {"E", "D", "C", "B", "A"};
+            String[] grades = { "E", "D", "C", "B", "A" };
             for (int i = 0; i < numLevels; i++) {
                 Cell c = row.createCell(threshStart + i);
                 c.setCellValue(i < grades.length ? grades[i] : "");
@@ -647,7 +992,7 @@ public class ExcelExportService {
     // ─── Score formulas ──────────────────────────────────────────────────────
 
     private String quantScoreFormula(int xlRow, KeyResult.MetricType type,
-                                     List<ScoreLevel> levels, int threshStart) {
+            List<ScoreLevel> levels, int threshStart) {
         String actualCol = colLetter(COL_ACTUAL);
         int n = levels.size();
         StringBuilder sb = new StringBuilder("ROUND(");
@@ -661,17 +1006,16 @@ public class ExcelExportService {
                     sb.append(levels.get(0).getScoreValue());
                 } else {
                     String nextTCol = colLetter(threshStart + i + 1);
-                    double score     = levels.get(i).getScoreValue();
+                    double score = levels.get(i).getScoreValue();
                     double nextScore = (i + 1 == n - 1) ? 1.0 : levels.get(i + 1).getScoreValue();
-                    double diff      = nextScore - score;
+                    double diff = nextScore - score;
                     sb.append(String.format(
-                        "IF(%s%d<=%s%d,%s+(%s%d-%s%d)/MAX(%s%d-%s%d,0.001)*%s,",
-                        actualCol, xlRow, tCol, xlRow,
-                        score,
-                        tCol, xlRow, actualCol, xlRow,
-                        tCol, xlRow, nextTCol, xlRow,
-                        diff
-                    ));
+                            "IF(%s%d<=%s%d,%s+(%s%d-%s%d)/MAX(%s%d-%s%d,0.001)*%s,",
+                            actualCol, xlRow, tCol, xlRow,
+                            score,
+                            tCol, xlRow, actualCol, xlRow,
+                            tCol, xlRow, nextTCol, xlRow,
+                            diff));
                 }
             }
         } else {
@@ -683,29 +1027,29 @@ public class ExcelExportService {
                     sb.append(levels.get(0).getScoreValue());
                 } else {
                     String nextTCol = colLetter(threshStart + i + 1);
-                    double score     = levels.get(i).getScoreValue();
+                    double score = levels.get(i).getScoreValue();
                     double nextScore = (i + 1 == n - 1) ? 1.0 : levels.get(i + 1).getScoreValue();
-                    double diff      = nextScore - score;
+                    double diff = nextScore - score;
                     sb.append(String.format(
-                        "IF(%s%d>=%s%d,%s+(%s%d-%s%d)/MAX(%s%d-%s%d,0.001)*%s,",
-                        actualCol, xlRow, tCol, xlRow,
-                        score,
-                        actualCol, xlRow, tCol, xlRow,
-                        nextTCol, xlRow, tCol, xlRow,
-                        diff
-                    ));
+                            "IF(%s%d>=%s%d,%s+(%s%d-%s%d)/MAX(%s%d-%s%d,0.001)*%s,",
+                            actualCol, xlRow, tCol, xlRow,
+                            score,
+                            actualCol, xlRow, tCol, xlRow,
+                            nextTCol, xlRow, tCol, xlRow,
+                            diff));
                 }
             }
         }
 
-        for (int i = 0; i < n - 1; i++) sb.append(")");
+        for (int i = 0; i < n - 1; i++)
+            sb.append(")");
         sb.append(",2)");
         return sb.toString();
     }
 
     private String qualScoreFormula(int xlRow, List<ScoreLevel> levels) {
         String actualCol = colLetter(COL_ACTUAL);
-        String[] grades  = {"A", "B", "C", "D", "E"};
+        String[] grades = { "A", "B", "C", "D", "E" };
         int n = Math.min(levels.size(), grades.length);
         StringBuilder sb = new StringBuilder();
         for (int i = n - 1; i >= 0; i--) {
@@ -715,7 +1059,8 @@ public class ExcelExportService {
                 sb.append(String.format("IF(%s%d=\"%s\",%s,", actualCol, xlRow, grade, score));
             } else if (i == 0) {
                 sb.append(score);
-                for (int j = 0; j < n - 1; j++) sb.append(")");
+                for (int j = 0; j < n - 1; j++)
+                    sb.append(")");
             } else {
                 sb.append(String.format("IF(%s%d=\"%s\",%s,", actualCol, xlRow, grade, score));
             }
@@ -725,17 +1070,18 @@ public class ExcelExportService {
 
     private String qualLevelFormula(int xlRow, List<ScoreLevel> levels) {
         String actualCol = colLetter(COL_ACTUAL);
-        String[] grades  = {"A", "B", "C", "D", "E"};
+        String[] grades = { "A", "B", "C", "D", "E" };
         int n = Math.min(levels.size(), grades.length);
         StringBuilder sb = new StringBuilder();
         for (int i = n - 1; i >= 0; i--) {
-            String grade     = grades[n - 1 - i];
+            String grade = grades[n - 1 - i];
             String levelName = levels.get(i).getName();
             if (i == n - 1) {
                 sb.append(String.format("IF(%s%d=\"%s\",\"%s\",", actualCol, xlRow, grade, levelName));
             } else if (i == 0) {
                 sb.append("\"").append(levelName).append("\"");
-                for (int j = 0; j < n - 1; j++) sb.append(")");
+                for (int j = 0; j < n - 1; j++)
+                    sb.append(")");
             } else {
                 sb.append(String.format("IF(%s%d=\"%s\",\"%s\",", actualCol, xlRow, grade, levelName));
             }
@@ -747,13 +1093,14 @@ public class ExcelExportService {
         String sCol = colLetter(scoreCol);
         StringBuilder sb = new StringBuilder();
         for (int i = levels.size() - 1; i >= 0; i--) {
-            double v    = levels.get(i).getScoreValue();
+            double v = levels.get(i).getScoreValue();
             String name = levels.get(i).getName();
             if (i == levels.size() - 1) {
                 sb.append(String.format("IF(%s%d>=%s,\"%s\",", sCol, xlRow, v, name));
             } else if (i == 0) {
                 sb.append("\"").append(name).append("\"");
-                for (int j = 0; j < levels.size() - 1; j++) sb.append(")");
+                for (int j = 0; j < levels.size() - 1; j++)
+                    sb.append(")");
             } else {
                 sb.append(String.format("IF(%s%d>=%s,\"%s\",", sCol, xlRow, v, name));
             }
@@ -764,8 +1111,8 @@ public class ExcelExportService {
     // ─── Conditional formatting ──────────────────────────────────────────────
 
     private void applyConditionalFormatting(XSSFSheet ws, int lastRow,
-                                             int scoreCol, int levelCol,
-                                             List<ScoreLevel> levels) {
+            int scoreCol, int levelCol,
+            List<ScoreLevel> levels) {
         XSSFSheetConditionalFormatting cf = ws.getSheetConditionalFormatting();
         String sColLetter = colLetter(scoreCol);
 
@@ -778,7 +1125,8 @@ public class ExcelExportService {
 
             String condition = (i == levels.size() - 1)
                     ? String.format("$%s2>=%s", sColLetter, lo)
-                    : String.format("AND($%s2>=%s,$%s2<%s)", sColLetter, lo, sColLetter, levels.get(i + 1).getScoreValue());
+                    : String.format("AND($%s2>=%s,$%s2<%s)", sColLetter, lo, sColLetter,
+                            levels.get(i + 1).getScoreValue());
 
             ConditionalFormattingRule rule = cf.createConditionalFormattingRule(condition);
             PatternFormatting pf = rule.createPatternFormatting();
@@ -813,20 +1161,23 @@ public class ExcelExportService {
         Double[] result = new Double[numLevels];
         var t = kr.getThresholds();
         Double[] backend = {
-            t != null && t.getBelow()       != null ? t.getBelow()       : 0.0,
-            t != null && t.getMeets()       != null ? t.getMeets()       : 0.0,
-            t != null && t.getGood()        != null ? t.getGood()        : 0.0,
-            t != null && t.getVeryGood()    != null ? t.getVeryGood()    : 0.0,
-            t != null && t.getExceptional() != null ? t.getExceptional() : 0.0
+                t != null && t.getBelow() != null ? t.getBelow() : 0.0,
+                t != null && t.getMeets() != null ? t.getMeets() : 0.0,
+                t != null && t.getGood() != null ? t.getGood() : 0.0,
+                t != null && t.getVeryGood() != null ? t.getVeryGood() : 0.0,
+                t != null && t.getExceptional() != null ? t.getExceptional() : 0.0
         };
-        for (int i = 0; i < numLevels; i++) result[i] = backend[Math.min(i, 4)];
+        for (int i = 0; i < numLevels; i++)
+            result[i] = backend[Math.min(i, 4)];
         return result;
     }
 
     private static String sanitizeSheetName(String name) {
         String sanitized = name.replaceAll("[\\\\/*?\\[\\]:]", "");
-        if (sanitized.length() > 31) sanitized = sanitized.substring(0, 31);
-        if (sanitized.isBlank()) sanitized = "Sheet";
+        if (sanitized.length() > 31)
+            sanitized = sanitized.substring(0, 31);
+        if (sanitized.isBlank())
+            sanitized = "Sheet";
         return sanitized;
     }
 
@@ -841,37 +1192,42 @@ public class ExcelExportService {
     }
 
     static byte[] hexToBytes(String hex) {
-        if (hex == null || hex.isEmpty()) return new byte[]{(byte)128, (byte)128, (byte)128};
+        if (hex == null || hex.isEmpty())
+            return new byte[] { (byte) 128, (byte) 128, (byte) 128 };
         String h = hex.startsWith("#") ? hex.substring(1) : hex;
         try {
-            return new byte[]{
-                (byte) Integer.parseInt(h.substring(0, 2), 16),
-                (byte) Integer.parseInt(h.substring(2, 4), 16),
-                (byte) Integer.parseInt(h.substring(4, 6), 16)
+            return new byte[] {
+                    (byte) Integer.parseInt(h.substring(0, 2), 16),
+                    (byte) Integer.parseInt(h.substring(2, 4), 16),
+                    (byte) Integer.parseInt(h.substring(4, 6), 16)
             };
         } catch (Exception e) {
-            return new byte[]{(byte)128, (byte)128, (byte)128};
+            return new byte[] { (byte) 128, (byte) 128, (byte) 128 };
         }
     }
 
     private static String metricTypeDisplay(KeyResult.MetricType t) {
-        if (t == null) return "";
+        if (t == null)
+            return "";
         return switch (t) {
             case HIGHER_BETTER -> "↑ Чем выше, тем лучше";
-            case LOWER_BETTER  -> "↓ Чем ниже, тем лучше";
-            case QUALITATIVE   -> "Качественный (A-E)";
+            case LOWER_BETTER -> "↓ Чем ниже, тем лучше";
+            case QUALITATIVE -> "Качественный (A-E)";
         };
     }
 
     private void applyBottomBorder(XSSFSheet ws, int rowIdx, int totalCols,
-                                    BorderStyle style, String hexColor) {
+            BorderStyle style, String hexColor) {
         Row row = ws.getRow(rowIdx);
-        if (row == null) return;
+        if (row == null)
+            return;
         for (int c = 0; c < totalCols; c++) {
             Cell cell = row.getCell(c);
-            if (cell == null) cell = row.createCell(c);
+            if (cell == null)
+                cell = row.createCell(c);
             XSSFCellStyle cs = (XSSFCellStyle) ws.getWorkbook().createCellStyle();
-            if (cell.getCellStyle() != null) cs.cloneStyleFrom(cell.getCellStyle());
+            if (cell.getCellStyle() != null)
+                cs.cloneStyleFrom(cell.getCellStyle());
             cs.setBorderBottom(style);
             cs.setBottomBorderColor(new XSSFColor(hexToBytes(hexColor), null));
             cell.setCellStyle(cs);
@@ -879,7 +1235,8 @@ public class ExcelExportService {
     }
 
     private void safeAddMerge(XSSFSheet ws, int r1, int r2, int c1, int c2) {
-        if (r2 > r1) ws.addMergedRegion(new CellRangeAddress(r1, r2, c1, c2));
+        if (r2 > r1)
+            ws.addMergedRegion(new CellRangeAddress(r1, r2, c1, c2));
     }
 
     // ─── Style bundle ─────────────────────────────────────────────────────────
@@ -909,19 +1266,25 @@ public class ExcelExportService {
 
         Styles(XSSFWorkbook wb, List<ScoreLevel> levels, int numLevels) {
             Font whiteBold = wb.createFont();
-            whiteBold.setBold(true); whiteBold.setColor(IndexedColors.WHITE.getIndex());
+            whiteBold.setBold(true);
+            whiteBold.setColor(IndexedColors.WHITE.getIndex());
 
             Font whiteBoldLg = wb.createFont();
-            whiteBoldLg.setBold(true); whiteBoldLg.setColor(IndexedColors.WHITE.getIndex()); whiteBoldLg.setFontHeightInPoints((short)11);
+            whiteBoldLg.setBold(true);
+            whiteBoldLg.setColor(IndexedColors.WHITE.getIndex());
+            whiteBoldLg.setFontHeightInPoints((short) 11);
 
             XSSFFont orangeBold = (XSSFFont) wb.createFont();
-            orangeBold.setBold(true); orangeBold.setColor(new XSSFColor(hexToBytes("#" + WEIGHT_FG), null));
+            orangeBold.setBold(true);
+            orangeBold.setColor(new XSSFColor(hexToBytes("#" + WEIGHT_FG), null));
 
             XSSFFont darkBlueBold = (XSSFFont) wb.createFont();
-            darkBlueBold.setBold(true); darkBlueBold.setColor(new XSSFColor(hexToBytes("#1F3864"), null));
+            darkBlueBold.setBold(true);
+            darkBlueBold.setColor(new XSSFColor(hexToBytes("#1F3864"), null));
 
             XSSFFont purpleBold = (XSSFFont) wb.createFont();
-            purpleBold.setBold(true); purpleBold.setColor(new XSSFColor(hexToBytes("#" + LEADER_FG), null));
+            purpleBold.setBold(true);
+            purpleBold.setColor(new XSSFColor(hexToBytes("#" + LEADER_FG), null));
 
             // Header
             headerStyle = wb.createCellStyle();
@@ -934,7 +1297,8 @@ public class ExcelExportService {
 
             headerWeightStyle = wb.createCellStyle();
             headerWeightStyle.cloneStyleFrom(headerStyle);
-            ((XSSFCellStyle) headerWeightStyle).setFillForegroundColor(new XSSFColor(hexToBytes("#" + WEIGHT_FG), null));
+            ((XSSFCellStyle) headerWeightStyle)
+                    .setFillForegroundColor(new XSSFColor(hexToBytes("#" + WEIGHT_FG), null));
 
             weightStyle = wb.createCellStyle();
             weightStyle.setFillForegroundColor(new XSSFColor(hexToBytes("#" + WEIGHT_BG), null));
@@ -956,14 +1320,16 @@ public class ExcelExportService {
             objNameStyle.setAlignment(HorizontalAlignment.CENTER);
             objNameStyle.setVerticalAlignment(VerticalAlignment.CENTER);
             objNameStyle.setWrapText(true);
-            Font objFont = wb.createFont(); objFont.setBold(true);
+            Font objFont = wb.createFont();
+            objFont.setBold(true);
             objNameStyle.setFont(objFont);
 
             deptLabelStyle = wb.createCellStyle();
             deptLabelStyle.setAlignment(HorizontalAlignment.CENTER);
             deptLabelStyle.setVerticalAlignment(VerticalAlignment.CENTER);
             deptLabelStyle.setWrapText(true);
-            Font deptFont = wb.createFont(); deptFont.setBold(true);
+            Font deptFont = wb.createFont();
+            deptFont.setBold(true);
             deptLabelStyle.setFont(deptFont);
 
             // Leader styles
@@ -993,56 +1359,56 @@ public class ExcelExportService {
 
             XSSFColor objSumBgColor = new XSSFColor(hexToBytes("#" + OBJ_SUMMARY_BG), null);
             objSummaryLabelStyle = wb.createCellStyle();
-            ((XSSFCellStyle)objSummaryLabelStyle).setFillForegroundColor(objSumBgColor);
+            ((XSSFCellStyle) objSummaryLabelStyle).setFillForegroundColor(objSumBgColor);
             objSummaryLabelStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             objSummaryLabelStyle.setFont(darkBlueBold);
             objSummaryLabelStyle.setAlignment(HorizontalAlignment.RIGHT);
             objSummaryLabelStyle.setVerticalAlignment(VerticalAlignment.CENTER);
 
             objSummaryBgStyle = wb.createCellStyle();
-            ((XSSFCellStyle)objSummaryBgStyle).setFillForegroundColor(objSumBgColor);
+            ((XSSFCellStyle) objSummaryBgStyle).setFillForegroundColor(objSumBgColor);
             objSummaryBgStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
             scoreSummaryStyle = wb.createCellStyle();
             scoreSummaryStyle.cloneStyleFrom(scoreCellStyle);
-            ((XSSFCellStyle)scoreSummaryStyle).setFillForegroundColor(objSumBgColor);
+            ((XSSFCellStyle) scoreSummaryStyle).setFillForegroundColor(objSumBgColor);
             scoreSummaryStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             scoreSummaryStyle.setFont(darkBlueBold);
 
             levelSummaryStyle = wb.createCellStyle();
             levelSummaryStyle.cloneStyleFrom(levelCellStyle);
-            ((XSSFCellStyle)levelSummaryStyle).setFillForegroundColor(objSumBgColor);
+            ((XSSFCellStyle) levelSummaryStyle).setFillForegroundColor(objSumBgColor);
             levelSummaryStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             levelSummaryStyle.setFont(darkBlueBold);
 
             XSSFColor deptSumBgColor = new XSSFColor(hexToBytes("#" + DEPT_SUMMARY_BG), null);
             deptSummaryNameStyle = wb.createCellStyle();
-            ((XSSFCellStyle)deptSummaryNameStyle).setFillForegroundColor(deptSumBgColor);
+            ((XSSFCellStyle) deptSummaryNameStyle).setFillForegroundColor(deptSumBgColor);
             deptSummaryNameStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             deptSummaryNameStyle.setFont(whiteBoldLg);
             deptSummaryNameStyle.setAlignment(HorizontalAlignment.CENTER);
             deptSummaryNameStyle.setVerticalAlignment(VerticalAlignment.CENTER);
 
             deptSummaryLabelStyle = wb.createCellStyle();
-            ((XSSFCellStyle)deptSummaryLabelStyle).setFillForegroundColor(deptSumBgColor);
+            ((XSSFCellStyle) deptSummaryLabelStyle).setFillForegroundColor(deptSumBgColor);
             deptSummaryLabelStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             deptSummaryLabelStyle.setFont(whiteBoldLg);
             deptSummaryLabelStyle.setAlignment(HorizontalAlignment.RIGHT);
             deptSummaryLabelStyle.setVerticalAlignment(VerticalAlignment.CENTER);
 
             deptSummaryBgStyle = wb.createCellStyle();
-            ((XSSFCellStyle)deptSummaryBgStyle).setFillForegroundColor(deptSumBgColor);
+            ((XSSFCellStyle) deptSummaryBgStyle).setFillForegroundColor(deptSumBgColor);
             deptSummaryBgStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
             deptScoreSummaryStyle = wb.createCellStyle();
             deptScoreSummaryStyle.cloneStyleFrom(scoreCellStyle);
-            ((XSSFCellStyle)deptScoreSummaryStyle).setFillForegroundColor(deptSumBgColor);
+            ((XSSFCellStyle) deptScoreSummaryStyle).setFillForegroundColor(deptSumBgColor);
             deptScoreSummaryStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             deptScoreSummaryStyle.setFont(whiteBoldLg);
 
             deptLevelSummaryStyle = wb.createCellStyle();
             deptLevelSummaryStyle.cloneStyleFrom(levelCellStyle);
-            ((XSSFCellStyle)deptLevelSummaryStyle).setFillForegroundColor(deptSumBgColor);
+            ((XSSFCellStyle) deptLevelSummaryStyle).setFillForegroundColor(deptSumBgColor);
             deptLevelSummaryStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             deptLevelSummaryStyle.setFont(whiteBoldLg);
 

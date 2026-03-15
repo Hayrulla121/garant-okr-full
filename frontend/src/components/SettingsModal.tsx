@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Department, Objective, MetricType, Division } from '../types/okr';
-import { departmentApi, objectiveApi, keyResultApi, divisionApi, platformSettingsApi, SERVER_BASE } from '../services/api';
+import { Department, MetricType, Division, Group } from '../types/okr';
+import { departmentApi, objectiveApi, keyResultApi, divisionApi, groupApi, platformSettingsApi, SERVER_BASE } from '../services/api';
 import ScoreLevelsManager from './ScoreLevelsManager';
 import { useLanguage } from '../i18n';
 import { useScoreLevels } from '../contexts/ScoreLevelContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useWatermark } from '../contexts/WatermarkContext';
 import { Role } from '../types/auth';
+import ManageGroupMembersModal from './modals/ManageGroupMembersModal';
 
 // ── Shared icons & styles (top-level so they never remount) ────────────────
 
@@ -21,6 +22,11 @@ const PlusIcon = () => (
 const TrashIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+  </svg>
+);
+const PencilIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
   </svg>
 );
 export const ChevronIcon = ({ open }: { open: boolean }) => (
@@ -207,19 +213,7 @@ const KrEditForm: React.FC<KrEditFormProps> = ({ kr, objName, otherKrWeightTotal
   const [showThresholds, setShowThresholds] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const initThresholds = () => ({
-    [scoreLevels.length > 0 ? [...scoreLevels].sort((a, b) => a.scoreValue - b.scoreValue)[0]?.name ?? 'below' : 'below']: String(kr.thresholds?.below ?? ''),
-    ...(() => {
-      const sorted = [...scoreLevels].sort((a, b) => a.scoreValue - b.scoreValue);
-      const names = ['below', 'meets', 'good', 'veryGood', 'exceptional'];
-      const threshVals = [kr.thresholds?.below, kr.thresholds?.meets, kr.thresholds?.good, kr.thresholds?.veryGood, kr.thresholds?.exceptional];
-      const result: Record<string, string> = {};
-      sorted.forEach((level, i) => { result[level.name] = String(threshVals[Math.min(i, 4)] ?? ''); });
-      return result;
-    })(),
-  });
-
-  // simpler: just pre-fill threshold inputs from the 5 backend fields
+  // Pre-fill threshold inputs from the 5 backend fields
   const initialThresholds = (): Record<string, string> => {
     const sorted = [...scoreLevels].sort((a, b) => a.scoreValue - b.scoreValue);
     const backendVals = [kr.thresholds?.below, kr.thresholds?.meets, kr.thresholds?.good, kr.thresholds?.veryGood, kr.thresholds?.exceptional];
@@ -358,11 +352,20 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ departments, onClose, onU
   // Which division/dept/objective rows are collapsed
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
-  // Form values — div / dept / obj levels only (KR state lives in KrAddForm)
+  // Form values — div / dept / obj / group levels only (KR state lives in KrAddForm)
   const [divName, setDivName] = useState('');
   const [deptName, setDeptName] = useState('');
   const [objName, setObjName] = useState('');
   const [objWeight, setObjWeight] = useState('');
+  const [groupName, setGroupName] = useState('');
+  const [selectedLeaderId, setSelectedLeaderId] = useState('');
+  const [manageMembersGroup, setManageMembersGroup] = useState<{ group: Group; departmentId: string } | null>(null);
+
+  // Inline objective editing
+  const [editingObjId, setEditingObjId] = useState<string | null>(null);
+  const [editObjName, setEditObjName] = useState('');
+  const [editObjWeight, setEditObjWeight] = useState('');
+  const [editObjSaving, setEditObjSaving] = useState(false);
 
   // Watermark state
   const [wmEnabled, setWmEnabled] = useState(wm.enabled);
@@ -427,7 +430,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ departments, onClose, onU
     setError(null);
     setSuccess(null);
     // Reset simple form fields when opening a new form
-    setDivName(''); setDeptName(''); setObjName(''); setObjWeight('');
+    setDivName(''); setDeptName(''); setObjName(''); setObjWeight(''); setGroupName('');
   };
 
   const flashSuccess = (msg: string) => {
@@ -496,13 +499,46 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ departments, onClose, onU
     finally { setLoading(false); }
   };
 
+  const handleCreateDivisionObjective = async (e: React.FormEvent, divId: string) => {
+    e.preventDefault();
+    if (!objName.trim()) return;
+    setLoading(true); setError(null);
+    try {
+      await divisionApi.createObjective(divId, { name: objName, weight: objWeight ? parseFloat(objWeight) : undefined });
+      setObjName(''); setObjWeight('');
+      setOpenForm(null);
+      await loadDivisions();
+      onUpdate();
+      flashSuccess('Division objective created.');
+    } catch { setError(t.failedToCreateObjective); }
+    finally { setLoading(false); }
+  };
+
+  const handleCreateGroupObjective = async (e: React.FormEvent, groupId: string) => {
+    e.preventDefault();
+    if (!objName.trim()) return;
+    setLoading(true); setError(null);
+    try {
+      await groupApi.createObjective(groupId, { name: objName, weight: objWeight ? parseFloat(objWeight) : undefined });
+      setObjName(''); setObjWeight('');
+      setOpenForm(null);
+      onUpdate();
+      flashSuccess('Group objective created.');
+    } catch { setError(t.failedToCreateObjective); }
+    finally { setLoading(false); }
+  };
+
   const handleCreateLeaderObjective = async (e: React.FormEvent, deptId: string) => {
     e.preventDefault();
     if (!objName.trim()) return;
     setLoading(true); setError(null);
     try {
-      await objectiveApi.createLeaderObjective(deptId, { name: objName, weight: objWeight ? parseFloat(objWeight) : undefined } as any);
-      setObjName(''); setObjWeight('');
+      await objectiveApi.createLeaderObjective(deptId, {
+        name: objName,
+        weight: objWeight ? parseFloat(objWeight) : undefined,
+        employeeId: selectedLeaderId || undefined,
+      } as any);
+      setObjName(''); setObjWeight(''); setSelectedLeaderId('');
       setOpenForm(null);
       onUpdate();
       flashSuccess('Leader objective created.');
@@ -520,11 +556,57 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ departments, onClose, onU
     finally { setLoading(false); }
   };
 
+  const startEditObjective = (obj: { id: string; name: string; weight?: number }) => {
+    setEditingObjId(obj.id);
+    setEditObjName(obj.name);
+    setEditObjWeight(obj.weight != null ? String(obj.weight) : '');
+    setOpenForm(null);
+  };
+
+  const handleSaveObjective = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingObjId || !editObjName.trim()) return;
+    setEditObjSaving(true); setError(null);
+    try {
+      await objectiveApi.update(editingObjId, {
+        name: editObjName.trim(),
+        weight: editObjWeight ? parseFloat(editObjWeight) : undefined,
+      });
+      setEditingObjId(null);
+      await loadDivisions();
+      onUpdate();
+      flashSuccess('Objective updated.');
+    } catch { setError('Failed to update objective.'); }
+    finally { setEditObjSaving(false); }
+  };
+
   const handleDeleteKeyResult = async (id: string) => {
     if (!window.confirm(t.confirmDeleteKeyResult)) return;
     setLoading(true);
     try { await keyResultApi.delete(id); onUpdate(); }
     catch { setError(t.failedToDeleteKeyResult); }
+    finally { setLoading(false); }
+  };
+
+  const handleCreateGroup = async (e: React.FormEvent, deptId: string) => {
+    e.preventDefault();
+    if (!groupName.trim()) return;
+    setLoading(true); setError(null);
+    try {
+      await groupApi.create({ name: groupName, departmentId: deptId });
+      setGroupName('');
+      setOpenForm(null);
+      onUpdate();
+      flashSuccess('Group created.');
+    } catch { setError('Failed to create group.'); }
+    finally { setLoading(false); }
+  };
+
+  const handleDeleteGroup = async (id: string, name: string) => {
+    if (!window.confirm(`Delete group "${name}"? All its objectives and data will also be deleted.`)) return;
+    setLoading(true);
+    try { await groupApi.delete(id); onUpdate(); }
+    catch { setError('Failed to delete group.'); }
     finally { setLoading(false); }
   };
 
@@ -567,8 +649,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ departments, onClose, onU
     return map;
   }, [departments]);
 
-  // Divisions that have no departments yet but exist in `divisions` state
-  const allDivisionIds = new Set(divisions.map(d => d.id));
   // Departments with no division
   const orphanDepts = deptsByDivision['__none__'] || [];
 
@@ -631,6 +711,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ departments, onClose, onU
               <div className="flex items-center gap-4 text-xs text-slate-500 mb-4 bg-slate-50 rounded-lg px-4 py-2.5 border border-slate-200">
                 <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-purple-500 inline-block" />Division</span>
                 <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-primary inline-block" />Department</span>
+                <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-teal-500 inline-block" />Group</span>
                 <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-500 inline-block" />Objective</span>
                 <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-emerald-500 inline-block" />Key Result</span>
               </div>
@@ -661,7 +742,127 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ departments, onClose, onU
                           <TrashIcon />
                         </button>
                       )}
+                      {isAdmin && !isReadOnly && (
+                        <button onClick={() => openAddForm(`div-obj-${div.id}`)} className={btnGhost}>
+                          <PlusIcon /> {t.addObjectiveBtn}
+                        </button>
+                      )}
                     </div>
+
+                    {/* Division Objective add form */}
+                    {openForm === `div-obj-${div.id}` && (
+                      <form onSubmit={e => handleCreateDivisionObjective(e, div.id)}
+                        className="mx-4 mb-3 bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-2">
+                        <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">New Objective in {div.name}</p>
+                        <input className={`${inputCls} w-full`} placeholder="Objective name *" value={objName}
+                          onChange={e => setObjName(e.target.value)} required autoFocus />
+                        <div className="flex gap-2">
+                          <input className={`${inputCls} flex-1`} type="number" placeholder={t.weightPercent} min="0" max="100"
+                            value={objWeight} onChange={e => setObjWeight(e.target.value)} />
+                          <button type="button" onClick={() => setOpenForm(null)} className="px-3 py-2 text-sm text-slate-500 hover:bg-slate-100 rounded-lg">{t.cancel}</button>
+                          <button type="submit" disabled={loading} className={btnPrimary}>{loading ? '…' : t.addBtn}</button>
+                        </div>
+                      </form>
+                    )}
+
+                    {/* Division Objectives */}
+                    {!isDivCollapsed && div.objectives && div.objectives.length > 0 && (
+                      <div className="px-4 pb-3 space-y-2">
+                        <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide px-1 pt-1">Division Objectives</p>
+                        {div.objectives.map(obj => {
+                          const isObjCollapsed = collapsed.has(`obj-${obj.id}`);
+                          return (
+                            <div key={obj.id} className="rounded-lg border border-amber-200 bg-amber-50 overflow-hidden ml-2 mb-2">
+                              {/* Objective row */}
+                              {editingObjId === obj.id ? (
+                                <form onSubmit={handleSaveObjective} className="flex items-center gap-2 px-3 py-2">
+                                  <input className={`${inputCls} flex-1`} value={editObjName} onChange={e => setEditObjName(e.target.value)} required autoFocus />
+                                  <input className={`${inputCls} w-20`} type="number" placeholder="%" min="0" max="100" value={editObjWeight} onChange={e => setEditObjWeight(e.target.value)} />
+                                  <button type="button" onClick={() => setEditingObjId(null)} className="px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100 rounded-lg">{t.cancel}</button>
+                                  <button type="submit" disabled={editObjSaving} className={btnPrimary}>{editObjSaving ? '…' : t.save || 'Save'}</button>
+                                </form>
+                              ) : (
+                                <div className="flex items-center gap-2 px-3 py-2">
+                                  <button onClick={() => toggleCollapse(`obj-${obj.id}`)} className="text-amber-600 hover:text-amber-800 p-0.5 rounded">
+                                    <ChevronIcon open={!isObjCollapsed} />
+                                  </button>
+                                  <div className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0" />
+                                  <span className="font-medium text-slate-700 text-sm flex-1">{obj.name}</span>
+                                  <span className="text-xs text-amber-600 font-semibold">{obj.weight}%</span>
+                                  <span className="text-xs text-slate-400">{obj.keyResults?.length || 0} KR</span>
+                                  {isAdmin && !isReadOnly && (
+                                    <button onClick={() => openAddForm(`kr-${obj.id}`)} className={btnGhost}>
+                                      <PlusIcon /> {t.addKrBtn}
+                                    </button>
+                                  )}
+                                  {isAdmin && !isReadOnly && (
+                                    <button onClick={() => startEditObjective(obj)} className="p-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-100 rounded transition-colors" title="Edit Objective">
+                                      <PencilIcon />
+                                    </button>
+                                  )}
+                                  {isAdmin && (
+                                    <button onClick={() => handleDeleteObjective(obj.id)} className={btnDanger} title={t.deleteObjective}>
+                                      <TrashIcon />
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                              {/* KR add form */}
+                              {openForm === `kr-${obj.id}` && (
+                                <KrAddForm
+                                  objId={obj.id} objName={obj.name}
+                                  existingKrWeightTotal={(obj.keyResults || []).reduce((s, k) => s + (k.weight ?? 0), 0)}
+                                  scoreLevels={scoreLevels} t={t}
+                                  onCancel={() => setOpenForm(null)}
+                                  onSuccess={() => { setOpenForm(null); loadDivisions(); onUpdate(); flashSuccess('Key Result created.'); }}
+                                  onError={msg => setError(msg)}
+                                />
+                              )}
+                              {/* Key Results */}
+                              {!isObjCollapsed && obj.keyResults && obj.keyResults.length > 0 && (
+                                <div className="px-3 pb-2 space-y-1">
+                                  {obj.keyResults.map(kr => {
+                                    const totalWeight = obj.keyResults.reduce((s, k) => s + (k.weight ?? 0), 0);
+                                    const otherWeight = totalWeight - (kr.weight ?? 0);
+                                    return (
+                                      <div key={kr.id} className="rounded-lg border border-emerald-200 overflow-hidden">
+                                        <div className="flex items-center gap-2 px-3 py-2 bg-white">
+                                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+                                          <div className="flex-1 min-w-0">
+                                            <span className="text-sm text-slate-700 font-medium">{kr.name}</span>
+                                            <span className={`ml-2 text-xs font-bold px-1.5 py-0.5 rounded ${totalWeight > 100 ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-700'}`}>
+                                              {kr.weight ?? 0}%
+                                            </span>
+                                          </div>
+                                          {isAdmin && (
+                                            <>
+                                              <button onClick={() => openAddForm(`edit-kr-${kr.id}`)} className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded transition-colors" title={t.editKeyResult}>
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                              </button>
+                                              <button onClick={() => handleDeleteKeyResult(kr.id)} className={btnDanger} title={t.deleteKeyResult}>
+                                                <TrashIcon />
+                                              </button>
+                                            </>
+                                          )}
+                                        </div>
+                                        {openForm === `edit-kr-${kr.id}` && (
+                                          <KrEditForm
+                                            kr={kr} objName={obj.name} otherKrWeightTotal={otherWeight}
+                                            scoreLevels={scoreLevels} t={t} onCancel={() => setOpenForm(null)}
+                                            onSuccess={() => { setOpenForm(null); loadDivisions(); onUpdate(); flashSuccess('Key Result updated.'); }}
+                                            onError={msg => setError(msg)}
+                                          />
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
 
                     {/* Department add form */}
                     {openForm === `dept-${div.id}` && (
@@ -694,18 +895,24 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ departments, onClose, onU
                                 <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
                                 <span className="font-semibold text-slate-800 text-sm flex-1">{dept.name}</span>
                                 <span className="text-xs text-slate-400">{dept.objectives.length} obj</span>
+                                <span className="text-xs text-slate-400">{(dept.groups || []).length} grp</span>
 
                                 {canEdit && !isReadOnly && (
                                   <button onClick={() => openAddForm(`obj-${dept.id}`)} className={btnGhost}>
                                     <PlusIcon /> {t.addObjectiveBtn}
                                   </button>
                                 )}
-                                {/* Add Leader Objective — only shown if dept has a leader */}
-                                {canEdit && !isReadOnly && dept.leaderName && (
+                                {canEdit && !isReadOnly && (
+                                  <button onClick={() => openAddForm(`group-${dept.id}`)} className="px-3 py-1.5 text-sm font-medium text-teal-600 hover:bg-teal-50 rounded-lg transition-colors flex items-center gap-1">
+                                    <PlusIcon /> {t.addGroup}
+                                  </button>
+                                )}
+                                {/* Add Leader Objective — shown if dept has a leader or leaders list */}
+                                {canEdit && !isReadOnly && (dept.leaderName || (dept.leaders && dept.leaders.length > 0)) && (
                                   <button
-                                    onClick={() => openAddForm(`leader-obj-${dept.id}`)}
+                                    onClick={() => { setSelectedLeaderId(''); openAddForm(`leader-obj-${dept.id}`); }}
                                     className="px-3 py-1.5 text-sm font-medium text-violet-600 hover:bg-violet-50 rounded-lg transition-colors flex items-center gap-1"
-                                    title={`Add personal objective for ${dept.leaderName}`}
+                                    title={`Add personal objective for leader`}
                                   >
                                     <PlusIcon /> {t.leaderPersonalGoals}
                                   </button>
@@ -733,13 +940,42 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ departments, onClose, onU
                                 </form>
                               )}
 
+                              {/* Group add form */}
+                              {openForm === `group-${dept.id}` && (
+                                <form onSubmit={e => handleCreateGroup(e, dept.id)}
+                                  className="mx-3 mb-3 bg-teal-50 border border-teal-200 rounded-xl p-3 space-y-2">
+                                  <p className="text-xs font-bold text-teal-700 uppercase tracking-wide">New Group in {dept.name}</p>
+                                  <div className="flex gap-2">
+                                    <input className={`${inputCls} flex-1`} placeholder="Group name *" value={groupName}
+                                      onChange={e => setGroupName(e.target.value)} required autoFocus />
+                                    <button type="button" onClick={() => setOpenForm(null)} className="px-3 py-2 text-sm text-slate-500 hover:bg-slate-100 rounded-lg">{t.cancel}</button>
+                                    <button type="submit" disabled={loading} className={btnPrimary}>{loading ? '…' : t.addBtn}</button>
+                                  </div>
+                                </form>
+                              )}
+
                               {/* Leader Objective add form */}
                               {openForm === `leader-obj-${dept.id}` && (
                                 <form onSubmit={e => handleCreateLeaderObjective(e, dept.id)}
                                   className="mx-3 mb-3 bg-violet-50 border border-violet-200 rounded-xl p-3 space-y-2">
                                   <p className="text-xs font-bold text-violet-700 uppercase tracking-wide">
-                                    {t.leaderPersonalGoals} — {dept.leaderName}
+                                    {t.leaderPersonalGoals}
                                   </p>
+                                  {dept.leaders && dept.leaders.length > 0 ? (
+                                    <select
+                                      className={`${inputCls} w-full`}
+                                      value={selectedLeaderId}
+                                      onChange={e => setSelectedLeaderId(e.target.value)}
+                                      required
+                                    >
+                                      <option value="">-- Select leader --</option>
+                                      {dept.leaders.map(l => (
+                                        <option key={l.id} value={l.id}>{l.fullName}</option>
+                                      ))}
+                                    </select>
+                                  ) : (
+                                    <p className="text-sm text-violet-600">{dept.leaderName}</p>
+                                  )}
                                   <input className={`${inputCls} w-full`} placeholder="Objective name *" value={objName}
                                     onChange={e => setObjName(e.target.value)} required autoFocus />
                                   <div className="flex gap-2">
@@ -762,25 +998,39 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ departments, onClose, onU
                                   </p>
                                   {dept.leaderObjectives.map(obj => (
                                     <div key={obj.id} className="rounded-lg border border-violet-200 bg-violet-50 overflow-hidden">
-                                      <div className="flex items-center gap-2 px-3 py-2">
-                                        <button onClick={() => toggleCollapse(`obj-${obj.id}`)} className="text-violet-500 p-0.5 rounded">
-                                          <ChevronIcon open={!collapsed.has(`obj-${obj.id}`)} />
-                                        </button>
-                                        <div className="w-2 h-2 rounded-full bg-violet-500 flex-shrink-0" />
-                                        <span className="font-medium text-slate-700 text-sm flex-1">{obj.name}</span>
-                                        <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-violet-100 text-violet-700">{obj.weight ?? 0}%</span>
-                                        <span className="text-xs text-slate-400">{obj.keyResults.length} KR</span>
-                                        {canEdit && !isReadOnly && (
-                                          <button onClick={() => openAddForm(`kr-${obj.id}`)} className="px-2 py-1 text-xs font-medium text-violet-600 hover:bg-violet-100 rounded-lg flex items-center gap-1">
-                                            <PlusIcon /> {t.addKrBtn}
+                                      {editingObjId === obj.id ? (
+                                        <form onSubmit={handleSaveObjective} className="flex items-center gap-2 px-3 py-2">
+                                          <input className={`${inputCls} flex-1`} value={editObjName} onChange={e => setEditObjName(e.target.value)} required autoFocus />
+                                          <input className={`${inputCls} w-20`} type="number" placeholder="%" min="0" max="100" value={editObjWeight} onChange={e => setEditObjWeight(e.target.value)} />
+                                          <button type="button" onClick={() => setEditingObjId(null)} className="px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100 rounded-lg">{t.cancel}</button>
+                                          <button type="submit" disabled={editObjSaving} className={btnPrimary}>{editObjSaving ? '…' : t.save || 'Save'}</button>
+                                        </form>
+                                      ) : (
+                                        <div className="flex items-center gap-2 px-3 py-2">
+                                          <button onClick={() => toggleCollapse(`obj-${obj.id}`)} className="text-violet-500 p-0.5 rounded">
+                                            <ChevronIcon open={!collapsed.has(`obj-${obj.id}`)} />
                                           </button>
-                                        )}
-                                        {canEdit && (
-                                          <button onClick={() => handleDeleteObjective(obj.id)} className={btnDanger}>
-                                            <TrashIcon />
-                                          </button>
-                                        )}
-                                      </div>
+                                          <div className="w-2 h-2 rounded-full bg-violet-500 flex-shrink-0" />
+                                          <span className="font-medium text-slate-700 text-sm flex-1">{obj.name}</span>
+                                          <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-violet-100 text-violet-700">{obj.weight ?? 0}%</span>
+                                          <span className="text-xs text-slate-400">{obj.keyResults.length} KR</span>
+                                          {canEdit && !isReadOnly && (
+                                            <button onClick={() => openAddForm(`kr-${obj.id}`)} className="px-2 py-1 text-xs font-medium text-violet-600 hover:bg-violet-100 rounded-lg flex items-center gap-1">
+                                              <PlusIcon /> {t.addKrBtn}
+                                            </button>
+                                          )}
+                                          {canEdit && !isReadOnly && (
+                                            <button onClick={() => startEditObjective(obj)} className="p-1.5 text-violet-600 hover:text-violet-800 hover:bg-violet-100 rounded transition-colors" title="Edit Objective">
+                                              <PencilIcon />
+                                            </button>
+                                          )}
+                                          {canEdit && (
+                                            <button onClick={() => handleDeleteObjective(obj.id)} className={btnDanger}>
+                                              <TrashIcon />
+                                            </button>
+                                          )}
+                                        </div>
+                                      )}
                                       {openForm === `kr-${obj.id}` && (
                                         <KrAddForm
                                           objId={obj.id} objName={obj.name}
@@ -819,26 +1069,40 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ departments, onClose, onU
                                     return (
                                       <div key={obj.id} className="rounded-lg border border-amber-200 bg-amber-50 overflow-hidden">
                                         {/* Objective row */}
-                                        <div className="flex items-center gap-2 px-3 py-2">
-                                          <button onClick={() => toggleCollapse(`obj-${obj.id}`)} className="text-amber-600 hover:text-amber-800 p-0.5 rounded">
-                                            <ChevronIcon open={!isObjCollapsed} />
-                                          </button>
-                                          <div className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0" />
-                                          <span className="font-medium text-slate-700 text-sm flex-1">{obj.name}</span>
-                                          <span className="text-xs text-amber-600 font-semibold">{obj.weight}%</span>
-                                          <span className="text-xs text-slate-400">{obj.keyResults.length} KR</span>
+                                        {editingObjId === obj.id ? (
+                                          <form onSubmit={handleSaveObjective} className="flex items-center gap-2 px-3 py-2">
+                                            <input className={`${inputCls} flex-1`} value={editObjName} onChange={e => setEditObjName(e.target.value)} required autoFocus />
+                                            <input className={`${inputCls} w-20`} type="number" placeholder="%" min="0" max="100" value={editObjWeight} onChange={e => setEditObjWeight(e.target.value)} />
+                                            <button type="button" onClick={() => setEditingObjId(null)} className="px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100 rounded-lg">{t.cancel}</button>
+                                            <button type="submit" disabled={editObjSaving} className={btnPrimary}>{editObjSaving ? '…' : t.save || 'Save'}</button>
+                                          </form>
+                                        ) : (
+                                          <div className="flex items-center gap-2 px-3 py-2">
+                                            <button onClick={() => toggleCollapse(`obj-${obj.id}`)} className="text-amber-600 hover:text-amber-800 p-0.5 rounded">
+                                              <ChevronIcon open={!isObjCollapsed} />
+                                            </button>
+                                            <div className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0" />
+                                            <span className="font-medium text-slate-700 text-sm flex-1">{obj.name}</span>
+                                            <span className="text-xs text-amber-600 font-semibold">{obj.weight}%</span>
+                                            <span className="text-xs text-slate-400">{obj.keyResults.length} KR</span>
 
-                                          {canEdit && !isReadOnly && (
-                                            <button onClick={() => openAddForm(`kr-${obj.id}`)} className={btnGhost}>
-                                              <PlusIcon /> {t.addKrBtn}
-                                            </button>
-                                          )}
-                                          {canEdit && (
-                                            <button onClick={() => handleDeleteObjective(obj.id)} className={btnDanger} title={t.deleteObjective}>
-                                              <TrashIcon />
-                                            </button>
-                                          )}
-                                        </div>
+                                            {canEdit && !isReadOnly && (
+                                              <button onClick={() => openAddForm(`kr-${obj.id}`)} className={btnGhost}>
+                                                <PlusIcon /> {t.addKrBtn}
+                                              </button>
+                                            )}
+                                            {canEdit && !isReadOnly && (
+                                              <button onClick={() => startEditObjective(obj)} className="p-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-100 rounded transition-colors" title="Edit Objective">
+                                                <PencilIcon />
+                                              </button>
+                                            )}
+                                            {canEdit && (
+                                              <button onClick={() => handleDeleteObjective(obj.id)} className={btnDanger} title={t.deleteObjective}>
+                                                <TrashIcon />
+                                              </button>
+                                            )}
+                                          </div>
+                                        )}
 
                                         {/* KR add form */}
                                         {openForm === `kr-${obj.id}` && (
@@ -928,6 +1192,144 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ departments, onClose, onU
 
                               {!isDeptCollapsed && dept.objectives.length === 0 && openForm !== `obj-${dept.id}` && (
                                 <p className="text-xs text-slate-400 px-6 pb-3">{t.noObjectivesYetClick}</p>
+                              )}
+
+                              {/* Groups */}
+                              {!isDeptCollapsed && dept.groups && dept.groups.length > 0 && (
+                                <div className="px-3 pb-3 space-y-2 mt-2 border-t border-gray-100 pt-2">
+                                  <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide px-1">Groups</p>
+                                  {dept.groups.map(group => {
+                                    const isGroupCollapsed = collapsed.has(`group-${group.id}`);
+                                    return (
+                                      <div key={group.id} className="rounded-lg border border-blue-200 bg-blue-50 overflow-hidden">
+                                        <div className="flex items-center gap-2 px-3 py-2">
+                                          <button onClick={() => toggleCollapse(`group-${group.id}`)} className="text-blue-600 hover:text-blue-800 p-0.5 rounded">
+                                            <ChevronIcon open={!isGroupCollapsed} />
+                                          </button>
+                                          <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
+                                          <span className="font-semibold text-slate-800 text-sm flex-1">{group.name}</span>
+                                          <span className="text-xs text-slate-400">{(group.members || []).length} members · {(group.objectives || []).length} obj</span>
+                                          {canEdit && !isReadOnly && (
+                                            <button onClick={() => setManageMembersGroup({ group, departmentId: dept.id })} className={btnGhost} title={t.manageMembers}>
+                                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                              </svg>
+                                            </button>
+                                          )}
+                                          {canEdit && !isReadOnly && (
+                                            <button onClick={() => openAddForm(`grp-obj-${group.id}`)} className={btnGhost}>
+                                              <PlusIcon /> {t.addObjectiveBtn}
+                                            </button>
+                                          )}
+                                          {isAdmin && (
+                                            <button onClick={() => handleDeleteGroup(group.id, group.name)} className={btnDanger} title={t.deleteGroup}>
+                                              <TrashIcon />
+                                            </button>
+                                          )}
+                                        </div>
+
+                                        {/* Group Objective add form */}
+                                        {openForm === `grp-obj-${group.id}` && (
+                                          <form onSubmit={e => handleCreateGroupObjective(e, group.id)}
+                                            className="mx-3 mb-3 bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-2">
+                                            <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">New Objective in {group.name}</p>
+                                            <input className={`${inputCls} w-full`} placeholder="Objective name *" value={objName}
+                                              onChange={e => setObjName(e.target.value)} required autoFocus />
+                                            <div className="flex gap-2">
+                                              <input className={`${inputCls} flex-1`} type="number" placeholder={t.weightPercent} min="0" max="100"
+                                                value={objWeight} onChange={e => setObjWeight(e.target.value)} />
+                                              <button type="button" onClick={() => setOpenForm(null)} className="px-3 py-2 text-sm text-slate-500 hover:bg-slate-100 rounded-lg">{t.cancel}</button>
+                                              <button type="submit" disabled={loading} className={btnPrimary}>{loading ? '…' : t.addBtn}</button>
+                                            </div>
+                                          </form>
+                                        )}
+
+                                        {/* Group Objectives */}
+                                        {!isGroupCollapsed && group.objectives && group.objectives.length > 0 && (
+                                          <div className="px-3 pb-3 space-y-2">
+                                            {group.objectives.map(obj => {
+                                              const isObjCollapsed = collapsed.has(`obj-${obj.id}`);
+                                              return (
+                                                <div key={obj.id} className="rounded-lg border border-amber-200 bg-amber-50 overflow-hidden">
+                                                  <div className="flex items-center gap-2 px-3 py-2">
+                                                    <button onClick={() => toggleCollapse(`obj-${obj.id}`)} className="text-amber-600 hover:text-amber-800 p-0.5 rounded">
+                                                      <ChevronIcon open={!isObjCollapsed} />
+                                                    </button>
+                                                    <div className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0" />
+                                                    <span className="font-medium text-slate-700 text-sm flex-1">{obj.name}</span>
+                                                    <span className="text-xs text-amber-600 font-semibold">{obj.weight}%</span>
+                                                    <span className="text-xs text-slate-400">{obj.keyResults?.length || 0} KR</span>
+                                                    {canEdit && !isReadOnly && (
+                                                      <button onClick={() => openAddForm(`kr-${obj.id}`)} className={btnGhost}>
+                                                        <PlusIcon /> {t.addKrBtn}
+                                                      </button>
+                                                    )}
+                                                    {canEdit && (
+                                                      <button onClick={() => handleDeleteObjective(obj.id)} className={btnDanger} title={t.deleteObjective}>
+                                                        <TrashIcon />
+                                                      </button>
+                                                    )}
+                                                  </div>
+                                                  {/* KR add form */}
+                                                  {openForm === `kr-${obj.id}` && (
+                                                    <KrAddForm
+                                                      objId={obj.id} objName={obj.name}
+                                                      existingKrWeightTotal={(obj.keyResults || []).reduce((s, k) => s + (k.weight ?? 0), 0)}
+                                                      scoreLevels={scoreLevels} t={t}
+                                                      onCancel={() => setOpenForm(null)}
+                                                      onSuccess={() => { setOpenForm(null); onUpdate(); flashSuccess('Key Result created.'); }}
+                                                      onError={msg => setError(msg)}
+                                                    />
+                                                  )}
+                                                  {/* Key Results */}
+                                                  {!isObjCollapsed && obj.keyResults && obj.keyResults.length > 0 && (
+                                                    <div className="px-3 pb-2 space-y-1">
+                                                      {obj.keyResults.map(kr => {
+                                                        const totalWeight = obj.keyResults.reduce((s, k) => s + (k.weight ?? 0), 0);
+                                                        const otherWeight = totalWeight - (kr.weight ?? 0);
+                                                        return (
+                                                          <div key={kr.id} className="rounded-lg border border-emerald-200 overflow-hidden">
+                                                            <div className="flex items-center gap-2 px-3 py-2 bg-white">
+                                                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+                                                              <div className="flex-1 min-w-0">
+                                                                <span className="text-sm text-slate-700 font-medium">{kr.name}</span>
+                                                                <span className={`ml-2 text-xs font-bold px-1.5 py-0.5 rounded ${totalWeight > 100 ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-700'}`}>
+                                                                  {kr.weight ?? 0}%
+                                                                </span>
+                                                              </div>
+                                                              {canEdit && (
+                                                                <>
+                                                                  <button onClick={() => openAddForm(`edit-kr-${kr.id}`)} className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded transition-colors" title={t.editKeyResult}>
+                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                                                  </button>
+                                                                  <button onClick={() => handleDeleteKeyResult(kr.id)} className={btnDanger} title={t.deleteKeyResult}>
+                                                                    <TrashIcon />
+                                                                  </button>
+                                                                </>
+                                                              )}
+                                                            </div>
+                                                            {openForm === `edit-kr-${kr.id}` && (
+                                                              <KrEditForm
+                                                                kr={kr} objName={obj.name} otherKrWeightTotal={otherWeight}
+                                                                scoreLevels={scoreLevels} t={t} onCancel={() => setOpenForm(null)}
+                                                                onSuccess={() => { setOpenForm(null); onUpdate(); flashSuccess('Key Result updated.'); }}
+                                                                onError={msg => setError(msg)}
+                                                              />
+                                                            )}
+                                                          </div>
+                                                        );
+                                                      })}
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
                               )}
                             </div>
                           );
@@ -1092,6 +1494,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ departments, onClose, onU
           )}
         </div>
       </div>
+
+      {manageMembersGroup && (
+        <ManageGroupMembersModal
+          group={manageMembersGroup.group}
+          departmentId={manageMembersGroup.departmentId}
+          onClose={() => setManageMembersGroup(null)}
+          onSuccess={() => { setManageMembersGroup(null); onUpdate(); flashSuccess(t.membersUpdated); }}
+        />
+      )}
     </div>
   );
 };

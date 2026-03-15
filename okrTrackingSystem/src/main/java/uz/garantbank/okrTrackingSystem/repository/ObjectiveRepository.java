@@ -34,4 +34,16 @@ public interface ObjectiveRepository extends JpaRepository<Objective, String> {
     // Find individual (leader) objective by name, department, and employee
     @Query("SELECT o FROM Objective o WHERE o.name = :name AND o.department.id = :departmentId AND o.employee.id = :employeeId AND o.level = 'INDIVIDUAL'")
     Optional<Objective> findByNameAndDepartmentIdAndEmployeeId(@Param("name") String name, @Param("departmentId") String departmentId, @Param("employeeId") java.util.UUID employeeId);
+
+    // Find objectives by division ID
+    @Query("SELECT DISTINCT o FROM Objective o LEFT JOIN FETCH o.keyResults WHERE o.division.id = :divisionId")
+    List<Objective> findByDivisionIdWithKeyResults(@Param("divisionId") String divisionId);
+
+    List<Objective> findByDivisionId(String divisionId);
+
+    // Find objectives by group ID
+    @Query("SELECT DISTINCT o FROM Objective o LEFT JOIN FETCH o.keyResults WHERE o.group.id = :groupId")
+    List<Objective> findByGroupIdWithKeyResults(@Param("groupId") String groupId);
+
+    List<Objective> findByGroupId(String groupId);
 }

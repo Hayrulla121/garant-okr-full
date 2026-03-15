@@ -15,14 +15,14 @@ public interface DepartmentRepository extends JpaRepository<Department, String> 
     /**
      * Find a department by ID with objectives eagerly loaded
      */
-    @Query("SELECT d FROM Department d LEFT JOIN FETCH d.objectives o LEFT JOIN FETCH o.keyResults WHERE d.id = :id")
+    @Query("SELECT d FROM Department d LEFT JOIN FETCH d.division LEFT JOIN FETCH d.objectives o LEFT JOIN FETCH o.keyResults WHERE d.id = :id")
     Optional<Department> findByIdWithObjectives(@Param("id") String id);
 
     /**
      * Find all departments with objectives and key results eagerly loaded.
      * Both objectives and keyResults are Sets, so no MultipleBagFetchException risk.
      */
-    @Query("SELECT DISTINCT d FROM Department d LEFT JOIN FETCH d.objectives o LEFT JOIN FETCH o.keyResults")
+    @Query("SELECT DISTINCT d FROM Department d LEFT JOIN FETCH d.division LEFT JOIN FETCH d.objectives o LEFT JOIN FETCH o.keyResults")
     List<Department> findAllWithObjectives();
 
     /**

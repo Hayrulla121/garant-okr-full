@@ -52,7 +52,7 @@ public class PlatformSettingController {
     })
     @GetMapping("/{key}")
     public ResponseEntity<PlatformSetting> getSetting(
-            @Parameter(description = "Setting key", required = true) @PathVariable String key) {
+            @Parameter(description = "Setting key", required = true) @PathVariable("key") String key) {
         return settingService.getSetting(key)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -68,7 +68,7 @@ public class PlatformSettingController {
     @PutMapping("/{key}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PlatformSetting> updateSetting(
-            @Parameter(description = "Setting key", required = true) @PathVariable String key,
+            @Parameter(description = "Setting key", required = true) @PathVariable("key") String key,
             @RequestBody Map<String, String> body) {
         String value = body.get("value");
         String description = body.get("description");

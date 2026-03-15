@@ -74,7 +74,7 @@ const DepartmentDetailView: React.FC<Props> = ({ department, onUpdate, refreshTr
         }
     };
 
-    const canEvaluate = user && [Role.DIRECTOR, Role.HR, Role.BUSINESS_BLOCK, Role.ADMIN].includes(user.role);
+    const canEvaluate = user && [Role.DIRECTOR, Role.HR, Role.BUSINESS_BLOCK, Role.ADMIN, Role.DEPARTMENT_LEADER].includes(user.role);
 
     if (loading) {
         return (

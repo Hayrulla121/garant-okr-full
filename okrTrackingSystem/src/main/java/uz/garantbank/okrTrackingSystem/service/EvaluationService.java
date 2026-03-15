@@ -32,6 +32,7 @@ public class EvaluationService {
     private final EvaluationRepository evaluationRepository;
     private final UserRepository userRepository;
     private final ScoreLevelRepository scoreLevelRepository;
+    private final DepartmentAccessService departmentAccessService;
 
     /**
      * Migrate any DRAFT evaluations to SUBMITTED status on application startup.
@@ -70,7 +71,7 @@ public class EvaluationService {
                 .orElseThrow(() -> new IllegalArgumentException("Evaluator not found"));
 
         // Validate evaluator has permission to evaluate
-        validateEvaluationPermissions(evaluator, request.getEvaluatorType(), request.getTargetType());
+        validateEvaluationPermissions(evaluator, request.getEvaluatorType(), request.getTargetType(), request.getTargetId());
 
         // Convert star rating to numeric if provided (for Director)
         Double numericRating = request.getNumericRating();
@@ -370,13 +371,19 @@ public class EvaluationService {
     /**
      * Validate evaluator has permission to create this type of evaluation
      */
-    private void validateEvaluationPermissions(User evaluator, EvaluatorType evaluatorType, String targetType) {
+    private void validateEvaluationPermissions(User evaluator, EvaluatorType evaluatorType, String targetType, UUID targetId) {
         Role userRole = evaluator.getRole();
 
         switch (evaluatorType) {
             case DIRECTOR:
-                if (userRole != Role.DIRECTOR && userRole != Role.ADMIN) {
-                    throw new IllegalArgumentException("Only Directors can create Director evaluations");
+                if (userRole != Role.DIRECTOR && userRole != Role.ADMIN && userRole != Role.DEPARTMENT_LEADER) {
+                    throw new IllegalArgumentException("Only Directors and Department Leaders can create Director evaluations");
+                }
+                // DEPARTMENT_LEADER can only evaluate departments they are assigned to
+                if (userRole == Role.DEPARTMENT_LEADER && "DEPARTMENT".equals(targetType) && targetId != null) {
+                    if (!departmentAccessService.isDepartmentAssigned(evaluator, targetId.toString())) {
+                        throw new IllegalArgumentException("Department Leaders can only evaluate their assigned departments");
+                    }
                 }
                 break;
             case HR:

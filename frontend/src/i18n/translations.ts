@@ -34,6 +34,11 @@ export interface Translations {
   organizationScoreBreakdown: string;
   orgAverage: string;
   allDepartments: string;
+  divisionObjectives: string;
+  departmentObjectives: string;
+  groupObjectives: string;
+  leaderObjectives: string;
+  noObjectivesFound: string;
   objectives: string;
 
   // Department View
@@ -123,6 +128,11 @@ export interface Translations {
   deleteObjective: string;
   editKeyResult: string;
   deleteKeyResult: string;
+  addGroup: string;
+  deleteGroup: string;
+  manageMembers: string;
+  noEmployeesInDepartment: string;
+  membersUpdated: string;
 
   // Score Levels Manager
   scoreLevelConfiguration: string;
@@ -168,6 +178,7 @@ export interface Translations {
   createFirstDivision: string;
   divisionsCount: string;
   departmentsCount: string;
+  groupsCount: string;
   employeesCount: string;
   leaderLabel: string;
   deptsShort: string;
@@ -194,6 +205,9 @@ export interface Translations {
   failedToCreateKeyResult: string;
   failedToDeleteKeyResult: string;
   failedToLoadDepartments: string;
+  closeMonth: string;
+  closeMonthConfirm: string;
+  closing: string;
   failedToExportExcel: string;
   importSuccess: string;
   importFailed: string;
@@ -211,6 +225,7 @@ export interface Translations {
 
   // Evaluations
   directorEvaluation: string;
+  leaderEvaluation: string;
   hrEvaluation: string;
   businessBlockEvaluation: string;
   automaticOkrScore: string;
@@ -400,6 +415,8 @@ export interface Translations {
   actions: string;
   editUser: string;
   assignDepartmentsAction: string;
+  assignGroups: string;
+  noGroupsAvailable: string;
   deleteUser: string;
   noUsersMatchingFilters: string;
   showingXOfYUsers: string;
@@ -450,6 +467,11 @@ export const translations: Record<Language, Translations> = {
     organizationScoreBreakdown: 'Organization Score Breakdown',
     orgAverage: 'Org Average',
     allDepartments: 'All Departments',
+    divisionObjectives: 'Division Objectives',
+    departmentObjectives: 'Department Objectives',
+    groupObjectives: 'Group Objectives',
+    leaderObjectives: 'Leader Objectives',
+    noObjectivesFound: 'No objectives found',
     objectives: 'objectives',
 
     // Department View
@@ -539,6 +561,11 @@ export const translations: Record<Language, Translations> = {
     deleteObjective: 'Delete objective',
     editKeyResult: 'Edit key result',
     deleteKeyResult: 'Delete key result',
+    addGroup: 'Add Group',
+    deleteGroup: 'Delete group',
+    manageMembers: 'Manage Members',
+    noEmployeesInDepartment: 'No employees in this department',
+    membersUpdated: 'Group members updated',
 
     // Score Levels Manager
     scoreLevelConfiguration: 'Score Level Configuration',
@@ -584,6 +611,7 @@ export const translations: Record<Language, Translations> = {
     createFirstDivision: 'Create your first division to start building the organization structure',
     divisionsCount: 'Divisions',
     departmentsCount: 'Departments',
+    groupsCount: 'Groups',
     employeesCount: 'Employees',
     leaderLabel: 'Leader:',
     deptsShort: 'Depts',
@@ -610,6 +638,9 @@ export const translations: Record<Language, Translations> = {
     failedToCreateKeyResult: 'Failed to create key result',
     failedToDeleteKeyResult: 'Failed to delete key result',
     failedToLoadDepartments: 'Failed to load departments',
+    closeMonth: 'Close the Month',
+    closeMonthConfirm: 'Close the current month and save scores? This action will snapshot all department scores.',
+    closing: 'Closing...',
     failedToExportExcel: 'Failed to export Excel',
     importSuccess: 'Import completed successfully!',
     importFailed: 'Import failed',
@@ -627,6 +658,7 @@ export const translations: Record<Language, Translations> = {
 
     // Evaluations
     directorEvaluation: 'Director Evaluation',
+    leaderEvaluation: 'Leader Evaluation',
     hrEvaluation: 'HR Evaluation',
     businessBlockEvaluation: 'Business Block',
     automaticOkrScore: 'Automatic OKR Score',
@@ -816,6 +848,8 @@ export const translations: Record<Language, Translations> = {
     actions: 'Actions',
     editUser: 'Edit User',
     assignDepartmentsAction: 'Assign Departments',
+    assignGroups: 'Assign Groups',
+    noGroupsAvailable: 'No groups available',
     deleteUser: 'Delete User',
     noUsersMatchingFilters: 'No users found matching your filters.',
     showingXOfYUsers: 'users',
@@ -865,6 +899,11 @@ export const translations: Record<Language, Translations> = {
     organizationScoreBreakdown: 'Детализация оценки организации',
     orgAverage: 'Среднее по орг.',
     allDepartments: 'Все отделы',
+    divisionObjectives: 'Цели дивизионов',
+    departmentObjectives: 'Цели отделов',
+    groupObjectives: 'Цели групп',
+    leaderObjectives: 'Цели руководителей',
+    noObjectivesFound: 'Цели не найдены',
     objectives: 'целей',
 
     // Department View
@@ -949,11 +988,16 @@ export const translations: Record<Language, Translations> = {
     noObjectivesYetClick: 'Пока нет целей — нажмите "+ Добавить цель" выше',
     noDepartmentsYetClick: 'Пока нет отделов — нажмите "+ Добавить отдел" выше',
     onlyAdminsCanEditScoreLevels: 'Только администраторы могут редактировать уровни оценок.',
-    deleteDivision: 'Удалить подразделение',
+    deleteDivision: 'Удалить дивизион',
     deleteDepartment: 'Удалить отдел',
     deleteObjective: 'Удалить цель',
     editKeyResult: 'Редактировать ключевой результат',
     deleteKeyResult: 'Удалить ключевой результат',
+    addGroup: 'Добавить группу',
+    deleteGroup: 'Удалить группу',
+    manageMembers: 'Участники',
+    noEmployeesInDepartment: 'Нет сотрудников в этом отделе',
+    membersUpdated: 'Участники группы обновлены',
 
     // Score Levels Manager
     scoreLevelConfiguration: 'Настройка уровней оценки',
@@ -999,6 +1043,7 @@ export const translations: Record<Language, Translations> = {
     createFirstDivision: 'Создайте ваш первый дивизион, чтобы начать строить структуру',
     divisionsCount: 'Дивизионы',
     departmentsCount: 'Отделы',
+    groupsCount: 'Группы',
     employeesCount: 'Сотрудники',
     leaderLabel: 'Руководитель:',
     deptsShort: 'Отд',
@@ -1025,6 +1070,9 @@ export const translations: Record<Language, Translations> = {
     failedToCreateKeyResult: 'Не удалось создать ключевой результат',
     failedToDeleteKeyResult: 'Не удалось удалить ключевой результат',
     failedToLoadDepartments: 'Не удалось загрузить отделы',
+    closeMonth: 'Закрыть месяц',
+    closeMonthConfirm: 'Закрыть текущий месяц и сохранить баллы? Будет сделан снимок баллов всех отделов.',
+    closing: 'Закрытие...',
     failedToExportExcel: 'Не удалось экспортировать в Excel',
     importSuccess: 'Импорт завершён успешно!',
     importFailed: 'Ошибка импорта',
@@ -1042,6 +1090,7 @@ export const translations: Record<Language, Translations> = {
 
     // Evaluations
     directorEvaluation: 'Оценка директора',
+    leaderEvaluation: 'Оценка руководителя',
     hrEvaluation: 'Оценка HR',
     businessBlockEvaluation: 'Бизнес-блок',
     automaticOkrScore: 'Автоматическая оценка OKR',
@@ -1231,6 +1280,8 @@ export const translations: Record<Language, Translations> = {
     actions: 'Действия',
     editUser: 'Редактировать',
     assignDepartmentsAction: 'Назначить отделы',
+    assignGroups: 'Назначить группы',
+    noGroupsAvailable: 'Нет доступных групп',
     deleteUser: 'Удалить',
     noUsersMatchingFilters: 'Пользователи по фильтру не найдены.',
     showingXOfYUsers: 'пользователей',
@@ -1280,6 +1331,11 @@ export const translations: Record<Language, Translations> = {
     organizationScoreBreakdown: 'Tashkilot bahosi tafsiloti',
     orgAverage: "Tash. o'rtacha",
     allDepartments: "Barcha bo'limlar",
+    divisionObjectives: 'Divizion maqsadlari',
+    departmentObjectives: "Bo'lim maqsadlari",
+    groupObjectives: 'Guruh maqsadlari',
+    leaderObjectives: 'Rahbar maqsadlari',
+    noObjectivesFound: "Maqsadlar topilmadi",
     objectives: 'maqsadlar',
 
     // Department View
@@ -1369,6 +1425,11 @@ export const translations: Record<Language, Translations> = {
     deleteObjective: "Maqsadni o'chirish",
     editKeyResult: "Asosiy natijani tahrirlash",
     deleteKeyResult: "Asosiy natijani o'chirish",
+    addGroup: "Guruh qo'shish",
+    deleteGroup: "Guruhni o'chirish",
+    manageMembers: "A'zolarni boshqarish",
+    noEmployeesInDepartment: "Bu bo'limda xodimlar yo'q",
+    membersUpdated: "Guruh a'zolari yangilandi",
 
     // Score Levels Manager
     scoreLevelConfiguration: 'Baho darajalarini sozlash',
@@ -1414,6 +1475,7 @@ export const translations: Record<Language, Translations> = {
     createFirstDivision: 'Tuzilmani qurishni boshlash uchun birinchi bo\'linmani yarating',
     divisionsCount: 'Bo\'linmalar',
     departmentsCount: 'Bo\'limlar',
+    groupsCount: 'Guruhlar',
     employeesCount: 'Xodimlar',
     leaderLabel: 'Rahbar:',
     deptsShort: 'Bo\'l',
@@ -1440,6 +1502,9 @@ export const translations: Record<Language, Translations> = {
     failedToCreateKeyResult: "Asosiy natija yaratib bo'lmadi",
     failedToDeleteKeyResult: "Asosiy natijani o'chirib bo'lmadi",
     failedToLoadDepartments: "Bo'limlarni yuklab bo'lmadi",
+    closeMonth: "Oyni yopish",
+    closeMonthConfirm: "Joriy oyni yopish va ballarni saqlash? Barcha bo'limlar ballari saqlanadi.",
+    closing: "Yopilmoqda...",
     failedToExportExcel: "Excelga eksport qilib bo'lmadi",
     importSuccess: "Import muvaffaqiyatli yakunlandi!",
     importFailed: "Import amalga oshmadi",
@@ -1457,6 +1522,7 @@ export const translations: Record<Language, Translations> = {
 
     // Evaluations
     directorEvaluation: 'Direktor bahosi',
+    leaderEvaluation: 'Rahbar bahosi',
     hrEvaluation: 'HR bahosi',
     businessBlockEvaluation: 'Biznes blok',
     automaticOkrScore: 'Avtomatik OKR bahosi',
@@ -1646,6 +1712,8 @@ export const translations: Record<Language, Translations> = {
     actions: 'Harakatlar',
     editUser: 'Tahrirlash',
     assignDepartmentsAction: "Bo'lim tayinlash",
+    assignGroups: "Guruhlarni tayinlash",
+    noGroupsAvailable: "Guruhlar mavjud emas",
     deleteUser: "O'chirish",
     noUsersMatchingFilters: "Filtrga mos foydalanuvchilar topilmadi.",
     showingXOfYUsers: 'foydalanuvchilar',

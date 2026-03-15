@@ -3,6 +3,7 @@ package uz.garantbank.okrTrackingSystem.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Entity
@@ -11,7 +12,7 @@ import java.util.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode(exclude = {"department", "employee", "keyResults"})
+@EqualsAndHashCode(exclude = {"department", "employee", "keyResults", "group", "division"})
 public class Objective {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -24,11 +25,25 @@ public class Objective {
     private Integer weight; // Percentage weight within department (0-100)
 
     /**
-     * Department this objective belongs to (null for individual employee OKRs)
+     * Department this objective belongs to (null for division/group-only OKRs)
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id")
     private Department department;
+
+    /**
+     * Division this objective belongs to (null unless level=DIVISION)
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "division_id")
+    private Division division;
+
+    /**
+     * Group this objective belongs to (null unless level=GROUP)
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id")
+    private OrgGroup group;
 
     /**
      * Employee this objective is assigned to (null for department OKRs)
@@ -39,15 +54,25 @@ public class Objective {
     private User employee;
 
     /**
-     * Level of this objective (DEPARTMENT or INDIVIDUAL)
+     * Level of this objective (DIVISION, DEPARTMENT, GROUP, or INDIVIDUAL)
      */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
     private ObjectiveLevel level = ObjectiveLevel.DEPARTMENT;
 
-    @OneToMany(mappedBy = "objective", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Column(name = "created_at")
     @Builder.Default
-    private Set<KeyResult> keyResults = new HashSet<>();
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) createdAt = LocalDateTime.now();
+    }
+
+    @OneToMany(mappedBy = "objective", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id ASC")
+    @Builder.Default
+    private List<KeyResult> keyResults = new ArrayList<>();
 }
 

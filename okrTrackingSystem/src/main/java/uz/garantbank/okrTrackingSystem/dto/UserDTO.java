@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import uz.garantbank.okrTrackingSystem.dto.user.DepartmentSummaryDTO;
+import uz.garantbank.okrTrackingSystem.dto.user.GroupSummaryDTO;
 import uz.garantbank.okrTrackingSystem.entity.Role;
 
 import java.time.LocalDateTime;
@@ -63,6 +64,9 @@ public class UserDTO {
 
     @Schema(description = "Departments the user is assigned to")
     private List<DepartmentSummaryDTO> assignedDepartments;
+
+    @Schema(description = "Groups the user is a member of")
+    private List<GroupSummaryDTO> assignedGroups;
 
     @Schema(description = "Account creation timestamp", example = "2025-01-01T09:00:00")
     private LocalDateTime createdAt;

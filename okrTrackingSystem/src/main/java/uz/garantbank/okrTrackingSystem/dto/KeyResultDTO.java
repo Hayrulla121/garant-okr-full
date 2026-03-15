@@ -49,4 +49,7 @@ public class KeyResultDTO {
 
     @Schema(description = "Progress percentage (0-100), manually set by ADMIN or DEPARTMENT_LEADER. Null if the current user cannot view progress for this department.", example = "50")
     private Integer progress;
+
+    @Schema(description = "Whether this KR is active. Inactive KRs are excluded from score calculation.", example = "true")
+    private Boolean active;
 }

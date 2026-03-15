@@ -103,21 +103,33 @@ export default function OrganizationStructure() {
     });
   };
 
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const toggleGroup = (groupId: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(groupId)) {
+        next.delete(groupId);
+      } else {
+        next.add(groupId);
+      }
+      return next;
+    });
+  };
+
   const [scale, setScale] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const expandAll = () => {
     setExpandedDivisions(new Set(divisions.map(d => d.id)));
     setExpandedDepartments(new Set(departments.map(d => d.id)));
+    const allGroupIds = departments.flatMap(d => (d.groups || []).map(g => g.id));
+    setExpandedGroups(new Set(allGroupIds));
   };
-
-  const isFullyExpanded = divisions.length > 0 &&
-    expandedDivisions.size === divisions.length &&
-    expandedDepartments.size === departments.length;
 
   const collapseAll = () => {
     setExpandedDivisions(new Set());
     setExpandedDepartments(new Set());
+    setExpandedGroups(new Set());
     setScale(1); // Reset scale on collapse
   };
 
@@ -165,7 +177,7 @@ export default function OrganizationStructure() {
       clearTimeout(timeoutId);
       window.removeEventListener('resize', adjustScale);
     };
-  }, [expandedDivisions, expandedDepartments, divisions, departments]);
+  }, [expandedDivisions, expandedDepartments, expandedGroups, divisions, departments]);
 
   const handleDeleteDivision = async (division: Division) => {
     if (division.departments.length > 0) {
@@ -224,6 +236,8 @@ export default function OrganizationStructure() {
   const getUnassignedDepartments = (): Department[] => {
     return departments.filter(d => !d.division && !d.divisionId);
   };
+
+  const totalGroups = departments.reduce((acc, dept) => acc + (dept.groups?.length || 0), 0);
 
   if (loading) {
     return (
@@ -292,7 +306,7 @@ export default function OrganizationStructure() {
         )}
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-lg shadow p-4 border border-slate-200">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
@@ -316,6 +330,19 @@ export default function OrganizationStructure() {
               <div>
                 <div className="text-2xl font-bold text-slate-800">{departments.length}</div>
                 <div className="text-sm text-slate-500">{t.departmentsCount}</div>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow p-4 border border-slate-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-teal-100 flex items-center justify-center">
+                <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-slate-800">{totalGroups}</div>
+                <div className="text-sm text-slate-500">{t.groupsCount}</div>
               </div>
             </div>
           </div>
@@ -446,7 +473,7 @@ export default function OrganizationStructure() {
                                           <h5 className="font-semibold text-slate-800 text-xs text-center mb-1 leading-tight h-8 flex items-center justify-center">{department.name}</h5>
 
                                           <div className="flex items-center justify-center gap-1.5 mt-1 border-t border-slate-100 pt-2">
-                                            <span className="text-[9px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium">{departmentEmployees.length} {t.empShort}</span>
+                                            <span className="text-[9px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium">{(department.groups || []).length} grp</span>
                                             {(department.finalScore || department.score) && (
                                               <span className="text-[9px] px-1.5 py-0.5 rounded text-white font-bold" style={{ backgroundColor: (department.finalScore || department.score)?.color || '#6b7280' }}>
                                                 {(department.finalScore || department.score)?.score.toFixed(2)}
@@ -455,7 +482,7 @@ export default function OrganizationStructure() {
                                           </div>
 
                                           {/* Expand/Collapse Toggle */}
-                                          {departmentEmployees.length > 0 && (
+                                          {(department.groups && department.groups.length > 0) && (
                                             <button
                                               onClick={() => toggleDepartment(department.id)}
                                               className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-white border border-slate-300 rounded-full p-0.5 shadow-sm text-slate-400 hover:text-primary z-20 transition-colors"
@@ -465,38 +492,63 @@ export default function OrganizationStructure() {
                                           )}
                                         </div>
 
-                                        {/* Employees Level */}
-                                        {isDeptExpanded && departmentEmployees.length > 0 && (
+                                        {/* Groups Level */}
+                                        {isDeptExpanded && department.groups && department.groups.length > 0 && (
                                           <ul>
-                                            {departmentEmployees.map((employee) => (
-                                              <li key={employee.id}>
-                                                {/* Employee Node */}
-                                                <div
-                                                  className="org-node bg-white border border-slate-200 rounded-xl shadow-sm p-3 w-40 relative group mt-4 cursor-pointer hover:border-green-400 hover:shadow-md transition-all"
-                                                  onClick={() => navigate(`/profile/${employee.id}`)}
-                                                >
-                                                  {isAdmin && (
-                                                    <button
-                                                      onClick={(e) => { e.stopPropagation(); handleAssignEmployee(employee); }}
-                                                      className="absolute -top-2 -right-2 p-1.5 text-white bg-blue-500 hover:bg-blue-600 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-20"
-                                                      title="Manage Departments"
-                                                    >
-                                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg>
-                                                    </button>
-                                                  )}
-                                                  <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-600 mx-auto flex items-center justify-center mb-2 font-bold text-xs overflow-hidden border-2 border-white shadow-sm">
-                                                    {employee.profilePhotoUrl ? (
-                                                      <img src={getImageUrl(employee.profilePhotoUrl)} alt={employee.fullName} className="w-full h-full object-cover" />
-                                                    ) : (
-                                                      employee.fullName.charAt(0).toUpperCase()
+                                            {department.groups.map((group) => {
+                                              const isGroupExpanded = expandedGroups.has(group.id);
+                                              const groupMembers = group.members || [];
+                                              return (
+                                                <li key={group.id}>
+                                                  <div className="org-node bg-white border border-teal-200 rounded-xl shadow-sm p-3 w-44 relative group mt-4 hover:border-teal-400 transition-colors">
+                                                    <div className="w-7 h-7 rounded-lg bg-teal-100 text-teal-600 mx-auto flex items-center justify-center mb-1.5 font-bold text-xs cursor-pointer" onClick={() => toggleGroup(group.id)}>
+                                                      {group.name.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <h5 className="font-semibold text-slate-800 text-[11px] text-center mb-1 leading-tight">{group.name}</h5>
+                                                    <div className="flex items-center justify-center gap-1.5 mt-1">
+                                                      <span className="text-[9px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium">{groupMembers.length} {t.empShort}</span>
+                                                      {group.score && (
+                                                        <span className="text-[9px] px-1.5 py-0.5 rounded text-white font-bold" style={{ backgroundColor: group.score.color || '#6b7280' }}>
+                                                          {group.score.score.toFixed(2)}
+                                                        </span>
+                                                      )}
+                                                    </div>
+                                                    {/* Expand/Collapse Toggle */}
+                                                    {groupMembers.length > 0 && (
+                                                      <button
+                                                        onClick={() => toggleGroup(group.id)}
+                                                        className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-white border border-slate-300 rounded-full p-0.5 shadow-sm text-slate-400 hover:text-teal-600 z-20 transition-colors"
+                                                      >
+                                                        <svg className={`w-3 h-3 transform transition-transform ${isGroupExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                                      </button>
                                                     )}
                                                   </div>
-                                                  <h6 className="font-semibold text-slate-800 text-[11px] text-center truncate w-full px-1">{employee.fullName}</h6>
-                                                  <p className="text-[9px] text-slate-500 text-center truncate w-full mb-1">{employee.jobTitle || employee.role}</p>
-                                                  <span className={`text-[8px] font-bold uppercase px-1.5 py-0.5 rounded ${employee.role === Role.DEPARTMENT_LEADER ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>{employee.role.replace('_', ' ')}</span>
-                                                </div>
-                                              </li>
-                                            ))}
+
+                                                  {/* Members (Employees) Level */}
+                                                  {isGroupExpanded && groupMembers.length > 0 && (
+                                                    <ul>
+                                                      {groupMembers.map((member) => (
+                                                        <li key={member.id}>
+                                                          <div
+                                                            className="org-node bg-white border border-slate-200 rounded-xl shadow-sm p-3 w-40 relative group mt-4 cursor-pointer hover:border-green-400 hover:shadow-md transition-all"
+                                                            onClick={() => navigate(`/profile/${member.id}`)}
+                                                          >
+                                                            <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-600 mx-auto flex items-center justify-center mb-2 font-bold text-xs overflow-hidden border-2 border-white shadow-sm">
+                                                              {member.profilePhotoUrl ? (
+                                                                <img src={getImageUrl(member.profilePhotoUrl)} alt={member.fullName} className="w-full h-full object-cover" />
+                                                              ) : (
+                                                                member.fullName.charAt(0).toUpperCase()
+                                                              )}
+                                                            </div>
+                                                            <h6 className="font-semibold text-slate-800 text-[11px] text-center truncate w-full px-1">{member.fullName}</h6>
+                                                          </div>
+                                                        </li>
+                                                      ))}
+                                                    </ul>
+                                                  )}
+                                                </li>
+                                              );
+                                            })}
                                           </ul>
                                         )}
                                       </li>

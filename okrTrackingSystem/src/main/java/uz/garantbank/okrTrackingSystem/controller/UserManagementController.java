@@ -79,7 +79,7 @@ public class UserManagementController {
     })
     @GetMapping("/{id}")
     public ResponseEntity<UserDTO> getUserById(
-            @Parameter(description = "User ID (UUID)", required = true) @PathVariable UUID id) {
+            @Parameter(description = "User ID (UUID)", required = true) @PathVariable("id") UUID id) {
         User currentUser = accessService.getCurrentUser();
         boolean isAdmin = currentUser.getRole() == Role.ADMIN;
         boolean isDirector = currentUser.getRole() == Role.DIRECTOR;
@@ -124,7 +124,7 @@ public class UserManagementController {
     })
     @PutMapping("/{id}")
     public ResponseEntity<UserDTO> updateUser(
-            @Parameter(description = "User ID (UUID)", required = true) @PathVariable UUID id,
+            @Parameter(description = "User ID (UUID)", required = true) @PathVariable("id") UUID id,
             @Valid @RequestBody UpdateUserRequest request) {
         User currentUser = accessService.getCurrentUser();
         return ResponseEntity.ok(userService.updateUser(id, request, currentUser));
@@ -141,7 +141,7 @@ public class UserManagementController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteUser(
-            @Parameter(description = "User ID (UUID)", required = true) @PathVariable UUID id) {
+            @Parameter(description = "User ID (UUID)", required = true) @PathVariable("id") UUID id) {
         User currentUser = accessService.getCurrentUser();
 
         if (currentUser.getId().equals(id)) {
@@ -164,7 +164,7 @@ public class UserManagementController {
     @PostMapping("/{id}/departments")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDTO> assignDepartments(
-            @Parameter(description = "User ID (UUID)", required = true) @PathVariable UUID id,
+            @Parameter(description = "User ID (UUID)", required = true) @PathVariable("id") UUID id,
             @Valid @RequestBody AssignDepartmentsRequest request) {
         return ResponseEntity.ok(userService.assignDepartments(id, request.getDepartmentIds()));
     }
@@ -180,8 +180,8 @@ public class UserManagementController {
     @DeleteMapping("/{id}/departments/{deptId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDTO> removeDepartment(
-            @Parameter(description = "User ID (UUID)", required = true) @PathVariable UUID id,
-            @Parameter(description = "Department ID to remove", required = true) @PathVariable String deptId) {
+            @Parameter(description = "User ID (UUID)", required = true) @PathVariable("id") UUID id,
+            @Parameter(description = "Department ID to remove", required = true) @PathVariable("deptId") String deptId) {
         return ResponseEntity.ok(userService.removeDepartment(id, deptId));
     }
 
@@ -196,7 +196,7 @@ public class UserManagementController {
     })
     @PostMapping(value = "/{id}/photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UserDTO> uploadPhoto(
-            @Parameter(description = "User ID (UUID)", required = true) @PathVariable UUID id,
+            @Parameter(description = "User ID (UUID)", required = true) @PathVariable("id") UUID id,
             @Parameter(description = "Profile photo file (JPEG, PNG, GIF; max 5MB)")
             @RequestParam("photo") MultipartFile file) {
         User currentUser = accessService.getCurrentUser();
@@ -219,7 +219,7 @@ public class UserManagementController {
     })
     @GetMapping("/by-department/{deptId}")
     public ResponseEntity<List<UserDTO>> getUsersByDepartment(
-            @Parameter(description = "Department ID", required = true) @PathVariable String deptId) {
+            @Parameter(description = "Department ID", required = true) @PathVariable("deptId") String deptId) {
         return ResponseEntity.ok(userService.getUsersByDepartment(deptId));
     }
 

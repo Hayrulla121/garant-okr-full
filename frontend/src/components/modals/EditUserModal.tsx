@@ -32,7 +32,7 @@ export default function EditUserModal({ user, departments, onClose, onSuccess }:
     phoneNumber: user.phoneNumber || '',
     bio: user.bio || '',
     role: user.role,
-    assignedDepartmentIds: user.assignedDepartments?.map(d => d.id) || [],
+    assignedGroupIds: user.assignedGroups?.map(g => g.id) || [],
     isActive: user.isActive,
     canEditAssignedDepartments: user.canEditAssignedDepartments || false,
     password: '',
@@ -46,7 +46,6 @@ export default function EditUserModal({ user, departments, onClose, onSuccess }:
     setLoading(true);
 
     try {
-      // Only send fields that have values or have changed
       const updateData: UpdateUserRequest = {
         fullName: formData.fullName,
         email: formData.email,
@@ -55,15 +54,13 @@ export default function EditUserModal({ user, departments, onClose, onSuccess }:
         bio: formData.bio,
       };
 
-      // Add admin-only fields if current user is admin
       if (isAdmin) {
         updateData.role = formData.role;
-        updateData.assignedDepartmentIds = formData.assignedDepartmentIds;
+        updateData.assignedGroupIds = formData.assignedGroupIds;
         updateData.isActive = formData.isActive;
         updateData.canEditAssignedDepartments = formData.canEditAssignedDepartments;
       }
 
-      // Add password if provided
       if (formData.password && formData.password.length >= 6) {
         updateData.password = formData.password;
       }
@@ -77,14 +74,17 @@ export default function EditUserModal({ user, departments, onClose, onSuccess }:
     }
   };
 
-  const handleDepartmentToggle = (deptId: string) => {
+  const handleGroupToggle = (groupId: string) => {
     setFormData(prev => ({
       ...prev,
-      assignedDepartmentIds: prev.assignedDepartmentIds?.includes(deptId)
-        ? prev.assignedDepartmentIds.filter(id => id !== deptId)
-        : [...(prev.assignedDepartmentIds || []), deptId]
+      assignedGroupIds: prev.assignedGroupIds?.includes(groupId)
+        ? prev.assignedGroupIds.filter(id => id !== groupId)
+        : [...(prev.assignedGroupIds || []), groupId]
     }));
   };
+
+  const departmentsWithGroups = departments.filter(d => d.groups && d.groups.length > 0);
+  const hasAnyGroups = departmentsWithGroups.length > 0;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -150,11 +150,10 @@ export default function EditUserModal({ user, departments, onClose, onSuccess }:
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value as Role })}
                 disabled={!isAdmin}
-                className={`w-full px-3 py-2 border rounded-lg ${
-                  isAdmin
+                className={`w-full px-3 py-2 border rounded-lg ${isAdmin
                     ? 'border-slate-300 focus:ring-2 focus:ring-primary focus:border-primary'
                     : 'border-slate-200 bg-slate-50 text-slate-500'
-                }`}
+                  }`}
               >
                 {Object.values(Role).map(role => (
                   <option key={role} value={role}>{roleLabels[role]}</option>
@@ -244,27 +243,34 @@ export default function EditUserModal({ user, departments, onClose, onSuccess }:
             </div>
           )}
 
-          {/* Departments (Admin only) */}
-          {isAdmin && (
+          {/* Groups (Admin only, organized by department) */}
+          {isAdmin && formData.role !== Role.ADMIN && formData.role !== Role.HR && formData.role !== Role.BUSINESS_BLOCK && (
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Assigned Departments
+                Assign Groups
               </label>
-              <div className="border border-slate-300 rounded-lg p-3 max-h-40 overflow-y-auto">
-                {departments.length === 0 ? (
-                  <p className="text-slate-400 text-sm">No departments available</p>
+              <div className="border border-slate-300 rounded-lg p-3 max-h-60 overflow-y-auto">
+                {!hasAnyGroups ? (
+                  <p className="text-slate-400 text-sm">No groups available</p>
                 ) : (
-                  <div className="space-y-2">
-                    {departments.map(dept => (
-                      <label key={dept.id} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded">
-                        <input
-                          type="checkbox"
-                          checked={formData.assignedDepartmentIds?.includes(dept.id) || false}
-                          onChange={() => handleDepartmentToggle(dept.id)}
-                          className="w-4 h-4 text-primary rounded focus:ring-primary"
-                        />
-                        <span className="text-sm text-slate-700">{dept.name}</span>
-                      </label>
+                  <div className="space-y-3">
+                    {departmentsWithGroups.map(dept => (
+                      <div key={dept.id}>
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">{dept.name}</p>
+                        <div className="space-y-1 ml-2">
+                          {dept.groups!.map(group => (
+                            <label key={group.id} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded">
+                              <input
+                                type="checkbox"
+                                checked={formData.assignedGroupIds?.includes(group.id) || false}
+                                onChange={() => handleGroupToggle(group.id)}
+                                className="w-4 h-4 text-primary rounded focus:ring-primary"
+                              />
+                              <span className="text-sm text-slate-700">{group.name}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )}

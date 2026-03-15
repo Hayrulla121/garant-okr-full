@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { User, Role, LoginRequest } from '../types/auth';
 import { authApi } from '../services/api';
 
@@ -16,6 +16,7 @@ interface AuthContextType {
     canCreateDepartment: boolean;
     isReadOnly: boolean;
     loading: boolean;
+    serverOffline: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,6 +37,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [serverOffline, setServerOffline] = useState(false);
 
     useEffect(() => {
         // Check for existing token on mount
@@ -48,6 +50,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
         setLoading(false);
     }, []);
+
+    // Detect tab becoming visible after inactivity and verify backend is reachable
+    const checkServerAlive = useCallback(async () => {
+        const storedToken = localStorage.getItem('token');
+        if (!storedToken) return;
+        try {
+            await authApi.getCurrentUser();
+            setServerOffline(false);
+        } catch (err: any) {
+            // Network error (ECONNREFUSED) — backend is down
+            if (!err.response) {
+                setServerOffline(true);
+            }
+            // 401 is handled by the api.ts interceptor (redirects to /login)
+        }
+    }, []);
+
+    useEffect(() => {
+        let hiddenAt: number | null = null;
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'hidden') {
+                hiddenAt = Date.now();
+            } else if (document.visibilityState === 'visible' && hiddenAt !== null) {
+                const inactiveMs = Date.now() - hiddenAt;
+                // If tab was hidden for more than 5 minutes, verify backend is still up
+                if (inactiveMs > 5 * 60 * 1000) {
+                    checkServerAlive();
+                }
+                hiddenAt = null;
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, [checkServerAlive]);
 
     const login = async (username: string, password: string) => {
         try {
@@ -92,8 +130,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const canEditDepartment = (departmentId: string): boolean => {
         if (!user) return false;
 
-        // ADMIN can edit all
-        if (user.role === Role.ADMIN) return true;
+        // ADMIN, HR, and BUSINESS_BLOCK can edit all
+        if (user.role === Role.ADMIN || user.role === Role.HR || user.role === Role.BUSINESS_BLOCK) return true;
 
         // EMPLOYEE is normally read-only, but can edit if canEditAssignedDepartments is enabled
         if (user.role === Role.EMPLOYEE) {
@@ -113,7 +151,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
      */
     const canEditProgress = (departmentId: string): boolean => {
         if (!user) return false;
-        if (user.role === Role.ADMIN) return true;
+        if (user.role === Role.ADMIN || user.role === Role.HR || user.role === Role.BUSINESS_BLOCK) return true;
         if (user.role === Role.DEPARTMENT_LEADER) {
             return user.assignedDepartments?.some(d => d.id === departmentId) ?? false;
         }
@@ -149,6 +187,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         canCreateDepartment,
         isReadOnly,
         loading,
+        serverOffline,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

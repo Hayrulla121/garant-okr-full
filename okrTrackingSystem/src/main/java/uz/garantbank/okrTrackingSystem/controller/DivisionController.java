@@ -16,10 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import uz.garantbank.okrTrackingSystem.dto.CreateDivisionRequest;
-import uz.garantbank.okrTrackingSystem.dto.DivisionDTO;
-import uz.garantbank.okrTrackingSystem.dto.DivisionWithScoreDTO;
-import uz.garantbank.okrTrackingSystem.dto.UpdateDivisionRequest;
+import uz.garantbank.okrTrackingSystem.dto.*;
 import uz.garantbank.okrTrackingSystem.dto.user.DepartmentSummaryDTO;
 import uz.garantbank.okrTrackingSystem.service.DepartmentAccessService;
 import uz.garantbank.okrTrackingSystem.service.DivisionAccessService;
@@ -71,7 +68,7 @@ public class DivisionController {
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<DivisionDTO> getDivisionById(
-            @Parameter(description = "Division ID", required = true) @PathVariable String id) {
+            @Parameter(description = "Division ID", required = true) @PathVariable("id") String id) {
         DivisionDTO division = divisionService.getDivisionById(id);
         return ResponseEntity.ok(division);
     }
@@ -107,7 +104,7 @@ public class DivisionController {
     @PutMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<DivisionDTO> updateDivision(
-            @Parameter(description = "Division ID", required = true) @PathVariable String id,
+            @Parameter(description = "Division ID", required = true) @PathVariable("id") String id,
             @Valid @RequestBody UpdateDivisionRequest request,
             Authentication authentication
     ) {
@@ -131,7 +128,7 @@ public class DivisionController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteDivision(
-            @Parameter(description = "Division ID", required = true) @PathVariable String id) {
+            @Parameter(description = "Division ID", required = true) @PathVariable("id") String id) {
         log.info("Deleting division: {}", id);
         departmentAccessService.requireWriteAccess(departmentAccessService.getCurrentUser());
         divisionService.deleteDivision(id);
@@ -148,7 +145,7 @@ public class DivisionController {
     @GetMapping("/{id}/departments")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<DepartmentSummaryDTO>> getDepartmentsByDivision(
-            @Parameter(description = "Division ID", required = true) @PathVariable String id
+            @Parameter(description = "Division ID", required = true) @PathVariable("id") String id
     ) {
         List<DepartmentSummaryDTO> departments =
                 divisionService.getDepartmentsByDivisionId(id);
@@ -165,9 +162,25 @@ public class DivisionController {
     })
     @GetMapping("/{id}/score")
     public ResponseEntity<DivisionWithScoreDTO> getDivisionScore(
-            @Parameter(description = "Division ID", required = true) @PathVariable String id) {
+            @Parameter(description = "Division ID", required = true) @PathVariable("id") String id) {
         DivisionWithScoreDTO result = divisionService.getDivisionWithScore(id);
         return ResponseEntity.ok(result);
+    }
+
+    @Operation(summary = "Create division objective")
+    @PostMapping("/{divisionId}/objectives")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTOR')")
+    public ResponseEntity<ObjectiveDTO> createDivisionObjective(
+            @PathVariable("divisionId") String divisionId, @RequestBody ObjectiveDTO dto) {
+        departmentAccessService.requireWriteAccess(departmentAccessService.getCurrentUser());
+        return ResponseEntity.ok(divisionService.createDivisionObjective(divisionId, dto));
+    }
+
+    @Operation(summary = "Get division objectives")
+    @GetMapping("/{divisionId}/objectives")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<ObjectiveDTO>> getDivisionObjectives(@PathVariable("divisionId") String divisionId) {
+        return ResponseEntity.ok(divisionService.getDivisionObjectives(divisionId));
     }
 
 }

@@ -44,6 +44,11 @@ public class KeyResult {
     @lombok.Builder.Default
     private Integer progress = 0;
 
+    // Whether this KR is active (inactive KRs are excluded from score calculation)
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
+    @lombok.Builder.Default
+    private Boolean active = true;
+
     // Attachment for actual value proof/basis
     @Column(name = "attachment_url")
     private String attachmentUrl;

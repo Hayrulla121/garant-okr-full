@@ -41,6 +41,9 @@ public class UpdateUserRequest {
     @Schema(description = "Department IDs to assign (ADMIN only)", example = "[\"dept-001\", \"dept-002\"]")
     private List<String> assignedDepartmentIds;
 
+    @Schema(description = "Group IDs to assign (ADMIN only, auto-derives departments)", example = "[\"group-001\"]")
+    private List<String> assignedGroupIds;
+
     @Schema(description = "Account active status (ADMIN only)", example = "true")
     @JsonProperty("isActive")
     private Boolean isActive;

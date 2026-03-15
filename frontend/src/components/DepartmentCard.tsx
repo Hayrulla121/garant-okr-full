@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Department, Objective, KeyResult } from '../types/okr';
-import { keyResultApi, platformSettingsApi } from '../services/api';
+import { keyResultApi, objectiveApi, platformSettingsApi } from '../services/api';
 import Speedometer from './Speedometer';
 import { useLanguage } from '../i18n';
 import { useScoreLevels } from '../contexts/ScoreLevelContext';
@@ -10,6 +10,8 @@ interface DepartmentCardProps {
     department: Department;
     objective: Objective;
     onUpdate: () => void;
+    /** 1-based display index for numbering (e.g. 1, 2, 3) */
+    index?: number;
     /**
      * Override the default canEditDepartment permission check.
      * Used for leader objectives where edit access is granted to
@@ -18,13 +20,17 @@ interface DepartmentCardProps {
     canEditOverride?: boolean;
 }
 
-const DepartmentCard: React.FC<DepartmentCardProps> = ({ department, objective, onUpdate, canEditOverride }) => {
+const DepartmentCard: React.FC<DepartmentCardProps> = ({ department, objective, onUpdate, index, canEditOverride }) => {
     const { t } = useLanguage();
     const { scoreLevels } = useScoreLevels();
     const { canEditDepartment, canEditProgress: canEditProgressFn } = useAuth();
     const canEdit = canEditOverride !== undefined ? canEditOverride : canEditDepartment(department.id);
     const canEditProg = canEditProgressFn(department.id);
     const [expanded, setExpanded] = useState(true);
+    const [isEditingObjective, setIsEditingObjective] = useState(false);
+    const [editName, setEditName] = useState(objective.name);
+    const [editWeight, setEditWeight] = useState(String(objective.weight));
+    const [savingObjective, setSavingObjective] = useState(false);
     const [localValues, setLocalValues] = useState<Record<string, string>>({});
     const [localProgress, setLocalProgress] = useState<Record<string, number | string>>({});
     const focusedIdRef = useRef<string | null>(null);
@@ -63,7 +69,7 @@ const DepartmentCard: React.FC<DepartmentCardProps> = ({ department, objective, 
         platformSettingsApi.getAll().then(res => {
             const setting = res.data.find(s => s.settingKey === 'REQUIRE_ATTACHMENT_FOR_ACTUAL_VALUE');
             setAttachmentRequired(setting?.settingValue === 'true');
-        }).catch(() => {});
+        }).catch(() => { });
     }, []);
 
     useEffect(() => {
@@ -338,17 +344,97 @@ const DepartmentCard: React.FC<DepartmentCardProps> = ({ department, objective, 
         return `${apiBase}${url}`;
     };
 
+    const handleStartEditObjective = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setEditName(objective.name);
+        setEditWeight(String(objective.weight));
+        setIsEditingObjective(true);
+    };
+
+    const handleSaveObjective = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const w = parseInt(editWeight, 10);
+        if (!editName.trim() || isNaN(w) || w < 0 || w > 100) return;
+        setSavingObjective(true);
+        try {
+            await objectiveApi.update(objective.id, { name: editName.trim(), weight: w });
+            setIsEditingObjective(false);
+            onUpdate();
+        } catch (err) {
+            console.error('Failed to update objective:', err);
+        } finally {
+            setSavingObjective(false);
+        }
+    };
+
+    const handleCancelEditObjective = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsEditingObjective(false);
+    };
+
     return (
         <div className="bg-white rounded-lg shadow border border-slate-200 overflow-hidden">
             {/* Objective Header - Compact */}
             <div
                 className="bg-gradient-to-r from-primary to-primary-dark px-3 py-2 cursor-pointer"
-                onClick={() => setExpanded(!expanded)}
+                onClick={() => !isEditingObjective && setExpanded(!expanded)}
             >
                 <div className="flex items-center justify-between">
                     <div className="flex-1">
+                        {isEditingObjective ? (
+                            <div className="flex items-center gap-2 flex-wrap" onClick={e => e.stopPropagation()}>
+                                <span className="text-white/70 text-sm font-bold">{index != null ? `${index}.` : ''}</span>
+                                <input
+                                    className="text-sm font-bold text-slate-800 bg-white rounded px-2 py-0.5 flex-1 min-w-0 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                                    value={editName}
+                                    onChange={e => setEditName(e.target.value)}
+                                    autoFocus
+                                    onKeyDown={e => { if (e.key === 'Escape') handleCancelEditObjective(e as any); }}
+                                />
+                                <input
+                                    className="text-sm font-bold text-slate-800 bg-white rounded px-2 py-0.5 w-16 text-center focus:outline-none focus:ring-2 focus:ring-amber-400"
+                                    type="number"
+                                    min={0}
+                                    max={100}
+                                    value={editWeight}
+                                    onChange={e => setEditWeight(e.target.value)}
+                                />
+                                <span className="text-white/80 text-xs">%</span>
+                                <button
+                                    onClick={handleSaveObjective}
+                                    disabled={savingObjective}
+                                    className="bg-green-500 hover:bg-green-600 text-white text-xs px-2 py-1 rounded font-semibold disabled:opacity-50 flex items-center gap-1"
+                                >
+                                    {savingObjective ? (
+                                        <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    )}
+                                    {t.save}
+                                </button>
+                                <button
+                                    onClick={handleCancelEditObjective}
+                                    className="bg-white/20 hover:bg-white/30 text-white text-xs px-2 py-1 rounded font-semibold"
+                                >
+                                    {t.cancel}
+                                </button>
+                            </div>
+                        ) : (
                         <div className="flex items-center gap-2 flex-wrap">
+                            {index != null && (
+                                <span className="text-white/70 text-sm font-bold">{index}.</span>
+                            )}
                             <h3 className="text-sm font-bold text-white">{objective.name}</h3>
+                            {objective.employeeName && (
+                                <span className="bg-white/20 backdrop-blur-sm text-white text-xs px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                    {objective.employeeName}
+                                </span>
+                            )}
                             <span className="bg-white/30 backdrop-blur-sm text-white text-xs px-1.5 py-0.5 rounded-full font-semibold">
                                 {objective.weight}%
                             </span>
@@ -359,6 +445,7 @@ const DepartmentCard: React.FC<DepartmentCardProps> = ({ department, objective, 
                                 return null;
                             })()}
                         </div>
+                        )}
                         <p className="text-red-100 text-xs">
                             {objective.keyResults.length} KR{objective.keyResults.length !== 1 ? 's' : ''}
                         </p>
@@ -370,6 +457,17 @@ const DepartmentCard: React.FC<DepartmentCardProps> = ({ department, objective, 
                                     {objective.score.score.toFixed(2)}
                                 </div>
                             </div>
+                        )}
+                        {canEdit && !isEditingObjective && (
+                            <button
+                                onClick={handleStartEditObjective}
+                                className="bg-white/20 hover:bg-white/30 text-white p-1 rounded transition-colors"
+                                title="Редактировать Objective"
+                            >
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                            </button>
                         )}
                         <span className="text-white text-sm">{expanded ? '▲' : '▼'}</span>
                     </div>
@@ -426,281 +524,309 @@ const DepartmentCard: React.FC<DepartmentCardProps> = ({ department, objective, 
                         <div className="overflow-x-auto">
                             <table className="w-full text-xs">
                                 <thead>
-                                <tr className="bg-gradient-to-r from-primary to-primary-dark text-white">
-                                    <th className="px-2 py-1 text-left font-bold">KR</th>
-                                    <th className="px-2 py-1 text-center font-bold">{t.weight}</th>
-                                    <th className="px-2 py-1 text-left font-bold">{t.keyResult}</th>
-                                    <th className="px-2 py-1 text-center font-bold">{t.actual}</th>
-                                    {(scoreLevels.length > 0 ? [...scoreLevels].sort((a, b) => a.scoreValue - b.scoreValue) : [
-                                        { name: t.below, scoreValue: 0.0, color: '#d9534f' },
-                                        { name: t.meets, scoreValue: 0.31, color: '#f0ad4e' },
-                                        { name: t.good, scoreValue: 0.51, color: '#5cb85c' },
-                                        { name: t.veryGood, scoreValue: 0.86, color: '#28a745' },
-                                        { name: t.exceptional, scoreValue: 0.98, color: '#1e7b34' }
-                                    ]).map((level) => (
-                                        <th
-                                            key={level.name}
-                                            className="px-1 py-1 text-center font-bold text-xs"
-                                            style={{ backgroundColor: level.color }}
-                                        >
-                                            {level.name}<br/>{level.scoreValue.toFixed(2)}
-                                        </th>
-                                    ))}
-                                    <th className="px-2 py-1 text-center font-bold">{t.score}</th>
-                                    {objective.keyResults.some(kr => kr.progress != null) && (
-                                        <th className="px-2 py-1 text-center font-bold min-w-[120px]">{t.progress}</th>
-                                    )}
-                                </tr>
+                                    <tr className="bg-gradient-to-r from-primary to-primary-dark text-white">
+                                        <th className="px-2 py-1 text-left font-bold">KR</th>
+                                        <th className="px-2 py-1 text-center font-bold">{t.weight}</th>
+                                        <th className="px-2 py-1 text-left font-bold">{t.keyResult}</th>
+                                        <th className="px-2 py-1 text-center font-bold">{t.actual}</th>
+                                        {(scoreLevels.length > 0 ? [...scoreLevels].sort((a, b) => a.scoreValue - b.scoreValue) : [
+                                            { name: t.below, scoreValue: 0.0, color: '#d9534f' },
+                                            { name: t.meets, scoreValue: 0.31, color: '#f0ad4e' },
+                                            { name: t.good, scoreValue: 0.51, color: '#5cb85c' },
+                                            { name: t.veryGood, scoreValue: 0.86, color: '#28a745' },
+                                            { name: t.exceptional, scoreValue: 0.98, color: '#1e7b34' }
+                                        ]).map((level) => (
+                                            <th
+                                                key={level.name}
+                                                className="px-1 py-1 text-center font-bold text-xs"
+                                                style={{ backgroundColor: level.color }}
+                                            >
+                                                {level.name}<br />{level.scoreValue.toFixed(2)}
+                                            </th>
+                                        ))}
+                                        <th className="px-2 py-1 text-center font-bold">{t.score}</th>
+                                        {objective.keyResults.some(kr => kr.progress != null) && (
+                                            <th className="px-2 py-1 text-center font-bold min-w-[120px]">{t.progress}</th>
+                                        )}
+                                    </tr>
                                 </thead>
                                 <tbody>
-                                {objective.keyResults.map((kr, index) => (
-                                    <tr
-                                        key={kr.id}
-                                        className={`border-b border-slate-200 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-gray-50 transition-colors`}
-                                    >
-                                        <td className="px-2 py-1.5 font-bold text-slate-700">
-                                            KR{index + 1}
-                                        </td>
-                                        <td className="px-2 py-1.5 text-center">
-                                            <span className="inline-block bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-bold text-xs">
-                                                {kr.weight}%
-                                            </span>
-                                        </td>
-                                        <td className="px-2 py-1.5">
-                                            <div className="font-semibold text-slate-800 text-xs">{kr.name}</div>
-                                            <div className="text-xs text-slate-400">
-                                                {getMetricTypeLabel(kr.metricType)}
-                                            </div>
-                                        </td>
-                                        <td className="px-2 py-1.5 text-center">
-                                            {(() => {
-                                                const hasFile = !!pendingFiles[kr.id] || !!kr.attachmentUrl;
-                                                const lockedByAttachment = attachmentRequired && !hasFile;
-                                                const inputDisabled = !canEdit || savingIds.has(kr.id) || lockedByAttachment;
-                                                const lockTitle = lockedByAttachment
-                                                    ? t.attachFileFirst
-                                                    : !canEdit ? t.noEditPermission : '';
-                                                return (
-                                                    <>
-                                                        {/* Attachment section — shown BEFORE input so user uploads first */}
-                                                        <div className="mb-1">
-                                                            <input
-                                                                type="file"
-                                                                ref={el => { fileInputRefs.current[kr.id] = el; }}
-                                                                onChange={(e) => handleFileSelect(kr.id, e.target.files?.[0] || null)}
-                                                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.gif,.txt"
-                                                                className="hidden"
-                                                            />
-                                                            {canEdit && (
-                                                                <button
-                                                                    onClick={() => fileInputRefs.current[kr.id]?.click()}
-                                                                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded transition-colors ${
-                                                                        lockedByAttachment
-                                                                            ? 'bg-red-50 text-red-600 border border-red-300 hover:bg-red-100'
-                                                                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                                                    }`}
-                                                                    title={attachmentRequired ? t.attachmentRequired : t.attachFile}
-                                                                >
-                                                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                                                                    </svg>
-                                                                    {lockedByAttachment ? t.fileRequired : t.file}
-                                                                </button>
-                                                            )}
-                                                            {pendingFiles[kr.id] && (
-                                                                <div className="flex items-center gap-1 mt-0.5 text-xs text-green-700 bg-green-50 rounded px-1.5 py-0.5">
-                                                                    <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
-                                                                    </svg>
-                                                                    <span className="truncate max-w-[100px]">{pendingFiles[kr.id].name}</span>
+                                    {objective.keyResults.map((kr, index) => (
+                                        <tr
+                                            key={kr.id}
+                                            className={`border-b border-slate-200 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-gray-50 transition-colors ${kr.active === false ? 'opacity-50' : ''}`}
+                                        >
+                                            <td className="px-2 py-1.5 font-bold text-slate-700">
+                                                KR{index + 1}
+                                            </td>
+                                            <td className="px-2 py-1.5 text-center">
+                                                <span className="inline-block bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-bold text-xs">
+                                                    {kr.weight}%
+                                                </span>
+                                            </td>
+                                            <td className="px-2 py-1.5">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="font-semibold text-slate-800 text-xs">{kr.name}</div>
+                                                    {canEdit && (
+                                                        <button
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                try {
+                                                                    await keyResultApi.toggleActive(kr.id, kr.active === false);
+                                                                    onUpdate();
+                                                                } catch (err) {
+                                                                    console.error('Failed to toggle KR active', err);
+                                                                }
+                                                            }}
+                                                            className={`px-1.5 py-0.5 text-[10px] font-medium rounded transition-colors ${
+                                                                kr.active === false
+                                                                    ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                                                                    : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                                            }`}
+                                                            title={kr.active === false ? 'Activate KR' : 'Deactivate KR'}
+                                                        >
+                                                            {kr.active === false ? 'Inactive' : 'Active'}
+                                                        </button>
+                                                    )}
+                                                    {!canEdit && kr.active === false && (
+                                                        <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-red-100 text-red-600">
+                                                            Inactive
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="text-xs text-slate-400">
+                                                    {getMetricTypeLabel(kr.metricType)}
+                                                </div>
+                                            </td>
+                                            <td className="px-2 py-1.5 text-center">
+                                                {(() => {
+                                                    const hasFile = !!pendingFiles[kr.id] || !!kr.attachmentUrl;
+                                                    const lockedByAttachment = attachmentRequired && !hasFile;
+                                                    const hasAccess = canEdit || canEditProg;
+                                                    const inputDisabled = !hasAccess || savingIds.has(kr.id) || lockedByAttachment;
+                                                    const lockTitle = lockedByAttachment
+                                                        ? t.attachFileFirst
+                                                        : !hasAccess ? t.noEditPermission : '';
+                                                    return (
+                                                        <>
+                                                            {/* Attachment section — shown BEFORE input so user uploads first */}
+                                                            <div className="mb-1">
+                                                                <input
+                                                                    type="file"
+                                                                    ref={el => { fileInputRefs.current[kr.id] = el; }}
+                                                                    onChange={(e) => handleFileSelect(kr.id, e.target.files?.[0] || null)}
+                                                                    accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.gif,.txt"
+                                                                    className="hidden"
+                                                                />
+                                                                {hasAccess && (
                                                                     <button
-                                                                        onClick={() => setPendingFiles(prev => { const n = { ...prev }; delete n[kr.id]; return n; })}
-                                                                        className="text-red-500 hover:text-red-700 flex-shrink-0"
+                                                                        onClick={() => fileInputRefs.current[kr.id]?.click()}
+                                                                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded transition-colors ${lockedByAttachment
+                                                                                ? 'bg-red-50 text-red-600 border border-red-300 hover:bg-red-100'
+                                                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                                                            }`}
+                                                                        title={attachmentRequired ? t.attachmentRequired : t.attachFile}
                                                                     >
                                                                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                                                                         </svg>
+                                                                        {lockedByAttachment ? t.fileRequired : t.file}
                                                                     </button>
-                                                                </div>
-                                                            )}
-                                                            {/* Always show existing attachment link (visible to admin and all users) */}
-                                                            {!pendingFiles[kr.id] && kr.attachmentUrl && (
-                                                                <a
-                                                                    href={getAttachmentDownloadUrl(kr.attachmentUrl)}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="inline-flex items-center gap-1 mt-0.5 text-xs text-blue-600 hover:text-blue-800 bg-blue-50 rounded px-1.5 py-0.5"
-                                                                    title={kr.attachmentFileName || 'Download'}
-                                                                >
-                                                                    <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                                                                    </svg>
-                                                                    <span className="truncate max-w-[100px]">{kr.attachmentFileName || t.file}</span>
-                                                                </a>
-                                                            )}
-                                                            {attachmentErrors[kr.id] && (
-                                                                <div className="text-xs text-red-600 mt-0.5">{attachmentErrors[kr.id]}</div>
-                                                            )}
-                                                        </div>
-                                                        {/* Actual value input — locked until file is attached when required */}
-                                                        {kr.metricType === 'QUALITATIVE' ? (
-                                                            <select
-                                                                value={localValues[kr.id] ?? kr.actualValue ?? 'E'}
-                                                                onChange={(e) => handleActualValueChange(kr, e.target.value)}
-                                                                onFocus={() => handleFocus(kr.id)}
-                                                                onBlur={() => handleBlur(kr)}
-                                                                onKeyDown={(e) => handleEnter(kr, e)}
-                                                                disabled={inputDisabled}
-                                                                className="border-2 border-gray-300 rounded-md px-2 py-1 font-bold text-center focus:ring-2 focus:ring-primary focus:border-primary text-xs disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-100"
-                                                                title={lockTitle}
-                                                            >
-                                                                <option value="A">A</option>
-                                                                <option value="B">B</option>
-                                                                <option value="C">C</option>
-                                                                <option value="D">D</option>
-                                                                <option value="E">E</option>
-                                                            </select>
-                                                        ) : (
-                                                            <div className="relative">
-                                                                <input
-                                                                    type="number"
-                                                                    value={localValues[kr.id] ?? kr.actualValue ?? ''}
+                                                                )}
+                                                                {pendingFiles[kr.id] && (
+                                                                    <div className="flex items-center gap-1 mt-0.5 text-xs text-green-700 bg-green-50 rounded px-1.5 py-0.5">
+                                                                        <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
+                                                                        </svg>
+                                                                        <span className="truncate max-w-[100px]">{pendingFiles[kr.id].name}</span>
+                                                                        <button
+                                                                            onClick={() => setPendingFiles(prev => { const n = { ...prev }; delete n[kr.id]; return n; })}
+                                                                            className="text-red-500 hover:text-red-700 flex-shrink-0"
+                                                                        >
+                                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                                            </svg>
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                                {/* Always show existing attachment link (visible to admin and all users) */}
+                                                                {!pendingFiles[kr.id] && kr.attachmentUrl && (
+                                                                    <a
+                                                                        href={getAttachmentDownloadUrl(kr.attachmentUrl)}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="inline-flex items-center gap-1 mt-0.5 text-xs text-blue-600 hover:text-blue-800 bg-blue-50 rounded px-1.5 py-0.5"
+                                                                        title={kr.attachmentFileName || 'Download'}
+                                                                    >
+                                                                        <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                                                                        </svg>
+                                                                        <span className="truncate max-w-[100px]">{kr.attachmentFileName || t.file}</span>
+                                                                    </a>
+                                                                )}
+                                                                {attachmentErrors[kr.id] && (
+                                                                    <div className="text-xs text-red-600 mt-0.5">{attachmentErrors[kr.id]}</div>
+                                                                )}
+                                                            </div>
+                                                            {/* Actual value input — locked until file is attached when required */}
+                                                            {kr.metricType === 'QUALITATIVE' ? (
+                                                                <select
+                                                                    value={localValues[kr.id] ?? kr.actualValue ?? 'E'}
                                                                     onChange={(e) => handleActualValueChange(kr, e.target.value)}
                                                                     onFocus={() => handleFocus(kr.id)}
                                                                     onBlur={() => handleBlur(kr)}
                                                                     onKeyDown={(e) => handleEnter(kr, e)}
                                                                     disabled={inputDisabled}
-                                                                    className="border-2 border-gray-300 rounded-md px-2 py-1 w-20 font-bold text-center focus:ring-2 focus:ring-primary focus:border-primary text-xs disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-100"
-                                                                    placeholder="0"
+                                                                    className="border-2 border-gray-300 rounded-md px-2 py-1 font-bold text-center focus:ring-2 focus:ring-primary focus:border-primary text-xs disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-100"
                                                                     title={lockTitle}
+                                                                >
+                                                                    <option value="A">A</option>
+                                                                    <option value="B">B</option>
+                                                                    <option value="C">C</option>
+                                                                    <option value="D">D</option>
+                                                                    <option value="E">E</option>
+                                                                </select>
+                                                            ) : (
+                                                                <div className="relative">
+                                                                    <input
+                                                                        type="number"
+                                                                        value={localValues[kr.id] ?? kr.actualValue ?? ''}
+                                                                        onChange={(e) => handleActualValueChange(kr, e.target.value)}
+                                                                        onFocus={() => handleFocus(kr.id)}
+                                                                        onBlur={() => handleBlur(kr)}
+                                                                        onKeyDown={(e) => handleEnter(kr, e)}
+                                                                        disabled={inputDisabled}
+                                                                        className="border-2 border-gray-300 rounded-md px-2 py-1 w-20 font-bold text-center focus:ring-2 focus:ring-primary focus:border-primary text-xs disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+                                                                        placeholder="0"
+                                                                        title={lockTitle}
+                                                                    />
+                                                                    {savingIds.has(kr.id) && (
+                                                                        <div className="absolute inset-0 flex items-center justify-center">
+                                                                            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                                                        </div>
+                                                                    )}
+                                                                    {kr.unit && (
+                                                                        <div className="text-xs text-slate-500 mt-0.5">{kr.unit}</div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    );
+                                                })()}
+                                            </td>
+                                            {getThresholdsForDisplay(kr).map((threshold, thresholdIndex) => (
+                                                <td
+                                                    key={threshold.name}
+                                                    className="px-1 py-1.5 text-center font-semibold text-xs"
+                                                    style={{ backgroundColor: `${threshold.color}20` }}
+                                                >
+                                                    {thresholdIndex === 0
+                                                        ? (kr.metricType === 'LOWER_BETTER' ? '>' : '<')
+                                                        : '≥'
+                                                    }{threshold.value}
+                                                </td>
+                                            ))}
+                                            <td className="px-2 py-1.5 text-center">
+                                                {kr.score && (
+                                                    <div className="flex flex-col items-center gap-0.5">
+                                                        <div
+                                                            className="inline-block px-2 py-1 rounded-full text-white font-bold shadow text-xs"
+                                                            style={{ backgroundColor: kr.score.color }}
+                                                        >
+                                                            {kr.score.score.toFixed(2)}
+                                                        </div>
+                                                        <div className="text-xs text-slate-500">
+                                                            × {kr.weight}% = <span className="font-bold text-slate-700">{(kr.score.score * kr.weight / 100).toFixed(2)}</span>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </td>
+                                            {kr.progress != null && (
+                                                <td className="px-2 py-1.5">
+                                                    <div className="flex flex-col gap-1">
+                                                        {/* Progress bar */}
+                                                        <div className="relative w-full h-5 bg-slate-200 rounded-sm overflow-hidden">
+                                                            {(() => {
+                                                                const pVal = Number(localProgress[kr.id] ?? kr.progress) || 0;
+                                                                return (<>
+                                                                    <div
+                                                                        className="h-full rounded-sm transition-all duration-300"
+                                                                        style={{
+                                                                            width: `${pVal}%`,
+                                                                            backgroundColor: pVal >= 75 ? '#22c55e'
+                                                                                : pVal >= 50 ? '#3b82f6'
+                                                                                    : pVal >= 25 ? '#f59e0b'
+                                                                                        : '#ef4444',
+                                                                        }}
+                                                                    />
+                                                                    <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-800">
+                                                                        {pVal}%
+                                                                    </span>
+                                                                </>);
+                                                            })()}
+                                                        </div>
+                                                        {/* Editable input for ADMIN/DEPARTMENT_LEADER */}
+                                                        {canEditProg && (
+                                                            <div className="relative">
+                                                                <input
+                                                                    type="number"
+                                                                    min={0}
+                                                                    max={100}
+                                                                    value={localProgress[kr.id] ?? kr.progress}
+                                                                    onChange={(e) => handleProgressChange(kr.id, e.target.value)}
+                                                                    onBlur={() => handleProgressBlur(kr.id, kr.progress ?? 0)}
+                                                                    disabled={savingProgressIds.has(kr.id)}
+                                                                    className="border border-slate-300 rounded px-1.5 py-0.5 w-full text-xs text-center focus:ring-1 focus:ring-primary focus:border-primary disabled:opacity-50"
                                                                 />
-                                                                {savingIds.has(kr.id) && (
+                                                                {savingProgressIds.has(kr.id) && (
                                                                     <div className="absolute inset-0 flex items-center justify-center">
-                                                                        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                                                        <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
                                                                     </div>
-                                                                )}
-                                                                {kr.unit && (
-                                                                    <div className="text-xs text-slate-500 mt-0.5">{kr.unit}</div>
                                                                 )}
                                                             </div>
                                                         )}
-                                                    </>
-                                                );
-                                            })()}
-                                        </td>
-                                        {getThresholdsForDisplay(kr).map((threshold, thresholdIndex) => (
-                                            <td
-                                                key={threshold.name}
-                                                className="px-1 py-1.5 text-center font-semibold text-xs"
-                                                style={{ backgroundColor: `${threshold.color}20` }}
-                                            >
-                                                {thresholdIndex === 0
-                                                    ? (kr.metricType === 'LOWER_BETTER' ? '>' : '<')
-                                                    : '≥'
-                                                }{threshold.value}
-                                            </td>
-                                        ))}
-                                        <td className="px-2 py-1.5 text-center">
-                                            {kr.score && (
-                                                <div className="flex flex-col items-center gap-0.5">
-                                                    <div
-                                                        className="inline-block px-2 py-1 rounded-full text-white font-bold shadow text-xs"
-                                                        style={{ backgroundColor: kr.score.color }}
-                                                    >
-                                                        {kr.score.score.toFixed(2)}
                                                     </div>
-                                                    <div className="text-xs text-slate-500">
-                                                        × {kr.weight}% = <span className="font-bold text-slate-700">{(kr.score.score * kr.weight / 100).toFixed(2)}</span>
-                                                    </div>
-                                                </div>
+                                                </td>
                                             )}
-                                        </td>
-                                        {kr.progress != null && (
-                                            <td className="px-2 py-1.5">
-                                                <div className="flex flex-col gap-1">
-                                                    {/* Progress bar */}
-                                                    <div className="relative w-full h-5 bg-slate-200 rounded-sm overflow-hidden">
-                                                        {(() => {
-                                                            const pVal = Number(localProgress[kr.id] ?? kr.progress) || 0;
-                                                            return (<>
-                                                        <div
-                                                            className="h-full rounded-sm transition-all duration-300"
-                                                            style={{
-                                                                width: `${pVal}%`,
-                                                                backgroundColor: pVal >= 75 ? '#22c55e'
-                                                                    : pVal >= 50 ? '#3b82f6'
-                                                                    : pVal >= 25 ? '#f59e0b'
-                                                                    : '#ef4444',
-                                                            }}
-                                                        />
-                                                        <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-800">
-                                                            {pVal}%
-                                                        </span>
-                                                            </>);
-                                                        })()}
-                                                    </div>
-                                                    {/* Editable input for ADMIN/DEPARTMENT_LEADER */}
-                                                    {canEditProg && (
-                                                        <div className="relative">
-                                                            <input
-                                                                type="number"
-                                                                min={0}
-                                                                max={100}
-                                                                value={localProgress[kr.id] ?? kr.progress}
-                                                                onChange={(e) => handleProgressChange(kr.id, e.target.value)}
-                                                                onBlur={() => handleProgressBlur(kr.id, kr.progress ?? 0)}
-                                                                disabled={savingProgressIds.has(kr.id)}
-                                                                className="border border-slate-300 rounded px-1.5 py-0.5 w-full text-xs text-center focus:ring-1 focus:ring-primary focus:border-primary disabled:opacity-50"
-                                                            />
-                                                            {savingProgressIds.has(kr.id) && (
-                                                                <div className="absolute inset-0 flex items-center justify-center">
-                                                                    <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        )}
-                                    </tr>
-                                ))}
+                                        </tr>
+                                    ))}
 
-                                {/* Weighted Calculation Row */}
-                                <tr className="bg-gradient-to-r from-gray-100 to-gray-200 border-t-2 border-primary">
-                                    <td colSpan={4 + (scoreLevels.length > 0 ? scoreLevels.length : 5) + (objective.keyResults.some(kr => kr.progress != null) ? 1 : 0)} className="px-2 py-1.5 text-xs">
-                                        <div className="flex flex-wrap items-center justify-end gap-1">
-                                            <span className="font-bold text-slate-700">OKR =</span>
-                                            {objective.keyResults.map((kr, idx) => (
-                                                <span key={kr.id} className="text-slate-600">
-                                                    {idx > 0 && <span className="mx-1">+</span>}
-                                                    <span className="font-medium">
-                                                        ({kr.score?.score.toFixed(2) || '0'} × {kr.weight}%)
+                                    {/* Weighted Calculation Row */}
+                                    <tr className="bg-gradient-to-r from-gray-100 to-gray-200 border-t-2 border-primary">
+                                        <td colSpan={4 + (scoreLevels.length > 0 ? scoreLevels.length : 5) + (objective.keyResults.some(kr => kr.progress != null) ? 1 : 0)} className="px-2 py-1.5 text-xs">
+                                            <div className="flex flex-wrap items-center justify-end gap-1">
+                                                <span className="font-bold text-slate-700">OKR =</span>
+                                                {objective.keyResults.map((kr, idx) => (
+                                                    <span key={kr.id} className="text-slate-600">
+                                                        {idx > 0 && <span className="mx-1">+</span>}
+                                                        <span className="font-medium">
+                                                            ({kr.score?.score.toFixed(2) || '0'} × {kr.weight}%)
+                                                        </span>
                                                     </span>
+                                                ))}
+                                                <span className="mx-1">=</span>
+                                                <span className="font-bold text-slate-700">
+                                                    {objective.keyResults.reduce((sum, kr) => sum + (kr.score?.score || 0) * kr.weight / 100, 0).toFixed(2)}
                                                 </span>
-                                            ))}
-                                            <span className="mx-1">=</span>
-                                            <span className="font-bold text-slate-700">
-                                                {objective.keyResults.reduce((sum, kr) => sum + (kr.score?.score || 0) * kr.weight / 100, 0).toFixed(2)}
-                                            </span>
-                                            {(() => {
-                                                const totalWeight = objective.keyResults.reduce((sum, kr) => sum + kr.weight, 0);
-                                                return totalWeight !== 100 ? (
-                                                    <span className="text-slate-500 ml-1">
-                                                        / {totalWeight}% = <span className="font-bold">{(objective.keyResults.reduce((sum, kr) => sum + (kr.score?.score || 0) * kr.weight, 0) / totalWeight).toFixed(2)}</span>
-                                                    </span>
-                                                ) : null;
-                                            })()}
-                                        </div>
-                                    </td>
-                                    <td className="px-2 py-1.5 text-center">
-                                        <div
-                                            className="inline-block px-2 py-1 rounded text-white font-bold text-xs shadow"
-                                            style={{ backgroundColor: objective.score?.color || '#666' }}
-                                        >
-                                            {objective.score?.score.toFixed(2) || '0.00'}
-                                        </div>
-                                    </td>
-                                </tr>
+                                                {(() => {
+                                                    const totalWeight = objective.keyResults.reduce((sum, kr) => sum + kr.weight, 0);
+                                                    return totalWeight !== 100 ? (
+                                                        <span className="text-slate-500 ml-1">
+                                                            / {totalWeight}% = <span className="font-bold">{(objective.keyResults.reduce((sum, kr) => sum + (kr.score?.score || 0) * kr.weight, 0) / totalWeight).toFixed(2)}</span>
+                                                        </span>
+                                                    ) : null;
+                                                })()}
+                                            </div>
+                                        </td>
+                                        <td className="px-2 py-1.5 text-center">
+                                            <div
+                                                className="inline-block px-2 py-1 rounded text-white font-bold text-xs shadow"
+                                                style={{ backgroundColor: objective.score?.color || '#666' }}
+                                            >
+                                                {objective.score?.score.toFixed(2) || '0.00'}
+                                            </div>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>

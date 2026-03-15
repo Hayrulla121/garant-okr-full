@@ -31,10 +31,11 @@ public class Division {
 
 
     @OneToMany(mappedBy = "division", cascade = CascadeType.ALL)
-    // ↑ One division has many departments
-    // mappedBy = "division" means Department entity owns the relationship
-    // cascade = ALL means operations (save/delete) cascade to children
     private Set<Department> departments = new HashSet<>();
+
+    @OneToMany(mappedBy = "division", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("createdAt ASC")
+    private Set<Objective> objectives = new HashSet<>();
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

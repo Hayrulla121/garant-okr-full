@@ -33,4 +33,10 @@ public class DivisionDTO {
 
     @Schema(description = "Last update timestamp", example = "2025-01-15T14:30:00")
     private LocalDateTime updatedAt;
+
+    @Schema(description = "Division's own objectives")
+    private List<ObjectiveDTO> objectives;
+
+    @Schema(description = "Division's own OKR score")
+    private ScoreResult score;
 }

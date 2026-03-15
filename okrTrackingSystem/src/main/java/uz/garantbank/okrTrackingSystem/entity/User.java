@@ -130,6 +130,14 @@ public class User {
     private Set<Department> assignedDepartments = new HashSet<>();
 
     /**
+     * Groups the user is a member of (many-to-many via group_members table)
+     */
+    @ManyToMany(mappedBy = "members", fetch = FetchType.LAZY)
+    @Builder.Default
+    @JsonIgnore
+    private Set<OrgGroup> assignedGroups = new HashSet<>();
+
+    /**
      * Timestamp when user was created
      */
     @Column(nullable = false, updatable = false)

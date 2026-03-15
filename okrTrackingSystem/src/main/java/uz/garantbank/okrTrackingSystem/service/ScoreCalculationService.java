@@ -233,8 +233,7 @@ public class ScoreCalculationService {
                         score = 1.0;
                         level = scoreLevels.get(scoreIdx).getName().toLowerCase().replace(" ", "_");
                     } else {
-                        // Interpolate between current level and the next level.
-                        // When next level is the last one, interpolate toward 1.0 (not its scoreValue).
+                        // Interpolate between current level and the next level
                         ThresholdScore nextTs = thresholdScores.get(i + 1);
                         double ratio = (actual - ts.threshold) / Math.max(nextTs.threshold - ts.threshold, 0.001);
                         double startScore = scoreLevels.get(scoreIdx).getScoreValue();
@@ -314,13 +313,12 @@ public class ScoreCalculationService {
             Double below, Double meets, Double good, Double veryGood, Double exceptional) {
 
         // Default score values for 5 levels (0.0 to 1.0 normalized scale)
-        // scoreExceptional is 1.0 — hitting the exceptional threshold means perfect
-        // performance
+        // Discrete step function: assign the lower bound of the matched level.
         double scoreBelow = 0.0;
         double scoreMeets = 0.31;
         double scoreGood = 0.51;
         double scoreVeryGood = 0.86;
-        double scoreExceptional = 1.0;
+        double scoreExceptional = 0.98;
 
         double score;
         String level;
@@ -330,20 +328,16 @@ public class ScoreCalculationService {
                 score = scoreExceptional;
                 level = "исключительно";
             } else if (actual >= veryGood) {
-                double ratio = (actual - veryGood) / Math.max(exceptional - veryGood, 1);
-                score = scoreVeryGood + ratio * (scoreExceptional - scoreVeryGood);
+                score = scoreVeryGood;
                 level = "превышает_ожидания";
             } else if (actual >= good) {
-                double ratio = (actual - good) / Math.max(veryGood - good, 1);
-                score = scoreGood + ratio * (scoreVeryGood - scoreGood);
+                score = scoreGood;
                 level = "на_уровне_ожиданий";
             } else if (actual >= meets) {
-                double ratio = (actual - meets) / Math.max(good - meets, 1);
-                score = scoreMeets + ratio * (scoreGood - scoreMeets);
+                score = scoreMeets;
                 level = "ниже_ожиданий";
             } else if (actual >= below) {
-                double ratio = (actual - below) / Math.max(meets - below, 1);
-                score = scoreBelow + ratio * (scoreMeets - scoreBelow);
+                score = scoreBelow;
                 level = "не_соответствует";
             } else {
                 score = scoreBelow;
@@ -354,20 +348,16 @@ public class ScoreCalculationService {
                 score = scoreExceptional;
                 level = "исключительно";
             } else if (actual <= veryGood) {
-                double ratio = 1 - (actual - exceptional) / Math.max(veryGood - exceptional, 1);
-                score = scoreVeryGood + ratio * (scoreExceptional - scoreVeryGood);
+                score = scoreVeryGood;
                 level = "превышает_ожидания";
             } else if (actual <= good) {
-                double ratio = 1 - (actual - veryGood) / Math.max(good - veryGood, 1);
-                score = scoreGood + ratio * (scoreVeryGood - scoreGood);
+                score = scoreGood;
                 level = "на_уровне_ожиданий";
             } else if (actual <= meets) {
-                double ratio = 1 - (actual - good) / Math.max(meets - good, 1);
-                score = scoreMeets + ratio * (scoreGood - scoreMeets);
+                score = scoreMeets;
                 level = "ниже_ожиданий";
             } else if (actual <= below) {
-                double ratio = 1 - (actual - meets) / Math.max(below - meets, 1);
-                score = scoreBelow + ratio * (scoreMeets - scoreBelow);
+                score = scoreBelow;
                 level = "не_соответствует";
             } else {
                 score = scoreBelow;
@@ -397,10 +387,19 @@ public class ScoreCalculationService {
             return emptyScore();
         }
 
+        // Filter out inactive KRs
+        List<KeyResult> activeKRs = keyResults.stream()
+                .filter(kr -> kr.getActive() == null || kr.getActive())
+                .toList();
+
+        if (activeKRs.isEmpty()) {
+            return emptyScore();
+        }
+
         double weightedSum = 0;
         double totalWeight = 0;
 
-        for (KeyResult kr : keyResults) {
+        for (KeyResult kr : activeKRs) {
             ScoreResult krScore = calculateKeyResultScore(kr);
             double weight = kr.getWeight() != null ? kr.getWeight() : 0;
             weightedSum += krScore.getScore() * weight;
@@ -409,15 +408,16 @@ public class ScoreCalculationService {
 
         double avgScore;
         if (totalWeight > 0) {
-            // Weighted average: sum(score × weight) / sum(weights)
-            avgScore = weightedSum / totalWeight;
+            // Weights are percentages out of 100, so divide by max(totalWeight, 100)
+            // to avoid inflating scores when KR weights don't sum to 100%
+            avgScore = weightedSum / Math.max(totalWeight, 100.0);
         } else {
             // Fallback to simple average if no weights defined
             double total = 0;
-            for (KeyResult kr : keyResults) {
+            for (KeyResult kr : activeKRs) {
                 total += calculateKeyResultScore(kr).getScore();
             }
-            avgScore = total / keyResults.size();
+            avgScore = total / activeKRs.size();
         }
 
         return createScoreResult(avgScore);
@@ -545,11 +545,13 @@ public class ScoreCalculationService {
             totalWeight += weight;
         }
 
-        double avgScore = totalWeight > 0 ? weightedSum / totalWeight : 0;
+        // Weights are percentages out of 100, so divide by max(totalWeight, 100)
+        // to avoid inflating scores when objective weights don't sum to 100%
+        double avgScore = totalWeight > 0 ? weightedSum / Math.max(totalWeight, 100.0) : 0;
         return createScoreResult(avgScore);
     }
 
-    private ScoreResult createScoreResult(double score) {
+    public ScoreResult createScoreResult(double score) {
         // Clamp score: min from score levels, max is always 1.0.
         // scoreValue in DB is each level's lower bound, not the ceiling of the top
         // level.

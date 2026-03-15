@@ -6,11 +6,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import uz.garantbank.okrTrackingSystem.dto.*;
 import uz.garantbank.okrTrackingSystem.dto.user.DepartmentSummaryDTO;
-import uz.garantbank.okrTrackingSystem.entity.Department;
-import uz.garantbank.okrTrackingSystem.entity.Division;
-import uz.garantbank.okrTrackingSystem.entity.User;
+import uz.garantbank.okrTrackingSystem.entity.*;
 import uz.garantbank.okrTrackingSystem.repository.DepartmentRepository;
 import uz.garantbank.okrTrackingSystem.repository.DivisionRepository;
+import uz.garantbank.okrTrackingSystem.repository.ObjectiveRepository;
 import uz.garantbank.okrTrackingSystem.repository.UserRepository;
 
 import java.util.List;
@@ -25,18 +24,20 @@ public class DivisionService {
     private final DepartmentRepository departmentRepository;
     private final UserRepository userRepository;
     private final ScoreCalculationService scoreCalculationService;
+    private final ObjectiveRepository objectiveRepository;
 
-    // Constructor injection (recommended over @Autowired)
     public DivisionService(
             DivisionRepository divisionRepository,
             DepartmentRepository departmentRepository,
             UserRepository userRepository,
-            ScoreCalculationService scoreCalculationService
+            ScoreCalculationService scoreCalculationService,
+            ObjectiveRepository objectiveRepository
     ) {
         this.divisionRepository = divisionRepository;
         this.departmentRepository = departmentRepository;
         this.userRepository = userRepository;
         this.scoreCalculationService = scoreCalculationService;
+        this.objectiveRepository = objectiveRepository;
     }
 
     /**
@@ -172,6 +173,69 @@ public class DivisionService {
     }
 
     /**
+     * Create a division-level objective
+     */
+    public ObjectiveDTO createDivisionObjective(String divisionId, ObjectiveDTO dto) {
+        Division division = divisionRepository.findById(divisionId)
+                .orElseThrow(() -> new IllegalArgumentException("Division not found: " + divisionId));
+
+        Objective obj = Objective.builder()
+                .name(dto.getName())
+                .weight(dto.getWeight() != null ? dto.getWeight() : 0)
+                .division(division)
+                .level(ObjectiveLevel.DIVISION)
+                .build();
+
+        obj = objectiveRepository.save(obj);
+        return toObjectiveDTO(obj);
+    }
+
+    /**
+     * Get objectives for a division
+     */
+    public List<ObjectiveDTO> getDivisionObjectives(String divisionId) {
+        return objectiveRepository.findByDivisionIdWithKeyResults(divisionId).stream()
+                .map(this::toObjectiveDTO)
+                .collect(Collectors.toList());
+    }
+
+    private ObjectiveDTO toObjectiveDTO(Objective obj) {
+        List<KeyResultDTO> krs = obj.getKeyResults() != null
+                ? obj.getKeyResults().stream().map(this::toKeyResultDTO).collect(Collectors.toList())
+                : List.of();
+
+        return ObjectiveDTO.builder()
+                .id(obj.getId())
+                .name(obj.getName())
+                .weight(obj.getWeight())
+                .departmentId(obj.getDepartment() != null ? obj.getDepartment().getId() : null)
+                .keyResults(krs)
+                .score(scoreCalculationService.calculateObjectiveScore(obj.getKeyResults()))
+                .build();
+    }
+
+    private KeyResultDTO toKeyResultDTO(KeyResult kr) {
+        return KeyResultDTO.builder()
+                .id(kr.getId())
+                .name(kr.getName())
+                .description(kr.getDescription())
+                .metricType(kr.getMetricType())
+                .unit(kr.getUnit())
+                .weight(kr.getWeight())
+                .thresholds(ThresholdDTO.builder()
+                        .below(kr.getThresholdBelow())
+                        .meets(kr.getThresholdMeets())
+                        .good(kr.getThresholdGood())
+                        .veryGood(kr.getThresholdVeryGood())
+                        .exceptional(kr.getThresholdExceptional())
+                        .build())
+                .actualValue(kr.getActualValue())
+                .objectiveId(kr.getObjective().getId())
+                .score(scoreCalculationService.calculateKeyResultScore(kr))
+                .build();
+    }
+
+    /**
      * Convert Entity to DTO
      */
     private DivisionDTO convertToDTO(Division division) {
@@ -200,6 +264,13 @@ public class DivisionService {
                     .map(dept -> new DepartmentSummaryDTO(dept.getId(), dept.getName()))
                     .collect(Collectors.toList());
             dto.setDepartments(deptSummaries);
+        }
+
+        // Add division objectives and score
+        List<Objective> divisionObjs = objectiveRepository.findByDivisionIdWithKeyResults(division.getId());
+        if (!divisionObjs.isEmpty()) {
+            dto.setObjectives(divisionObjs.stream().map(this::toObjectiveDTO).collect(Collectors.toList()));
+            dto.setScore(scoreCalculationService.calculateDepartmentScore(divisionObjs));
         }
 
         return dto;

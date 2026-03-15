@@ -45,6 +45,9 @@ public class CreateUserRequest {
     @Schema(description = "Optional list of department IDs to assign", example = "[\"dept-001\"]")
     private List<String> assignedDepartmentIds;
 
+    @Schema(description = "Optional list of group IDs to assign (auto-derives department membership)", example = "[\"group-001\"]")
+    private List<String> assignedGroupIds;
+
     @Schema(description = "Job title", example = "Senior Developer")
     private String jobTitle;
 

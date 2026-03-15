@@ -42,11 +42,15 @@ public class OkrService {
     @Autowired
     private DivisionRepository divisionRepository;
     @Autowired
+    private GroupRepository groupRepository;
+    @Autowired
     private FileUploadService fileUploadService;
     @Autowired
     private PlatformSettingService platformSettingService;
     @Autowired
     private DepartmentAccessService accessService;
+    @Autowired
+    private ScoreSnapshotService scoreSnapshotService;
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -199,17 +203,26 @@ public class OkrService {
     public ObjectiveDTO createLeaderObjective(String deptId, ObjectiveDTO dto) {
         Department dept = departmentRepository.findById(deptId)
                 .orElseThrow(() -> new RuntimeException("Department not found: " + deptId));
-        if (dept.getDepartmentLeader() == null) {
+
+        // If employeeId is provided, use that leader; otherwise fall back to departmentLeader
+        User targetLeader;
+        if (dto.getEmployeeId() != null && !dto.getEmployeeId().isBlank()) {
+            targetLeader = userRepository.findById(UUID.fromString(dto.getEmployeeId()))
+                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + dto.getEmployeeId()));
+        } else if (dept.getDepartmentLeader() != null) {
+            targetLeader = dept.getDepartmentLeader();
+        } else {
             throw new IllegalArgumentException(
-                "Department has no leader assigned. Assign a department leader first.");
+                "Department has no leader assigned. Assign a department leader first or provide an employeeId.");
         }
+
         Objective obj = Objective.builder()
                 .name(dto.getName())
                 .weight(dto.getWeight() != null ? dto.getWeight() : 0)
                 .department(dept)
-                .employee(dept.getDepartmentLeader())
+                .employee(targetLeader)
                 .level(ObjectiveLevel.INDIVIDUAL)
-                .keyResults(new java.util.HashSet<>())
+                .keyResults(new java.util.ArrayList<>())
                 .build();
         return toObjectiveDTO(objectiveRepository.save(obj));
     }
@@ -337,6 +350,14 @@ public class OkrService {
         return toKeyResultDTO(keyResultRepository.save(kr));
     }
 
+    @Transactional
+    public KeyResultDTO toggleKeyResultActive(String id, boolean active) {
+        KeyResult kr = keyResultRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Key Result not found"));
+        kr.setActive(active);
+        return toKeyResultDTO(keyResultRepository.save(kr));
+    }
+
     // ==================== DTO MAPPERS ====================
 
     private DepartmentDTO toDepartmentDTO(Department department) {
@@ -385,6 +406,28 @@ public class OkrService {
                 builder.leaderId(department.getDepartmentLeader().getId().toString());
             }
 
+            // Populate groups
+            try {
+                List<uz.garantbank.okrTrackingSystem.entity.OrgGroup> groups =
+                        groupRepository.findByDepartmentIdWithObjectives(department.getId());
+                if (!groups.isEmpty()) {
+                    builder.groups(groups.stream().map(this::toGroupDTO).collect(Collectors.toList()));
+                }
+            } catch (Exception e) {
+                log.debug("Could not load groups for department {}: {}", department.getId(), e.getMessage());
+            }
+
+            // Populate leaders list: all DEPARTMENT_LEADER users assigned to this department
+            List<User> deptUsers = userRepository.findByAssignedDepartmentId(department.getId());
+            List<DepartmentDTO.LeaderInfo> leaderInfos = deptUsers.stream()
+                    .filter(u -> u.getRole() == Role.DEPARTMENT_LEADER)
+                    .map(u -> DepartmentDTO.LeaderInfo.builder()
+                            .id(u.getId().toString())
+                            .fullName(u.getFullName())
+                            .build())
+                    .collect(Collectors.toList());
+            builder.leaders(leaderInfos);
+
             // Automatic OKR score — only from DEPARTMENT-level objectives
             List<uz.garantbank.okrTrackingSystem.entity.Objective> deptLevelObjs = department.getObjectives().stream()
                     .filter(obj -> obj.getLevel() == ObjectiveLevel.DEPARTMENT)
@@ -412,19 +455,69 @@ public class OkrService {
         return builder.build();
     }
 
+    private GroupDTO toGroupDTO(OrgGroup group) {
+        GroupDTO.GroupDTOBuilder builder = GroupDTO.builder()
+                .id(group.getId())
+                .name(group.getName())
+                .departmentId(group.getDepartment().getId())
+                .departmentName(group.getDepartment().getName());
+
+        if (group.getGroupLeader() != null) {
+            builder.leader(UserSummaryDTO.builder()
+                    .id(group.getGroupLeader().getId())
+                    .username(group.getGroupLeader().getUsername())
+                    .fullName(group.getGroupLeader().getFullName())
+                    .profilePhotoUrl(group.getGroupLeader().getProfilePhotoUrl())
+                    .build());
+        }
+
+        if (group.getObjectives() != null && !group.getObjectives().isEmpty()) {
+            List<Objective> groupObjs = group.getObjectives().stream()
+                    .filter(o -> o.getLevel() == ObjectiveLevel.GROUP)
+                    .collect(Collectors.toList());
+            builder.objectives(groupObjs.stream().map(this::toObjectiveDTO).collect(Collectors.toList()));
+            builder.score(scoreService.calculateDepartmentScore(groupObjs));
+        } else {
+            builder.objectives(java.util.Collections.emptyList());
+        }
+
+        // Populate group members
+        try {
+            OrgGroup withMembers = groupRepository.findByIdWithMembers(group.getId()).orElse(group);
+            builder.members(withMembers.getMembers().stream()
+                    .map(u -> UserSummaryDTO.builder()
+                            .id(u.getId())
+                            .username(u.getUsername())
+                            .fullName(u.getFullName())
+                            .profilePhotoUrl(u.getProfilePhotoUrl())
+                            .build())
+                    .collect(Collectors.toList()));
+        } catch (Exception e) {
+            builder.members(java.util.Collections.emptyList());
+        }
+
+        return builder.build();
+    }
+
     private ObjectiveDTO toObjectiveDTO(Objective obj) {
         List<KeyResultDTO> keyResults = obj.getKeyResults().stream()
                 .map(this::toKeyResultDTO)
                 .collect(Collectors.toList());
 
-        return ObjectiveDTO.builder()
+        ObjectiveDTO.ObjectiveDTOBuilder builder = ObjectiveDTO.builder()
                 .id(obj.getId())
                 .name(obj.getName())
                 .weight(obj.getWeight())
-                .departmentId(obj.getDepartment().getId())
+                .departmentId(obj.getDepartment() != null ? obj.getDepartment().getId() : null)
                 .keyResults(keyResults)
-                .score(scoreService.calculateObjectiveScore(obj.getKeyResults()))
-                .build();
+                .score(scoreService.calculateObjectiveScore(obj.getKeyResults()));
+
+        if (obj.getEmployee() != null) {
+            builder.employeeId(obj.getEmployee().getId().toString());
+            builder.employeeName(obj.getEmployee().getFullName());
+        }
+
+        return builder.build();
     }
 
     private KeyResultDTO toKeyResultDTO(KeyResult kr) {
@@ -464,6 +557,7 @@ public class OkrService {
                 .attachmentUrl(kr.getAttachmentUrl())
                 .attachmentFileName(kr.getAttachmentFileName())
                 .progress(progress)
+                .active(kr.getActive() != null ? kr.getActive() : true)
                 .build();
     }
 
@@ -473,10 +567,12 @@ public class OkrService {
             log.info("Loading demo data...");
 
             // ── Clear existing data (respect FK order) ────────────────────────────
+            scoreSnapshotService.deleteAll();
             evaluationRepository.deleteAll();
             var allUsers = userRepository.findAllWithDepartments();
             for (var u : allUsers) u.getAssignedDepartments().clear();
             userRepository.saveAll(allUsers);
+            groupRepository.deleteAll();
             var allDepts = departmentRepository.findAll();
             for (var d : allDepts) d.setDepartmentLeader(null);
             departmentRepository.saveAll(allDepts);
@@ -712,10 +808,122 @@ public class OkrService {
                 new DemoKR("NPS ключевых клиентов под личным ведением",            HIGHER, "балл",50, 20.0,35.0, 50.0, 65.0, 80.0, "68")
             });
 
+            // ── GROUPS ──────────────────────────────────────────────────────────────
+            // Retail Sales groups
+            OrgGroup grpRetailLoans = mkGroup("Группа потребительского кредитования", dRetailSales, ldrRetailSales);
+            addGroupMembers(grpRetailLoans, emp1, emp2);
+            OrgGroup grpRetailCards = mkGroup("Группа карточных продуктов", dRetailSales, null);
+
+            // Customer Service groups
+            OrgGroup grpCallCenter = mkGroup("Колл-центр", dCustService, ldrCustSvc);
+            addGroupMembers(grpCallCenter, emp3);
+            OrgGroup grpBranchService = mkGroup("Обслуживание в филиалах", dCustService, null);
+            addGroupMembers(grpBranchService, emp4);
+
+            // IT Development groups
+            OrgGroup grpBackend = mkGroup("Backend-разработка", dITDev, ldrIT);
+            addGroupMembers(grpBackend, emp7);
+            OrgGroup grpFrontend = mkGroup("Frontend-разработка", dITDev, null);
+            addGroupMembers(grpFrontend, emp8);
+
+            // PMO groups
+            OrgGroup grpProjectMgmt = mkGroup("Управление проектами", dPMO, ldrPMO);
+            addGroupMembers(grpProjectMgmt, emp6);
+
+            // Operations groups
+            OrgGroup grpPayments = mkGroup("Платёжные операции", dOpsSupport, ldrOps);
+            addGroupMembers(grpPayments, emp9);
+
+            // Risk groups
+            OrgGroup grpCreditAnalysis = mkGroup("Кредитный анализ", dCreditRisk, ldrRisk);
+            addGroupMembers(grpCreditAnalysis, emp10);
+
+            // ── DIVISION OBJECTIVES ─────────────────────────────────────────────────
+            createDivisionObjective(divRetail, "Рост розничного бизнеса", 50, new DemoKR[]{
+                new DemoKR("Совокупный розничный доход (млрд сум)",     HIGHER, "млрд", 50, 100.0, 150.0, 200.0, 260.0, 320.0, "245"),
+                new DemoKR("Доля рынка в розничных кредитах (%)",       HIGHER, "%",    50, 3.0,   5.0,   7.0,   9.0,   12.0,  "7.8")
+            });
+            createDivisionObjective(divRetail, "Клиентский опыт и лояльность", 50, new DemoKR[]{
+                new DemoKR("NPS по розничному сегменту",                HIGHER, "балл", 50, 20.0, 35.0, 50.0, 65.0, 80.0, "55"),
+                new DemoKR("Индекс удовлетворённости клиентов (%)",    HIGHER, "%",    50, 60.0, 70.0, 80.0, 88.0, 95.0, "82")
+            });
+
+            createDivisionObjective(divCorporate, "Рост корпоративного портфеля", 60, new DemoKR[]{
+                new DemoKR("Совокупный корпоративный доход (трлн сум)", HIGHER, "трлн", 50, 1.0, 1.5, 2.2, 3.0, 4.0, "2.8"),
+                new DemoKR("Количество корпоративных клиентов",        HIGHER, "кл",   50, 100.0, 150.0, 200.0, 270.0, 350.0, "230")
+            });
+            createDivisionObjective(divCorporate, "Эффективность проектного управления", 40, new DemoKR[]{
+                new DemoKR("Проекты завершённые в срок и бюджете (%)",  HIGHER, "%",    100, 50.0, 65.0, 78.0, 88.0, 95.0, "80")
+            });
+
+            createDivisionObjective(divOpsIT, "Технологическое развитие", 50, new DemoKR[]{
+                new DemoKR("Аптайм критичных систем (%)",               HIGHER, "%",    50, 95.0, 97.0, 99.0, 99.5, 99.9, "99.6"),
+                new DemoKR("Внедрение новых технологий (шт)",          HIGHER, "шт",   50, 2.0,  4.0,  6.0,  8.0,  10.0, "7")
+            });
+            createDivisionObjective(divOpsIT, "Операционная надёжность", 50, new DemoKR[]{
+                new DemoKR("Количество инцидентов (кол-во)",           LOWER,  "",     50, 20.0, 12.0, 6.0, 3.0, 0.0, "5"),
+                new DemoKR("Время восстановления после сбоев (ч)",     LOWER,  "ч",    50, 8.0,  4.0,  2.0, 1.0, 0.5, "1.5")
+            });
+
+            createDivisionObjective(divRisk, "Качество управления рисками", 60, new DemoKR[]{
+                new DemoKR("Совокупный NPL портфеля (%)",              LOWER,  "%",    50, 8.0, 5.0, 3.0, 1.5, 0.5, "2.5"),
+                new DemoKR("Точность риск-моделей (%)",                HIGHER, "%",    50, 65.0, 75.0, 83.0, 90.0, 95.0, "86")
+            });
+            createDivisionObjective(divRisk, "Регуляторное соответствие", 40, new DemoKR[]{
+                new DemoKR("Нарушения регуляторных требований (кол-во)",LOWER,  "",     50, 15.0, 8.0, 4.0, 1.0, 0.0, "6"),
+                new DemoKR("Своевременная сдача отчётов (%)",           HIGHER, "%",    50, 70.0, 80.0, 90.0, 96.0, 100.0, "88")
+            });
+
+            // ── GROUP OBJECTIVES ────────────────────────────────────────────────────
+            createGroupObjective(grpRetailLoans, dRetailSales, "Выполнение плана по кредитованию", 60, new DemoKR[]{
+                new DemoKR("Выдано кредитов (млрд сум)",               HIGHER, "млрд", 50, 20.0, 35.0, 50.0, 65.0, 80.0, "58"),
+                new DemoKR("Средний чек кредита (млн сум)",            HIGHER, "млн",  50, 5.0,  8.0,  12.0, 16.0, 20.0, "14")
+            });
+            createGroupObjective(grpRetailLoans, dRetailSales, "Качество кредитного портфеля", 40, new DemoKR[]{
+                new DemoKR("Доля просрочки в группе (%)",              LOWER,  "%",    100, 8.0, 5.0, 3.0, 1.5, 0.5, "2.2")
+            });
+
+            createGroupObjective(grpCallCenter, dCustService, "Эффективность колл-центра", 100, new DemoKR[]{
+                new DemoKR("Уровень обслуживания (% звонков < 30 сек)",HIGHER, "%",    40, 60.0, 72.0, 82.0, 90.0, 98.0, "78"),
+                new DemoKR("Среднее время обработки звонка (сек)",     LOWER,  "сек",  30, 300.0, 240.0, 180.0, 120.0, 90.0, "160"),
+                new DemoKR("Удовлетворённость клиентов колл-центра (%)", HIGHER, "%", 30, 60.0, 70.0, 80.0, 88.0, 95.0, "75")
+            });
+
+            createGroupObjective(grpBackend, dITDev, "Качество и скорость разработки", 60, new DemoKR[]{
+                new DemoKR("Покрытие кода тестами (%)",                HIGHER, "%",    50, 40.0, 55.0, 68.0, 80.0, 90.0, "78"),
+                new DemoKR("Количество критических багов в продакшн",  LOWER,  "",     50, 10.0, 6.0, 3.0, 1.0, 0.0, "2")
+            });
+            createGroupObjective(grpBackend, dITDev, "Техническое развитие", 40, new DemoKR[]{
+                new DemoKR("Внедрение новых технологий (шт)",          HIGHER, "шт",   100, 1.0, 2.0, 3.0, 4.0, 5.0, "3")
+            });
+
+            createGroupObjective(grpFrontend, dITDev, "UX и производительность", 100, new DemoKR[]{
+                new DemoKR("Рейтинг мобильного приложения (★)",       HIGHER, "★",    50, 3.5, 3.8, 4.2, 4.5, 4.8, "4.4"),
+                new DemoKR("Среднее время загрузки страницы (сек)",    LOWER,  "сек",  50, 5.0, 3.0, 2.0, 1.0, 0.5, "1.1")
+            });
+
+            createGroupObjective(grpProjectMgmt, dPMO, "Реализация проектов", 100, new DemoKR[]{
+                new DemoKR("Проекты завершённые в срок (%)",           HIGHER, "%",    50, 50.0, 60.0, 80.0, 100.0, 100.0, "75"),
+                new DemoKR("Точность оценки трудозатрат (%)",          HIGHER, "%",    50, 50.0, 60.0, 75.0, 85.0, 100.0, "70")
+            });
+
+            createGroupObjective(grpPayments, dOpsSupport, "Точность и скорость обработки", 100, new DemoKR[]{
+                new DemoKR("Доля операций без ошибок (%)",             HIGHER, "%",    50, 85.0, 90.0, 95.0, 98.0, 100.0, "93"),
+                new DemoKR("Время обработки платежей (мин)",           LOWER,  "мин",  50, 60.0, 40.0, 20.0, 10.0, 5.0, "25")
+            });
+
+            createGroupObjective(grpCreditAnalysis, dCreditRisk, "Качество анализа", 100, new DemoKR[]{
+                new DemoKR("Точность скоринговых моделей (%)",         HIGHER, "%",    50, 65.0, 75.0, 83.0, 90.0, 95.0, "85"),
+                new DemoKR("Время рассмотрения заявки (дни)",          LOWER,  "дн",   50, 10.0, 7.0, 4.0, 2.0, 1.0, "3")
+            });
+
             entityManager.flush();
             entityManager.clear();
 
-            log.info("Demo data loaded successfully! 4 divisions, 8 departments, 16 users, leader objectives added.");
+            log.info("Demo data loaded successfully! 4 divisions, 8 departments, 11 groups, 20 users, division/department/group/leader objectives added.");
+
+            // Generate quarterly score history for the chart
+            scoreSnapshotService.generateDemoHistory();
 
             return getAllDepartments();
         } finally {
@@ -758,6 +966,59 @@ public class OkrService {
     private void setLeader(Department dept, User leader) {
         dept.setDepartmentLeader(leader);
         departmentRepository.save(dept);
+    }
+
+    private OrgGroup mkGroup(String name, Department dept, User leader) {
+        OrgGroup g = OrgGroup.builder()
+                .name(name).department(dept).groupLeader(leader)
+                .members(new java.util.HashSet<>()).objectives(new java.util.HashSet<>())
+                .build();
+        return groupRepository.save(g);
+    }
+
+    private void addGroupMembers(OrgGroup group, User... users) {
+        for (User u : users) group.getMembers().add(u);
+        groupRepository.save(group);
+    }
+
+    private void createDivisionObjective(Division div, String name, Integer weight, DemoKR[] krs) {
+        Objective objective = new Objective();
+        objective.setName(name);
+        objective.setWeight(weight);
+        objective.setDivision(div);
+        objective.setLevel(ObjectiveLevel.DIVISION);
+        objective = objectiveRepository.save(objective);
+        createKRsForObjective(objective, krs);
+    }
+
+    private void createGroupObjective(OrgGroup group, Department dept, String name, Integer weight, DemoKR[] krs) {
+        Objective objective = new Objective();
+        objective.setName(name);
+        objective.setWeight(weight);
+        objective.setGroup(group);
+        objective.setDepartment(dept);
+        objective.setLevel(ObjectiveLevel.GROUP);
+        objective = objectiveRepository.save(objective);
+        createKRsForObjective(objective, krs);
+    }
+
+    private void createKRsForObjective(Objective objective, DemoKR[] krs) {
+        for (DemoKR kr : krs) {
+            KeyResult keyResult = new KeyResult();
+            keyResult.setName(kr.name);
+            keyResult.setMetricType(kr.type);
+            keyResult.setUnit(kr.unit);
+            keyResult.setWeight(kr.weight);
+            keyResult.setThresholdBelow(kr.below);
+            keyResult.setThresholdMeets(kr.meets);
+            keyResult.setThresholdGood(kr.good);
+            keyResult.setThresholdVeryGood(kr.veryGood);
+            keyResult.setThresholdExceptional(kr.exceptional);
+            keyResult.setActualValue(kr.actualValue);
+            keyResult.setDescription(kr.description);
+            keyResult.setObjective(objective);
+            keyResultRepository.save(keyResult);
+        }
     }
 
     private void createDemoObjective(Department dept, String name, Integer weight, DemoKR[] krs) {

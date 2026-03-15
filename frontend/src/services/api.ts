@@ -1,9 +1,9 @@
 import axios from 'axios';
-import { Department, Objective, KeyResult, ScoreLevel, Division, DivisionWithScore, CreateDivisionRequest, UpdateDivisionRequest, DepartmentSummary } from '../types/okr';
+import { Department, Objective, KeyResult, ScoreLevel, Division, DivisionWithScore, CreateDivisionRequest, UpdateDivisionRequest, DepartmentSummary, Group, ScoreSnapshot } from '../types/okr';
 import { LoginRequest, LoginResponse, User, UserProfile, UserWithScore, CreateUserRequest, UpdateUserRequest, AssignDepartmentsRequest } from '../types/auth';
 import { Evaluation, EvaluationCreateRequest, DepartmentScoreResult, EmployeeEvaluationSummary } from '../types/evaluation';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+const API_BASE = process.env.REACT_APP_API_URL || '/api';
 export const SERVER_BASE = API_BASE.replace(/\/api$/, '');
 
 const api = axios.create({
@@ -56,6 +56,22 @@ export const divisionApi = {
     delete: (id: string) => api.delete(`/divisions/${id}`),
     getDepartments: (id: string) => api.get<DepartmentSummary[]>(`/divisions/${id}/departments`),
     getWithScore: (id: string) => api.get<DivisionWithScore>(`/divisions/${id}/score`),
+    createObjective: (divisionId: string, data: Partial<Objective>) =>
+        api.post<Objective>(`/divisions/${divisionId}/objectives`, data),
+    getObjectives: (divisionId: string) => api.get<Objective[]>(`/divisions/${divisionId}/objectives`),
+};
+
+// Group APIs
+export const groupApi = {
+    getByDepartment: (deptId: string) => api.get<Group[]>(`/departments/${deptId}/groups`),
+    getById: (id: string) => api.get<Group>(`/groups/${id}`),
+    create: (data: Partial<Group>) => api.post<Group>('/groups', data),
+    update: (id: string, data: Partial<Group>) => api.put<Group>(`/groups/${id}`, data),
+    delete: (id: string) => api.delete(`/groups/${id}`),
+    updateMembers: (id: string, userIds: string[]) => api.put<Group>(`/groups/${id}/members`, { userIds }),
+    createObjective: (groupId: string, data: Partial<Objective>) =>
+        api.post<Objective>(`/groups/${groupId}/objectives`, data),
+    getObjectives: (groupId: string) => api.get<Objective[]>(`/groups/${groupId}/objectives`),
 };
 
 // Objective APIs
@@ -85,6 +101,8 @@ export const keyResultApi = {
     },
     updateProgress: (id: string, progress: number) =>
         api.put<KeyResult>(`/key-results/${id}/progress`, { progress }),
+    toggleActive: (id: string, active: boolean) =>
+        api.put<KeyResult>(`/key-results/${id}/active`, { active }),
     delete: (id: string) => api.delete(`/key-results/${id}`),
 };
 
@@ -122,6 +140,13 @@ export const evaluationApi = {
 // Department Scores API
 export const departmentScoresApi = {
     getScores: (id: string) => api.get<DepartmentScoreResult>(`/departments/${id}/scores`),
+};
+
+// Score History API
+export const scoreHistoryApi = {
+    getHistory: (type: 'DEPARTMENT' | 'DIVISION' = 'DEPARTMENT') =>
+        api.get<ScoreSnapshot[]>(`/okr/score-history?type=${type}`),
+    closeMonth: () => api.post<void>('/okr/score-history/snapshot'),
 };
 
 // Export API

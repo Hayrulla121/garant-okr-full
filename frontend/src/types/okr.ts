@@ -29,6 +29,7 @@ export interface KeyResult {
     progress?: number | null; // 0-100%, null if user can't view
     attachmentUrl?: string;
     attachmentFileName?: string;
+    active?: boolean; // inactive KRs are excluded from score calculation
 }
 
 export interface Objective {
@@ -38,6 +39,8 @@ export interface Objective {
     departmentId: string;
     keyResults: KeyResult[];
     score?: ScoreResult;
+    employeeId?: string;
+    employeeName?: string;
 }
 
 // Division types - defined before Department since Department references DivisionSummary
@@ -59,6 +62,17 @@ export interface DepartmentSummary {
     name: string;
 }
 
+export interface Group {
+    id: string;
+    name: string;
+    departmentId: string;
+    departmentName?: string;
+    leader?: UserSummary;
+    members?: UserSummary[];
+    objectives?: Objective[];
+    score?: ScoreResult;
+}
+
 export interface Department {
     id: string;
     name: string;
@@ -76,6 +90,10 @@ export interface Department {
     leaderName?: string;
     /** UUID of the assigned department leader */
     leaderId?: string;
+    /** All leaders assigned to this department */
+    leaders?: Array<{ id: string; fullName: string }>;
+    /** Groups within this department */
+    groups?: Group[];
 }
 
 export interface ScoreLevel {
@@ -91,6 +109,8 @@ export interface Division {
     name: string;
     divisionLeader?: UserSummary;
     departments: DepartmentSummary[];
+    objectives?: Objective[];
+    score?: ScoreResult;
     createdAt?: string;
     updatedAt?: string;
 }
@@ -102,6 +122,20 @@ export interface DivisionWithScore {
     scoreLevel?: string;
     color?: string;
     percentage?: number;
+}
+
+export interface ScoreSnapshot {
+    id: string;
+    targetId: string;
+    targetName: string;
+    targetType: 'DEPARTMENT' | 'DIVISION';
+    quarter?: number;
+    month: number;
+    year: number;
+    score: number;
+    scoreLevel: string;
+    color: string;
+    snapshotDate: string;
 }
 
 export interface CreateDivisionRequest {
