@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Department, Division, ScoreResult } from '../types/okr';
 import { Role } from '../types/auth';
-import { departmentApi, divisionApi, demoApi, evaluationApi, importApi, scoreHistoryApi } from '../services/api';
+import { departmentApi, divisionApi, demoApi, evaluationApi, importApi, exportApi, scoreHistoryApi } from '../services/api';
 import Speedometer from '../components/Speedometer';
 import DepartmentCard from '../components/DepartmentCard';
 import SettingsModal from '../components/SettingsModal';
@@ -104,13 +104,8 @@ function Dashboard() {
 
   const handleExportExcel = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8080/api'}/export/excel`);
-
-      if (!response.ok) {
-        throw new Error('Export failed');
-      }
-
-      const blob = await response.blob();
+      const response = await exportApi.exportExcel();
+      const blob = new Blob([response.data], { type: response.headers['content-type'] });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

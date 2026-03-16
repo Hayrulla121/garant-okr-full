@@ -14,7 +14,7 @@ export function getImageUrl(relativeUrl: string | undefined | null): string | un
   }
 
   // Get the API base URL and derive the server base URL
-  const apiBase = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+  const apiBase = process.env.REACT_APP_API_URL || '/api';
   const serverBase = apiBase.replace(/\/api$/, '');
 
   return `${serverBase}${relativeUrl}`;
