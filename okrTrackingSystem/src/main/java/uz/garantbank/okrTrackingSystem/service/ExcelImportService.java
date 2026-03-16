@@ -37,6 +37,10 @@ public class ExcelImportService {
 
     private static final String DEFAULT_DIVISION = "Организация";
 
+    // Group/division section labels — import their objectives under the current department
+    private static final String GROUP_PREFIX = "\uD83D\uDC65"; // 👥
+    private static final String DIV_SECTION_PREFIX = "\uD83C\uDFDB"; // 🏛
+
     // Known header keywords for detecting header rows
     private static final Set<String> KNOWN_HEADERS = Set.of(
             "блок", "division", "департамент", "department", "bo'lim",
@@ -49,9 +53,9 @@ public class ExcelImportService {
             "блок", "division", "bo'lim"
     );
 
-    // Pattern for leader info: "👤 Руководитель...: Name" or "👤 Руководитель...: Name\n(DeptName)"
+    // Pattern for leader/employee info: "👤 Руководитель...: Name" or "👤 Сотрудник: Name\n(DeptName)"
     private static final Pattern LEADER_PATTERN = Pattern.compile(
-            "\uD83D\uDC64\\s*(?:Руководитель[^:]*|Department Leader|Leader)[:\\s]+(.+?)(?:\\s*\\((.+?)\\))?\\s*$",
+            "\uD83D\uDC64\\s*(?:Руководитель[^:]*|Сотрудник[^:]*|Department Leader|Leader|Employee)[:\\s]+(.+?)(?:\\s*\\((.+?)\\))?\\s*$",
             Pattern.DOTALL
     );
 
@@ -130,11 +134,26 @@ public class ExcelImportService {
                         currentDivisionName = divisionVal.trim();
                     }
 
-                    // Handle department/leader from dept column
+                    // Handle department/leader/group from dept column
                     if (!isBlank(deptVal)) {
-                        Matcher leaderMatch = LEADER_PATTERN.matcher(deptVal.trim());
-                        if (leaderMatch.find()) {
-                            // This is a leader section
+                        String trimmedDept = deptVal.trim();
+
+                        // Group section: "👥 Группа: Name" — keep current dept, import as dept objectives
+                        if (trimmedDept.contains(GROUP_PREFIX) || trimmedDept.contains(DIV_SECTION_PREFIX)) {
+                            // Don't change currentDept — group/division-section objectives
+                            // are imported as department-level objectives under the current dept
+                            currentObj = null;
+                            currentObjName = null;
+                            inLeaderSection = false;
+                            leaderEmployeeId = null;
+                            if (isBlank(objVal) || isBlank(krNameVal)) continue;
+                            // Fall through to objective/KR processing below
+                        } else
+                        // Leader/employee section: "👤 Руководитель: Name" or "👤 Сотрудник: Name"
+                        if (LEADER_PATTERN.matcher(trimmedDept).find()) {
+                            Matcher leaderMatch = LEADER_PATTERN.matcher(trimmedDept);
+                            leaderMatch.find();
+                            // This is a leader/employee section
                             inLeaderSection = true;
                             String leaderNameFromCell = leaderMatch.group(1).trim();
                             String deptNameFromCell = leaderMatch.group(2) != null ? leaderMatch.group(2).trim() : null;
@@ -299,7 +318,9 @@ public class ExcelImportService {
                 || upper.contains("ВЗВЕШЕННАЯ ОЦЕНКА")
                 || upper.contains("OBJECTIVE WEIGHTED SCORE")
                 || upper.contains("DEPARTMENT WEIGHTED SCORE")
-                || upper.contains("LEADER WEIGHTED SCORE");
+                || upper.contains("LEADER WEIGHTED SCORE")
+                || upper.contains("ВЗВЕШЕННАЯ ОЦЕНКА СОТРУДНИКА")
+                || upper.contains("EMPLOYEE WEIGHTED SCORE");
     }
 
     private String cleanObjectiveName(String name) {

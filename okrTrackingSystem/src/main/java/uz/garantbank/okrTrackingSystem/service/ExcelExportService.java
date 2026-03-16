@@ -14,9 +14,8 @@ import uz.garantbank.okrTrackingSystem.repository.ScoreLevelRepository;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Exports OKR data to Excel with multi-sheet support and department leader
@@ -363,193 +362,200 @@ public class ExcelExportService {
             }
         }
 
-        // ── Leader Objectives Section ─────────────────────────────────────
-        List<ObjectiveDTO> leaderObjs = dept.getLeaderObjectives();
-        String leaderName = dept.getLeaderName();
-        int leaderSectionStartRow = -1;
-        int leaderSectionEndRow = -1;
-        List<Integer> leaderObjSummaryRows = new ArrayList<>();
+        // ── Employee/Leader Individual Objectives Section ─────────────────
+        List<ObjectiveDTO> allIndividualObjs = dept.getLeaderObjectives();
+        if (allIndividualObjs != null && !allIndividualObjs.isEmpty()) {
+            // Group individual objectives by employee
+            Map<String, List<ObjectiveDTO>> byEmployee = new LinkedHashMap<>();
+            for (ObjectiveDTO obj : allIndividualObjs) {
+                String empKey = obj.getEmployeeId() != null ? obj.getEmployeeId() : "__dept_leader__";
+                byEmployee.computeIfAbsent(empKey, k -> new ArrayList<>()).add(obj);
+            }
 
-        if (leaderObjs != null && !leaderObjs.isEmpty() && leaderName != null && !leaderName.isBlank()) {
-            leaderSectionStartRow = rowIdx;
+            for (Map.Entry<String, List<ObjectiveDTO>> entry : byEmployee.entrySet()) {
+                List<ObjectiveDTO> empObjs = entry.getValue();
 
-            for (ObjectiveDTO obj : leaderObjs) {
-                if (obj == null || obj.getKeyResults() == null || obj.getKeyResults().isEmpty())
-                    continue;
+                // Determine employee name from objectives or fall back to dept leader
+                String empName = empObjs.stream()
+                        .map(ObjectiveDTO::getEmployeeName)
+                        .filter(n -> n != null && !n.isBlank())
+                        .findFirst()
+                        .orElse(dept.getLeaderName());
+                if (empName == null || empName.isBlank()) continue;
 
-                int objStartRow = rowIdx;
-                List<KeyResultDTO> krs = obj.getKeyResults();
-                int objWeight = obj.getWeight() != null ? obj.getWeight() : 0;
+                // Determine if this is the department leader
+                boolean isDeptLeader = entry.getKey().equals("__dept_leader__")
+                        || entry.getKey().equals(dept.getLeaderId());
+                String empLabel = isDeptLeader
+                        ? "\uD83D\uDC64 Руководитель: " + empName + "\n(" + (dept.getName() != null ? dept.getName() : "") + ")"
+                        : "\uD83D\uDC64 Сотрудник: " + empName + "\n(" + (dept.getName() != null ? dept.getName() : "") + ")";
 
-                for (KeyResultDTO kr : krs) {
-                    if (kr == null)
+                int empSectionStartRow = rowIdx;
+                int empSectionEndRow = -1;
+                List<Integer> empObjSummaryRows = new ArrayList<>();
+
+                for (ObjectiveDTO obj : empObjs) {
+                    if (obj == null || obj.getKeyResults() == null || obj.getKeyResults().isEmpty())
                         continue;
-                    Row row = ws.createRow(rowIdx);
-                    int krWeight = kr.getWeight() != null ? kr.getWeight() : 0;
 
-                    // A: Division — only on first row
-                    if (rowIdx == deptStartRow) {
-                        Cell c = row.createCell(COL_DIVISION);
-                        c.setCellValue(divisionName);
-                        c.setCellStyle(st.deptLabelStyle);
+                    int objStartRow = rowIdx;
+                    List<KeyResultDTO> krs = obj.getKeyResults();
+                    int objWeight = obj.getWeight() != null ? obj.getWeight() : 0;
+
+                    for (KeyResultDTO kr : krs) {
+                        if (kr == null)
+                            continue;
+                        Row row = ws.createRow(rowIdx);
+                        int krWeight = kr.getWeight() != null ? kr.getWeight() : 0;
+
+                        if (rowIdx == deptStartRow) {
+                            Cell c = row.createCell(COL_DIVISION);
+                            c.setCellValue(divisionName);
+                            c.setCellStyle(st.deptLabelStyle);
+                        }
+
+                        if (rowIdx == empSectionStartRow) {
+                            Cell c = row.createCell(COL_DEPT);
+                            c.setCellValue(empLabel);
+                            c.setCellStyle(st.leaderLabelStyle);
+                        }
+
+                        if (rowIdx == objStartRow) {
+                            Cell c = row.createCell(COL_OBJ);
+                            c.setCellValue(obj.getName() != null ? obj.getName() : "");
+                            c.setCellStyle(st.objNameStyle);
+
+                            Cell cWt = row.createCell(COL_OBJ_WT);
+                            cWt.setCellValue(objWeight);
+                            cWt.setCellStyle(st.weightStyle);
+                        }
+
+                        row.createCell(COL_KR_NAME).setCellValue(kr.getName() != null ? kr.getName() : "");
+
+                        Cell krWtCell = row.createCell(COL_KR_WT);
+                        krWtCell.setCellValue(krWeight);
+                        krWtCell.setCellStyle(st.weightStyle);
+
+                        row.createCell(COL_TYPE).setCellValue(metricTypeDisplay(kr.getMetricType()));
+
+                        Cell actualCell = row.createCell(COL_ACTUAL);
+                        actualCell.setCellStyle(st.centeredStyle);
+                        writeActualValue(actualCell, kr);
+
+                        row.createCell(COL_UNIT).setCellValue(kr.getUnit() != null ? kr.getUnit() : "");
+                        writeThresholds(row, kr, levels, numLevels, threshStart, st);
+
+                        int xlRow = rowIdx + 1;
+                        Cell scoreCell = row.createCell(scoreCol);
+                        writeScoreFormula(scoreCell, kr, xlRow, levels, threshStart, st);
+
+                        Cell levelCell = row.createCell(levelCol);
+                        writeLevelFormula(levelCell, kr, xlRow, scoreCol, levels, st);
+
+                        rowIdx++;
                     }
 
-                    // B: Leader label — only on first row of leader section
-                    if (rowIdx == leaderSectionStartRow) {
-                        Cell c = row.createCell(COL_DEPT);
-                        c.setCellValue("\uD83D\uDC64 Руководитель: " + leaderName + "\n("
-                                + (dept.getName() != null ? dept.getName() : "") + ")");
-                        c.setCellStyle(st.leaderLabelStyle);
+                    int objKrEndRow = rowIdx - 1;
+                    if (!krs.isEmpty()) {
+                        Row sumRow = ws.createRow(rowIdx);
+
+                        Cell lblCell = sumRow.createCell(COL_KR_NAME);
+                        lblCell.setCellValue("\uD83D\uDCCA ВЗВЕШЕННАЯ ОЦЕНКА ЦЕЛИ");
+                        lblCell.setCellStyle(st.objSummaryLabelStyle);
+
+                        for (int c = COL_KR_WT; c < threshStart + numLevels; c++) {
+                            sumRow.createCell(c).setCellStyle(st.objSummaryBgStyle);
+                        }
+
+                        String scoreColLetter = colLetter(scoreCol);
+                        String krWtColLetter = colLetter(COL_KR_WT);
+                        int xlObjStart = objStartRow + 1;
+                        int xlObjEnd = objKrEndRow + 1;
+                        String objScoreFormula = String.format(
+                                "IF(SUM(%s%d:%s%d)>0," +
+                                        "SUMPRODUCT(%s%d:%s%d,%s%d:%s%d)/SUM(%s%d:%s%d)," +
+                                        "AVERAGE(%s%d:%s%d))",
+                                krWtColLetter, xlObjStart, krWtColLetter, xlObjEnd,
+                                scoreColLetter, xlObjStart, scoreColLetter, xlObjEnd,
+                                krWtColLetter, xlObjStart, krWtColLetter, xlObjEnd,
+                                krWtColLetter, xlObjStart, krWtColLetter, xlObjEnd,
+                                scoreColLetter, xlObjStart, scoreColLetter, xlObjEnd);
+
+                        Cell objScoreCell = sumRow.createCell(scoreCol);
+                        objScoreCell.setCellFormula(objScoreFormula);
+                        objScoreCell.setCellStyle(st.scoreSummaryStyle);
+
+                        Cell objLevelCell = sumRow.createCell(levelCol);
+                        objLevelCell.setCellFormula(levelFormula(rowIdx + 1, scoreCol, levels));
+                        objLevelCell.setCellStyle(st.levelSummaryStyle);
+
+                        empObjSummaryRows.add(rowIdx);
+                        allObjSummaryRows.add(rowIdx);
+
+                        applyBottomBorder(ws, rowIdx, totalCols, BorderStyle.MEDIUM, "000000");
+                        rowIdx++;
                     }
 
-                    // C: Objective name
-                    if (rowIdx == objStartRow) {
-                        Cell c = row.createCell(COL_OBJ);
-                        c.setCellValue(obj.getName() != null ? obj.getName() : "");
-                        c.setCellStyle(st.objNameStyle);
+                    int objEndRow = rowIdx - 1;
+                    if (objEndRow > objStartRow) {
+                        safeAddMerge(ws, objStartRow, objEndRow, COL_OBJ, COL_OBJ);
+                        safeAddMerge(ws, objStartRow, objEndRow, COL_OBJ_WT, COL_OBJ_WT);
+                        ws.getRow(objStartRow).getCell(COL_OBJ_WT).setCellStyle(st.weightSumStyle);
                     }
-
-                    // D: Objective weight
-                    if (rowIdx == objStartRow) {
-                        Cell c = row.createCell(COL_OBJ_WT);
-                        c.setCellValue(objWeight);
-                        c.setCellStyle(st.weightStyle);
-                    }
-
-                    // E: KR name
-                    row.createCell(COL_KR_NAME).setCellValue(kr.getName() != null ? kr.getName() : "");
-
-                    // F: KR weight
-                    Cell krWtCell = row.createCell(COL_KR_WT);
-                    krWtCell.setCellValue(krWeight);
-                    krWtCell.setCellStyle(st.weightStyle);
-
-                    // G: Type
-                    row.createCell(COL_TYPE).setCellValue(metricTypeDisplay(kr.getMetricType()));
-
-                    // H: Actual value
-                    Cell actualCell = row.createCell(COL_ACTUAL);
-                    actualCell.setCellStyle(st.centeredStyle);
-                    writeActualValue(actualCell, kr);
-
-                    // I: Unit
-                    row.createCell(COL_UNIT).setCellValue(kr.getUnit() != null ? kr.getUnit() : "");
-
-                    // Threshold columns
-                    writeThresholds(row, kr, levels, numLevels, threshStart, st);
-
-                    // Score formula
-                    int xlRow = rowIdx + 1;
-                    Cell scoreCell = row.createCell(scoreCol);
-                    writeScoreFormula(scoreCell, kr, xlRow, levels, threshStart, st);
-
-                    // Level formula
-                    Cell levelCell = row.createCell(levelCol);
-                    writeLevelFormula(levelCell, kr, xlRow, scoreCol, levels, st);
-
-                    rowIdx++;
                 }
 
-                // Objective Summary Row
-                int objKrEndRow = rowIdx - 1;
-                if (!krs.isEmpty()) {
-                    Row sumRow = ws.createRow(rowIdx);
+                // Employee Summary Row
+                if (!empObjSummaryRows.isEmpty()) {
+                    Row empSumRow = ws.createRow(rowIdx);
 
-                    Cell lblCell = sumRow.createCell(COL_KR_NAME);
-                    lblCell.setCellValue("\uD83D\uDCCA ВЗВЕШЕННАЯ ОЦЕНКА ЦЕЛИ");
-                    lblCell.setCellStyle(st.objSummaryLabelStyle);
+                    String summaryLabel = isDeptLeader
+                            ? "\uD83D\uDC64 ВЗВЕШЕННАЯ ОЦЕНКА РУКОВОДИТЕЛЯ"
+                            : "\uD83D\uDC64 ВЗВЕШЕННАЯ ОЦЕНКА СОТРУДНИКА: " + empName;
+                    Cell empSumLbl = empSumRow.createCell(COL_KR_NAME);
+                    empSumLbl.setCellValue(summaryLabel);
+                    empSumLbl.setCellStyle(st.leaderSummaryLabelStyle);
 
                     for (int c = COL_KR_WT; c < threshStart + numLevels; c++) {
-                        sumRow.createCell(c).setCellStyle(st.objSummaryBgStyle);
+                        empSumRow.createCell(c);
                     }
 
                     String scoreColLetter = colLetter(scoreCol);
-                    String krWtColLetter = colLetter(COL_KR_WT);
-                    int xlObjStart = objStartRow + 1;
-                    int xlObjEnd = objKrEndRow + 1;
-                    String objScoreFormula = String.format(
-                            "IF(SUM(%s%d:%s%d)>0," +
-                                    "SUMPRODUCT(%s%d:%s%d,%s%d:%s%d)/SUM(%s%d:%s%d)," +
-                                    "AVERAGE(%s%d:%s%d))",
-                            krWtColLetter, xlObjStart, krWtColLetter, xlObjEnd,
-                            scoreColLetter, xlObjStart, scoreColLetter, xlObjEnd,
-                            krWtColLetter, xlObjStart, krWtColLetter, xlObjEnd,
-                            krWtColLetter, xlObjStart, krWtColLetter, xlObjEnd,
-                            scoreColLetter, xlObjStart, scoreColLetter, xlObjEnd);
-
-                    Cell objScoreCell = sumRow.createCell(scoreCol);
-                    objScoreCell.setCellFormula(objScoreFormula);
-                    objScoreCell.setCellStyle(st.scoreSummaryStyle);
-
-                    Cell objLevelCell = sumRow.createCell(levelCol);
-                    objLevelCell.setCellFormula(levelFormula(rowIdx + 1, scoreCol, levels));
-                    objLevelCell.setCellStyle(st.levelSummaryStyle);
-
-                    leaderObjSummaryRows.add(rowIdx);
-                    allObjSummaryRows.add(rowIdx);
-
-                    applyBottomBorder(ws, rowIdx, totalCols, BorderStyle.MEDIUM, "000000");
-                    rowIdx++;
-                }
-
-                // Merge objective cells
-                int objEndRow = rowIdx - 1;
-                if (objEndRow > objStartRow) {
-                    safeAddMerge(ws, objStartRow, objEndRow, COL_OBJ, COL_OBJ);
-                    safeAddMerge(ws, objStartRow, objEndRow, COL_OBJ_WT, COL_OBJ_WT);
-                    ws.getRow(objStartRow).getCell(COL_OBJ_WT).setCellStyle(st.weightSumStyle);
-                }
-            }
-
-            // Leader Summary Row
-            if (!leaderObjSummaryRows.isEmpty()) {
-                Row leaderSumRow = ws.createRow(rowIdx);
-
-                Cell leaderSumLbl = leaderSumRow.createCell(COL_KR_NAME);
-                leaderSumLbl.setCellValue("\uD83D\uDC64 ВЗВЕШЕННАЯ ОЦЕНКА РУКОВОДИТЕЛЯ");
-                leaderSumLbl.setCellStyle(st.leaderSummaryLabelStyle);
-
-                for (int c = COL_KR_WT; c < threshStart + numLevels; c++) {
-                    leaderSumRow.createCell(c);
-                }
-
-                String scoreColLetter = colLetter(scoreCol);
-                String objWtColLetter = colLetter(COL_OBJ_WT);
-                StringBuilder scoreRefs = new StringBuilder();
-                StringBuilder weightRefs = new StringBuilder();
-                for (int i = 0; i < leaderObjSummaryRows.size(); i++) {
-                    int xlSumRow = leaderObjSummaryRows.get(i) + 1;
-                    if (i > 0) {
-                        scoreRefs.append(",");
-                        weightRefs.append(",");
+                    String objWtColLetter = colLetter(COL_OBJ_WT);
+                    StringBuilder scoreRefs = new StringBuilder();
+                    StringBuilder weightRefs = new StringBuilder();
+                    for (int j = 0; j < empObjSummaryRows.size(); j++) {
+                        int xlSumRow = empObjSummaryRows.get(j) + 1;
+                        if (j > 0) {
+                            scoreRefs.append(",");
+                            weightRefs.append(",");
+                        }
+                        scoreRefs.append(scoreColLetter).append(xlSumRow);
+                        weightRefs.append(objWtColLetter).append(xlSumRow);
                     }
-                    scoreRefs.append(scoreColLetter).append(xlSumRow);
-                    weightRefs.append(objWtColLetter).append(xlSumRow);
+                    String empScoreFormula = String.format(
+                            "IF(SUM(%s)>0,SUMPRODUCT(%s,%s)/SUM(%s),AVERAGE(%s))",
+                            weightRefs, scoreRefs, weightRefs, weightRefs, scoreRefs);
+
+                    Cell empScoreCell = empSumRow.createCell(scoreCol);
+                    empScoreCell.setCellFormula(empScoreFormula);
+                    empScoreCell.setCellStyle(st.scoreSummaryStyle);
+
+                    Cell empLevelCell = empSumRow.createCell(levelCol);
+                    empLevelCell.setCellFormula(levelFormula(rowIdx + 1, scoreCol, levels));
+                    empLevelCell.setCellStyle(st.levelSummaryStyle);
+
+                    applyBottomBorder(ws, rowIdx, totalCols, BorderStyle.MEDIUM, LEADER_BORDER);
+                    empSectionEndRow = rowIdx;
+                    rowIdx++;
+                } else {
+                    empSectionEndRow = rowIdx - 1;
                 }
-                String leaderScoreFormula = String.format(
-                        "IF(SUM(%s)>0,SUMPRODUCT(%s,%s)/SUM(%s),AVERAGE(%s))",
-                        weightRefs, scoreRefs, weightRefs, weightRefs, scoreRefs);
 
-                Cell leaderScoreCell = leaderSumRow.createCell(scoreCol);
-                leaderScoreCell.setCellFormula(leaderScoreFormula);
-                leaderScoreCell.setCellStyle(st.scoreSummaryStyle);
-
-                Cell leaderLevelCell = leaderSumRow.createCell(levelCol);
-                leaderLevelCell.setCellFormula(levelFormula(rowIdx + 1, scoreCol, levels));
-                leaderLevelCell.setCellStyle(st.levelSummaryStyle);
-
-                // Dashed purple border
-                applyBottomBorder(ws, rowIdx, totalCols, BorderStyle.MEDIUM, LEADER_BORDER);
-                leaderSectionEndRow = rowIdx;
-                rowIdx++;
-            } else {
-                leaderSectionEndRow = rowIdx - 1;
-            }
-
-            // Merge leader label (column B) across all leader rows
-            if (leaderSectionStartRow >= 0 && leaderSectionEndRow > leaderSectionStartRow) {
-                safeAddMerge(ws, leaderSectionStartRow, leaderSectionEndRow, COL_DEPT, COL_DEPT);
-                ws.getRow(leaderSectionStartRow).getCell(COL_DEPT).setCellStyle(st.leaderLabelStyle);
+                // Merge employee label (column B) across all their rows
+                if (empSectionStartRow >= 0 && empSectionEndRow > empSectionStartRow) {
+                    safeAddMerge(ws, empSectionStartRow, empSectionEndRow, COL_DEPT, COL_DEPT);
+                    ws.getRow(empSectionStartRow).getCell(COL_DEPT).setCellStyle(st.leaderLabelStyle);
+                }
             }
         }
 
@@ -730,7 +736,21 @@ public class ExcelExportService {
 
                         if (rowIdx == groupSectionStartRow) {
                             Cell c = row.createCell(COL_DEPT);
-                            c.setCellValue("\uD83D\uDC65 Группа: " + (group.getName() != null ? group.getName() : ""));
+                            StringBuilder groupLabel = new StringBuilder("\uD83D\uDC65 Группа: ");
+                            groupLabel.append(group.getName() != null ? group.getName() : "");
+                            if (group.getLeader() != null && group.getLeader().getFullName() != null) {
+                                groupLabel.append("\n\uD83D\uDC64 ").append(group.getLeader().getFullName());
+                            }
+                            if (group.getMembers() != null && !group.getMembers().isEmpty()) {
+                                String memberNames = group.getMembers().stream()
+                                        .map(m -> m.getFullName() != null ? m.getFullName() : m.getUsername())
+                                        .filter(Objects::nonNull)
+                                        .collect(Collectors.joining(", "));
+                                if (!memberNames.isEmpty()) {
+                                    groupLabel.append("\nУчастники: ").append(memberNames);
+                                }
+                            }
+                            c.setCellValue(groupLabel.toString());
                             c.setCellStyle(st.deptLabelStyle);
                         }
 
