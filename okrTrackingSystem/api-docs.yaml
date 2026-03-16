@@ -83,6 +83,12 @@ tags:
     all OKR data.
 - name: Import
   description: "Data import operations. Import departments, objectives, and key results from Excel (.xlsx) files. Upserts by name: existing entities are updated, new ones are created. Requires ADMIN role."
+- name: Groups
+  description: Group management within departments. Groups are organizational subdivisions
+    within departments with their own objectives and members.
+- name: Score History
+  description: Historical score snapshots for departments and divisions. Supports
+    closing months and viewing quarterly trends.
 paths:
   /api/users/{id}:
     get:
@@ -1200,6 +1206,14 @@ paths:
         \ (.xlsx) file. The file includes scores and status information. **Public\
         \ endpoint — no authentication required.**"
       operationId: exportToExcel
+      parameters:
+      - name: multiSheet
+        in: query
+        description: "If true, each department is exported to a separate sheet"
+        required: false
+        schema:
+          type: boolean
+          default: true
       responses:
         "200":
           description: Excel file generated
@@ -1208,7 +1222,7 @@ paths:
         "500":
           description: Export failed
       security: []
-  /api/okr/import/excel:
+  /api/import/excel:
     post:
       tags:
       - Import
@@ -1475,6 +1489,448 @@ paths:
           description: Only ADMIN can remove departments
         "404":
           description: User or department not found
+  /api/evaluations/employee/{userId}/summary:
+    get:
+      tags:
+      - Evaluations
+      summary: Get employee evaluation summary
+      description: "Get a detailed evaluation summary for a specific employee, including\
+        \ total evaluations, below-expectations count, disciplinary status, and recent\
+        \ evaluation history. Accessible by ADMIN and DIRECTOR; other users can only\
+        \ view their own summary."
+      operationId: getEmployeeEvaluationSummary
+      parameters:
+      - name: userId
+        in: path
+        description: Employee User ID (UUID)
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Employee evaluation summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmployeeEvaluationSummaryDTO"
+        "403":
+          description: Insufficient permissions — can only view own summary
+        "404":
+          description: User not found
+  /api/evaluations/at-risk:
+    get:
+      tags:
+      - Evaluations
+      summary: Get at-risk employees
+      description: "Get all employees who have at least one below-expectations evaluation.\
+        \ Results are sorted by below-expectations count descending. **Requires ADMIN,\
+        \ DIRECTOR, or HR role.**"
+      operationId: getAtRiskEmployees
+      responses:
+        "200":
+          description: List of at-risk employee summaries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EmployeeEvaluationSummaryDTO"
+        "403":
+          description: Insufficient permissions
+  /api/departments/{departmentId}/leader-objectives:
+    post:
+      tags:
+      - Objectives
+      summary: Create leader objective
+      description: "Create a personal (INDIVIDUAL-level) objective for the department's\
+        \ assigned leader. These objectives are shown separately from department objectives\
+        \ and contribute to the leader's personal OKR score. Requires ADMIN, DIRECTOR,\
+        \ or department edit permission."
+      operationId: createLeaderObjective
+      parameters:
+      - name: departmentId
+        in: path
+        description: Department ID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ObjectiveDTO"
+        required: true
+      responses:
+        "200":
+          description: Leader objective created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectiveDTO"
+        "400":
+          description: Department has no leader assigned
+        "403":
+          description: No edit permission
+        "404":
+          description: Department not found
+  /api/divisions/{divisionId}/objectives:
+    get:
+      tags:
+      - Objectives
+      summary: Get division objectives
+      description: Returns all objectives at the DIVISION level for the specified division.
+      operationId: getDivisionObjectives
+      parameters:
+      - name: divisionId
+        in: path
+        description: Division ID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List of division objectives
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ObjectiveDTO"
+        "404":
+          description: Division not found
+    post:
+      tags:
+      - Objectives
+      summary: Create division objective
+      description: Create a new DIVISION-level objective within a division. **Requires
+        ADMIN or DIRECTOR role.**
+      operationId: createDivisionObjective
+      parameters:
+      - name: divisionId
+        in: path
+        description: Division ID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ObjectiveDTO"
+        required: true
+      responses:
+        "200":
+          description: Division objective created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectiveDTO"
+        "403":
+          description: Only ADMIN or DIRECTOR can create division objectives
+        "404":
+          description: Division not found
+  /api/key-results/{id}/active:
+    put:
+      tags:
+      - Key Results
+      summary: Toggle key result active status
+      description: "Toggle a key result's active/inactive status. Inactive key results\
+        \ are excluded from score calculations. Requires edit permission for the parent\
+        \ department."
+      operationId: toggleKeyResultActive
+      parameters:
+      - name: id
+        in: path
+        description: Key Result ID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                active:
+                  type: boolean
+                  description: Whether the key result should be active
+                  example: true
+        required: true
+      responses:
+        "200":
+          description: KR active status updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KeyResultDTO"
+        "403":
+          description: No edit permission
+        "404":
+          description: Key result not found
+  /api/okr/score-history:
+    get:
+      tags:
+      - Score History
+      summary: Get score history
+      description: Returns historical score snapshots for departments (or divisions).
+        Used for the quarterly line chart.
+      operationId: getScoreHistory
+      parameters:
+      - name: type
+        in: query
+        description: "Target type: DEPARTMENT or DIVISION"
+        required: false
+        schema:
+          type: string
+          enum:
+          - DEPARTMENT
+          - DIVISION
+          default: DEPARTMENT
+          example: DEPARTMENT
+      responses:
+        "200":
+          description: List of score snapshots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ScoreSnapshotDTO"
+  /api/okr/score-history/snapshot:
+    post:
+      tags:
+      - Score History
+      summary: Close the month
+      description: "Close the current month: saves a score snapshot for all departments\
+        \ with the current date. **Requires ADMIN role.**"
+      operationId: closeMonth
+      responses:
+        "200":
+          description: Month closed and snapshot saved
+        "403":
+          description: Only ADMIN can close the month
+  /api/departments/{deptId}/groups:
+    get:
+      tags:
+      - Groups
+      summary: Get groups by department
+      description: Returns all groups within a specific department, including their
+        members, objectives, and scores.
+      operationId: getGroupsByDepartment
+      parameters:
+      - name: deptId
+        in: path
+        description: Department ID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List of groups in the department
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GroupDTO"
+        "404":
+          description: Department not found
+  /api/groups/{id}:
+    get:
+      tags:
+      - Groups
+      summary: Get group by ID
+      description: Returns a single group with its members, objectives, and score.
+      operationId: getGroup
+      parameters:
+      - name: id
+        in: path
+        description: Group ID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Group found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupDTO"
+        "404":
+          description: Group not found
+    put:
+      tags:
+      - Groups
+      summary: Update group
+      description: "Update a group's name, leader, or other details. **Requires ADMIN,\
+        \ DIRECTOR, or DEPARTMENT_LEADER role.**"
+      operationId: updateGroup
+      parameters:
+      - name: id
+        in: path
+        description: Group ID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupDTO"
+        required: true
+      responses:
+        "200":
+          description: Group updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupDTO"
+        "403":
+          description: No edit permission
+        "404":
+          description: Group not found
+    delete:
+      tags:
+      - Groups
+      summary: Delete group
+      description: Permanently delete a group. **Requires ADMIN or DIRECTOR role.**
+      operationId: deleteGroup
+      parameters:
+      - name: id
+        in: path
+        description: Group ID
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Group deleted
+        "403":
+          description: Only ADMIN or DIRECTOR can delete groups
+        "404":
+          description: Group not found
+  /api/groups:
+    post:
+      tags:
+      - Groups
+      summary: Create group
+      description: "Create a new group within a department. **Requires ADMIN, DIRECTOR,\
+        \ or DEPARTMENT_LEADER role.**"
+      operationId: createGroup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupDTO"
+        required: true
+      responses:
+        "200":
+          description: Group created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupDTO"
+        "403":
+          description: Insufficient permissions
+  /api/groups/{id}/members:
+    put:
+      tags:
+      - Groups
+      summary: Update group members
+      description: "Replace the member list for a group. **Requires ADMIN, DIRECTOR,\
+        \ or DEPARTMENT_LEADER role.**"
+      operationId: updateGroupMembers
+      parameters:
+      - name: id
+        in: path
+        description: Group ID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userIds:
+                  type: array
+                  description: List of user IDs to assign as group members
+                  items:
+                    type: string
+                    format: uuid
+                  example:
+                  - 550e8400-e29b-41d4-a716-446655440000
+                  - 660e8400-e29b-41d4-a716-446655440001
+        required: true
+      responses:
+        "200":
+          description: Members updated — returns updated group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupDTO"
+        "403":
+          description: Insufficient permissions
+        "404":
+          description: Group not found
+  /api/groups/{groupId}/objectives:
+    get:
+      tags:
+      - Groups
+      summary: Get group objectives
+      description: Returns all GROUP-level objectives for the specified group.
+      operationId: getGroupObjectives
+      parameters:
+      - name: groupId
+        in: path
+        description: Group ID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List of group objectives
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ObjectiveDTO"
+        "404":
+          description: Group not found
+    post:
+      tags:
+      - Groups
+      summary: Create group objective
+      description: "Create a new GROUP-level objective within a group. **Requires ADMIN,\
+        \ DIRECTOR, or DEPARTMENT_LEADER role.**"
+      operationId: createGroupObjective
+      parameters:
+      - name: groupId
+        in: path
+        description: Group ID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ObjectiveDTO"
+        required: true
+      responses:
+        "200":
+          description: Group objective created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectiveDTO"
+        "403":
+          description: Insufficient permissions
+        "404":
+          description: Group not found
 components:
   schemas:
     UpdateUserRequest:
@@ -1613,8 +2069,6 @@ components:
           format: date-time
           description: Account creation timestamp
           example: 2025-01-01T09:00:00
-        active:
-          type: boolean
         isActive:
           type: boolean
           description: Whether the user account is active
@@ -1627,6 +2081,27 @@ components:
           type: boolean
           description: Whether the user is in read-only mode (cannot make any edits)
           example: false
+        assignedGroups:
+          type: array
+          description: Groups the user is a member of
+          items:
+            $ref: "#/components/schemas/GroupSummaryDTO"
+    GroupSummaryDTO:
+      type: object
+      description: Lightweight group reference
+      properties:
+        id:
+          type: string
+          description: Group ID
+          example: group-001
+        name:
+          type: string
+          description: Group name
+          example: Backend Team
+        departmentId:
+          type: string
+          description: Parent department ID
+          example: dept-001
     ScoreLevelDTO:
       type: object
       description: Score level configuration entry
@@ -1729,6 +2204,11 @@ components:
           description: "Progress percentage (0-100), manually set by ADMIN or DEPARTMENT_LEADER.\
             \ Null if the current user cannot view progress for this department."
           example: 50
+        active:
+          type: boolean
+          description: "Whether this KR is active. Inactive KRs are excluded from\
+            \ score calculation."
+          example: true
     ObjectiveDTO:
       type: object
       description: Objective with key results and computed score
@@ -1759,6 +2239,16 @@ components:
         score:
           $ref: "#/components/schemas/ScoreResult"
           description: Computed score based on key result achievements
+        employeeId:
+          type: string
+          description: "Optional employee ID for leader objectives (selects which\
+            \ leader to assign)"
+          example: 550e8400-e29b-41d4-a716-446655440000
+        employeeName:
+          type: string
+          description: "Full name of the assigned employee (read-only, populated for\
+            \ leader objectives)"
+          example: John Doe
     ScoreResult:
       type: object
       description: Computed score with level classification and color
@@ -2046,6 +2536,45 @@ components:
           type: boolean
           description: True if the department has both Director and HR evaluations
           example: true
+        leaderObjectives:
+          type: array
+          description: Personal objectives belonging to the department leader (INDIVIDUAL
+            level OKRs)
+          items:
+            $ref: "#/components/schemas/ObjectiveDTO"
+        leaderScore:
+          $ref: "#/components/schemas/ScoreResult"
+          description: Weighted OKR score computed from the leader's personal objectives
+        leaderName:
+          type: string
+          description: Full name of the assigned department leader
+          example: John Doe
+        leaderId:
+          type: string
+          description: UUID of the assigned department leader
+          example: 550e8400-e29b-41d4-a716-446655440000
+        leaders:
+          type: array
+          description: All leaders assigned to this department
+          items:
+            $ref: "#/components/schemas/LeaderInfo"
+        groups:
+          type: array
+          description: Groups within this department
+          items:
+            $ref: "#/components/schemas/GroupDTO"
+    LeaderInfo:
+      type: object
+      description: Lightweight leader reference within a department
+      properties:
+        id:
+          type: string
+          description: Leader user ID
+          example: 550e8400-e29b-41d4-a716-446655440000
+        fullName:
+          type: string
+          description: Leader full name
+          example: John Doe
     DivisionSummaryDTO:
       type: object
       description: Lightweight division reference
@@ -2311,8 +2840,6 @@ components:
           format: double
           description: Score as percentage (0-100)
           example: 75.0
-        active:
-          type: boolean
         isActive:
           type: boolean
           description: Account active status
@@ -2325,6 +2852,27 @@ components:
           type: boolean
           description: Whether the user is in read-only mode
           example: false
+        totalEvaluationsCount:
+          type: integer
+          format: int32
+          description: Total number of evaluations received as EMPLOYEE target
+          example: 5
+        belowExpectationsCount:
+          type: integer
+          format: int32
+          description: Number of below-expectations evaluations received
+          example: 1
+        disciplinaryStatus:
+          type: string
+          description: Disciplinary status based on below-expectations evaluation
+            count
+          enum:
+          - NONE
+          - WATCH
+          - WARNING
+          - FINE
+          - TERMINATION_RISK
+          example: NONE
     UserProfileDTO:
       type: object
       description: Extended user profile with detailed department info and recent
@@ -2397,8 +2945,6 @@ components:
           description: Recent evaluations for this user
           items:
             $ref: "#/components/schemas/EvaluationDTO"
-        active:
-          type: boolean
         isActive:
           type: boolean
           description: Account active status
@@ -2594,6 +3140,140 @@ components:
           type: integer
           description: Number of key results imported or updated
           example: 45
+    EmployeeEvaluationSummaryDTO:
+      type: object
+      description: Evaluation summary for an employee including disciplinary status
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: Employee user ID
+          example: 550e8400-e29b-41d4-a716-446655440000
+        userFullName:
+          type: string
+          description: Employee full name
+          example: John Doe
+        totalEvaluations:
+          type: integer
+          format: int32
+          description: Total number of evaluations received
+          example: 5
+        belowExpectationsCount:
+          type: integer
+          format: int32
+          description: Number of evaluations rated as below expectations
+          example: 2
+        disciplinaryStatus:
+          type: string
+          description: Disciplinary status based on below-expectations count
+          enum:
+          - NONE
+          - WATCH
+          - WARNING
+          - FINE
+          - TERMINATION_RISK
+          example: WARNING
+        disciplinaryDescription:
+          type: string
+          description: Human-readable description of the disciplinary status
+          example: "Warning — 2 below-expectations evaluations"
+        recentEvaluations:
+          type: array
+          description: Recent evaluation history (up to 10 most recent)
+          items:
+            $ref: "#/components/schemas/EvaluationDTO"
+    GroupDTO:
+      type: object
+      description: "Group with objectives, members, and score"
+      properties:
+        id:
+          type: string
+          description: Group ID
+          example: grp-001
+        name:
+          type: string
+          description: Group name
+          example: Backend Team
+        departmentId:
+          type: string
+          description: Parent department ID
+          example: dept-001
+        departmentName:
+          type: string
+          description: Department name
+          example: Software Development
+        leader:
+          $ref: "#/components/schemas/UserSummaryDTO"
+          description: Group leader info
+        members:
+          type: array
+          description: Group members
+          items:
+            $ref: "#/components/schemas/UserSummaryDTO"
+        objectives:
+          type: array
+          description: Group-level objectives
+          items:
+            $ref: "#/components/schemas/ObjectiveDTO"
+        score:
+          $ref: "#/components/schemas/ScoreResult"
+          description: Group OKR score
+    ScoreSnapshotDTO:
+      type: object
+      description: Historical score snapshot for a department or division
+      properties:
+        id:
+          type: string
+          description: Snapshot ID
+          example: snap-001
+        targetId:
+          type: string
+          description: ID of the department or division
+          example: dept-001
+        targetName:
+          type: string
+          description: Name of the department or division
+          example: Software Development
+        targetType:
+          type: string
+          description: Target entity type
+          enum:
+          - DEPARTMENT
+          - DIVISION
+          example: DEPARTMENT
+        quarter:
+          type: integer
+          format: int32
+          description: Quarter number (1-4)
+          example: 1
+        year:
+          type: integer
+          format: int32
+          description: Snapshot year
+          example: 2026
+        month:
+          type: integer
+          format: int32
+          description: Snapshot month (1-12)
+          example: 3
+        score:
+          type: number
+          format: double
+          description: Score at the time of snapshot (0.0-1.0)
+          example: 0.72
+        scoreLevel:
+          type: string
+          description: Score level classification at the time of snapshot
+          example: на_уровне_ожиданий
+        color:
+          type: string
+          description: Hex color for the score level
+          example: "#4CAF50"
+        snapshotDate:
+          type: string
+          format: date-time
+          description: When the snapshot was taken
+          example: 2026-03-01T00:00:00
   securitySchemes:
     Bearer Authentication:
       type: http

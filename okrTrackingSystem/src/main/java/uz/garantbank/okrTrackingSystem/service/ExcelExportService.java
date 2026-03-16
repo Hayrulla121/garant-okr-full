@@ -58,6 +58,7 @@ public class ExcelExportService {
     private static final String LEADER_BG = "E8E0F5";
     private static final String LEADER_FG = "4A2391";
     private static final String LEADER_BORDER = "6366F1";
+    private static final String ORG_SUMMARY_BG = "0D4222";
 
     private static final List<DefaultLevel> DEFAULT_LEVELS = List.of(
             new DefaultLevel("Не соответствует", 0.0, "#d9534f"),
@@ -72,6 +73,9 @@ public class ExcelExportService {
     }
 
     private record DefaultLevel(String name, double scoreValue, String color) {
+    }
+
+    private record DeptSummaryRef(String sheetName, int summaryRowIdx) {
     }
 
     // ─── Public API ──────────────────────────────────────────────────────────
@@ -94,19 +98,16 @@ public class ExcelExportService {
 
             Styles st = new Styles(wb, levels, numLevels);
 
+            List<DeptSummaryRef> deptSummaryRefs = new ArrayList<>();
+
             if (multiSheet) {
                 for (int i = 0; i < departments.size(); i++) {
                     DepartmentDTO dept = departments.get(i);
                     if (dept == null)
                         continue;
 
-                    String sheetName = sanitizeSheetName(dept.getName() != null ? dept.getName() : "Sheet" + (i + 1));
-                    XSSFSheet ws;
-                    if (i == 0) {
-                        ws = wb.createSheet(sheetName);
-                    } else {
-                        ws = wb.createSheet(sheetName);
-                    }
+                    String sheetName = sanitizeSheetName(dept.getName() != null ? dept.getName() : "Sheet" + (i + 1), wb);
+                    XSSFSheet ws = wb.createSheet(sheetName);
                     writeHeaderRow(ws, st, levels, numLevels, threshStart, scoreCol, levelCol);
                     setColumnWidths(ws, numLevels, scoreCol, levelCol);
 
@@ -116,6 +117,27 @@ public class ExcelExportService {
 
                     if (rowIdx > 1) {
                         applyConditionalFormatting(ws, rowIdx - 1, scoreCol, levelCol, levels);
+                        deptSummaryRefs.add(new DeptSummaryRef(sheetName, rowIdx - 1));
+                    }
+                }
+
+                // Add organization score row to each sheet
+                if (!deptSummaryRefs.isEmpty()) {
+                    String scoreColLetter = colLetter(scoreCol);
+                    StringBuilder orgFormula = new StringBuilder("AVERAGE(");
+                    for (int j = 0; j < deptSummaryRefs.size(); j++) {
+                        if (j > 0) orgFormula.append(",");
+                        DeptSummaryRef ref = deptSummaryRefs.get(j);
+                        orgFormula.append("'").append(ref.sheetName).append("'!")
+                                  .append(scoreColLetter).append(ref.summaryRowIdx + 1);
+                    }
+                    orgFormula.append(")");
+                    String orgFormulaStr = orgFormula.toString();
+
+                    for (int i = 0; i < wb.getNumberOfSheets(); i++) {
+                        XSSFSheet ws = wb.getSheetAt(i);
+                        writeOrgSummaryRow(ws, ws.getLastRowNum() + 2, orgFormulaStr,
+                                scoreCol, levelCol, threshStart, numLevels, totalCols, levels, st);
                     }
                 }
             } else {
@@ -127,12 +149,30 @@ public class ExcelExportService {
                 for (DepartmentDTO dept : departments) {
                     if (dept == null)
                         continue;
+                    int startRow = rowIdx;
                     rowIdx = writeDepartment(ws, dept, levels, numLevels, threshStart, scoreCol, levelCol, st, rowIdx,
                             totalCols);
+                    if (rowIdx > startRow) {
+                        deptSummaryRefs.add(new DeptSummaryRef(null, rowIdx - 1));
+                    }
                 }
 
                 if (rowIdx > 1) {
                     applyConditionalFormatting(ws, rowIdx - 1, scoreCol, levelCol, levels);
+                }
+
+                // Add organization score row at the end
+                if (!deptSummaryRefs.isEmpty()) {
+                    String scoreColLetter = colLetter(scoreCol);
+                    StringBuilder orgFormula = new StringBuilder("AVERAGE(");
+                    for (int j = 0; j < deptSummaryRefs.size(); j++) {
+                        if (j > 0) orgFormula.append(",");
+                        orgFormula.append(scoreColLetter).append(deptSummaryRefs.get(j).summaryRowIdx + 1);
+                    }
+                    orgFormula.append(")");
+
+                    writeOrgSummaryRow(ws, rowIdx + 1, orgFormula.toString(),
+                            scoreCol, levelCol, threshStart, numLevels, totalCols, levels, st);
                 }
             }
 
@@ -889,6 +929,34 @@ public class ExcelExportService {
         return rowIdx;
     }
 
+    // ─── Organization summary row ───────────────────────────────────────────
+
+    private void writeOrgSummaryRow(XSSFSheet ws, int orgRowIdx, String orgScoreFormula,
+            int scoreCol, int levelCol, int threshStart, int numLevels,
+            int totalCols, List<ScoreLevel> levels, Styles st) {
+        Row orgRow = ws.createRow(orgRowIdx);
+
+        Cell orgLbl = orgRow.createCell(COL_KR_NAME);
+        orgLbl.setCellValue("\uD83C\uDF10 ВЗВЕШЕННАЯ ОЦЕНКА ОРГАНИЗАЦИИ");
+        orgLbl.setCellStyle(st.orgSummaryLabelStyle);
+
+        for (int c = COL_OBJ; c < threshStart + numLevels; c++) {
+            if (c != COL_KR_NAME) {
+                orgRow.createCell(c).setCellStyle(st.orgSummaryBgStyle);
+            }
+        }
+
+        Cell orgScoreCell = orgRow.createCell(scoreCol);
+        orgScoreCell.setCellFormula(orgScoreFormula);
+        orgScoreCell.setCellStyle(st.orgScoreSummaryStyle);
+
+        Cell orgLevelCell = orgRow.createCell(levelCol);
+        orgLevelCell.setCellFormula(levelFormula(orgRowIdx + 1, scoreCol, levels));
+        orgLevelCell.setCellStyle(st.orgLevelSummaryStyle);
+
+        applyBottomBorder(ws, orgRowIdx, totalCols, BorderStyle.THICK, ORG_SUMMARY_BG);
+    }
+
     // ─── Common write helpers ────────────────────────────────────────────────
 
     private void writeActualValue(Cell actualCell, KeyResultDTO kr) {
@@ -1172,13 +1240,22 @@ public class ExcelExportService {
         return result;
     }
 
-    private static String sanitizeSheetName(String name) {
+    private static String sanitizeSheetName(String name, XSSFWorkbook wb) {
         String sanitized = name.replaceAll("[\\\\/*?\\[\\]:]", "");
         if (sanitized.length() > 31)
             sanitized = sanitized.substring(0, 31);
         if (sanitized.isBlank())
             sanitized = "Sheet";
-        return sanitized;
+        // Ensure uniqueness by appending a suffix if needed
+        String candidate = sanitized;
+        int suffix = 2;
+        while (wb.getSheet(candidate) != null) {
+            String sfx = " (" + suffix + ")";
+            int maxLen = 31 - sfx.length();
+            candidate = (sanitized.length() > maxLen ? sanitized.substring(0, maxLen) : sanitized) + sfx;
+            suffix++;
+        }
+        return candidate;
     }
 
     static String colLetter(int colIndex) {
@@ -1262,6 +1339,10 @@ public class ExcelExportService {
         final CellStyle deptSummaryBgStyle;
         final CellStyle deptScoreSummaryStyle;
         final CellStyle deptLevelSummaryStyle;
+        final CellStyle orgSummaryLabelStyle;
+        final CellStyle orgSummaryBgStyle;
+        final CellStyle orgScoreSummaryStyle;
+        final CellStyle orgLevelSummaryStyle;
         final List<CellStyle> thresholdStyles;
 
         Styles(XSSFWorkbook wb, List<ScoreLevel> levels, int numLevels) {
@@ -1411,6 +1492,37 @@ public class ExcelExportService {
             ((XSSFCellStyle) deptLevelSummaryStyle).setFillForegroundColor(deptSumBgColor);
             deptLevelSummaryStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             deptLevelSummaryStyle.setFont(whiteBoldLg);
+
+            // Organization summary styles (dark green)
+            XSSFColor orgSumBgColor = new XSSFColor(hexToBytes("#" + ORG_SUMMARY_BG), null);
+
+            Font whiteBoldXl = wb.createFont();
+            whiteBoldXl.setBold(true);
+            whiteBoldXl.setColor(IndexedColors.WHITE.getIndex());
+            whiteBoldXl.setFontHeightInPoints((short) 12);
+
+            orgSummaryLabelStyle = wb.createCellStyle();
+            ((XSSFCellStyle) orgSummaryLabelStyle).setFillForegroundColor(orgSumBgColor);
+            orgSummaryLabelStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            orgSummaryLabelStyle.setFont(whiteBoldXl);
+            orgSummaryLabelStyle.setAlignment(HorizontalAlignment.RIGHT);
+            orgSummaryLabelStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+
+            orgSummaryBgStyle = wb.createCellStyle();
+            ((XSSFCellStyle) orgSummaryBgStyle).setFillForegroundColor(orgSumBgColor);
+            orgSummaryBgStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            orgScoreSummaryStyle = wb.createCellStyle();
+            orgScoreSummaryStyle.cloneStyleFrom(scoreCellStyle);
+            ((XSSFCellStyle) orgScoreSummaryStyle).setFillForegroundColor(orgSumBgColor);
+            orgScoreSummaryStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            orgScoreSummaryStyle.setFont(whiteBoldXl);
+
+            orgLevelSummaryStyle = wb.createCellStyle();
+            orgLevelSummaryStyle.cloneStyleFrom(levelCellStyle);
+            ((XSSFCellStyle) orgLevelSummaryStyle).setFillForegroundColor(orgSumBgColor);
+            orgLevelSummaryStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            orgLevelSummaryStyle.setFont(whiteBoldXl);
 
             thresholdStyles = new ArrayList<>();
             for (ScoreLevel level : levels) {

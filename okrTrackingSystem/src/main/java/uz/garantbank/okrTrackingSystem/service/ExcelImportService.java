@@ -19,9 +19,11 @@ import java.util.regex.Pattern;
 /**
  * Imports OKR data from Excel files.
  *
- * Expected column layout (matching ExcelExportService):
- * A=Division, B=Dept, C=Objective, D=ObjWeight, E=KR, F=KRWeight, G=Type, H=Actual, I=Unit, J+=Thresholds
+ * Supports two column layouts:
+ *   Standard: A=Division, B=Dept, C=Objective, D=ObjWeight, E=KR, F=KRWeight, G=Type, H=Actual, I=Unit, J+=Thresholds
+ *   Compact:  A=Dept, B=Objective, C=ObjWeight, D=KR, E=KRWeight, F=Type, G=Actual, H=Unit, I+=Thresholds
  *
+ * Auto-detects format from the header row.
  * Supports multi-sheet files (one department per sheet) and single-sheet exports.
  * Upserts by name: matches divisions, departments, objectives, and key results by name.
  */
@@ -33,17 +35,7 @@ public class ExcelImportService {
     private final OkrService okrService;
     private final ScoreLevelRepository scoreLevelRepository;
 
-    // Column indices (0-based) — must match ExcelExportService
-    private static final int COL_DIVISION  = 0;  // A
-    private static final int COL_DEPT      = 1;  // B
-    private static final int COL_OBJ       = 2;  // C
-    private static final int COL_OBJ_WT    = 3;  // D
-    private static final int COL_KR_NAME   = 4;  // E
-    private static final int COL_KR_WT     = 5;  // F
-    private static final int COL_TYPE      = 6;  // G
-    private static final int COL_ACTUAL    = 7;  // H
-    private static final int COL_UNIT      = 8;  // I
-    private static final int COL_THRESHOLD_START = 9; // J+
+    private static final String DEFAULT_DIVISION = "Организация";
 
     // Known header keywords for detecting header rows
     private static final Set<String> KNOWN_HEADERS = Set.of(
@@ -52,9 +44,14 @@ public class ExcelImportService {
             "ключевой результат", "key result"
     );
 
-    // Pattern for leader info in column B: "👤 Руководитель: Name\n(DeptName)"
+    // Keywords that indicate column A is a Division/Block column (standard format)
+    private static final Set<String> DIVISION_HEADERS = Set.of(
+            "блок", "division", "bo'lim"
+    );
+
+    // Pattern for leader info: "👤 Руководитель...: Name" or "👤 Руководитель...: Name\n(DeptName)"
     private static final Pattern LEADER_PATTERN = Pattern.compile(
-            "\uD83D\uDC64\\s*(?:Руководитель|Department Leader|Leader)[:\\s]+(.+?)(?:\\s*\\((.+?)\\))?\\s*$",
+            "\uD83D\uDC64\\s*(?:Руководитель[^:]*|Department Leader|Leader)[:\\s]+(.+?)(?:\\s*\\((.+?)\\))?\\s*$",
             Pattern.DOTALL
     );
 
@@ -78,7 +75,23 @@ public class ExcelImportService {
                 boolean hasHeader = isHeaderRow(firstRow);
                 int dataStartRow = hasHeader ? 1 : 0;
 
-                String currentDivisionName = null;
+                // Auto-detect column layout from header
+                boolean hasDivisionColumn = hasHeader && hasDivisionHeader(firstRow);
+                int colDept = hasDivisionColumn ? 1 : 0;
+                int colObj = hasDivisionColumn ? 2 : 1;
+                int colObjWt = hasDivisionColumn ? 3 : 2;
+                int colKrName = hasDivisionColumn ? 4 : 3;
+                int colKrWt = hasDivisionColumn ? 5 : 4;
+                int colType = hasDivisionColumn ? 6 : 5;
+                int colActual = hasDivisionColumn ? 7 : 6;
+                int colUnit = hasDivisionColumn ? 8 : 7;
+                int colThreshStart = hasDivisionColumn ? 9 : 8;
+
+                if (!hasDivisionColumn) {
+                    log.info("Sheet '{}': compact format detected (no Division column)", ws.getSheetName());
+                }
+
+                String currentDivisionName = hasDivisionColumn ? null : DEFAULT_DIVISION;
                 String currentDeptName = null;
                 String currentObjName = null;
                 Department currentDept = null;
@@ -90,31 +103,34 @@ public class ExcelImportService {
                     Row row = ws.getRow(rowIdx);
                     if (row == null) continue;
 
-                    // Read cell values
-                    String divisionVal = getCellString(row, COL_DIVISION);
-                    String deptVal = getCellString(row, COL_DEPT);
-                    String objVal = getCellString(row, COL_OBJ);
-                    String objWeightVal = getCellString(row, COL_OBJ_WT);
-                    String krNameVal = getCellString(row, COL_KR_NAME);
-                    String krWeightVal = getCellString(row, COL_KR_WT);
-                    String typeVal = getCellString(row, COL_TYPE);
-                    String actualVal = getCellString(row, COL_ACTUAL);
-                    String unitVal = getCellString(row, COL_UNIT);
+                    // Read cell values using detected column indices
+                    String divisionVal = hasDivisionColumn ? getCellString(row, 0) : null;
+                    String deptVal = getCellString(row, colDept);
+                    String objVal = getCellString(row, colObj);
+                    String objWeightVal = getCellString(row, colObjWt);
+                    String krNameVal = getCellString(row, colKrName);
+                    String krWeightVal = getCellString(row, colKrWt);
+                    String typeVal = getCellString(row, colType);
+                    String actualVal = getCellString(row, colActual);
+                    String unitVal = getCellString(row, colUnit);
 
                     // Skip completely empty rows
                     if (isBlank(divisionVal) && isBlank(deptVal) && isBlank(objVal) && isBlank(krNameVal)) {
                         continue;
                     }
 
-                    // Skip summary/formula rows
+                    // Skip summary/formula rows — check both KR column and dept column
                     if (isSummaryRow(krNameVal)) continue;
+                    if (isSummaryRow(deptVal)) continue;
 
-                    // Handle division from column A (inherit from previous if blank)
-                    if (!isBlank(divisionVal)) {
+                    // Handle division from column A (standard format only; inherit from previous if blank)
+                    if (hasDivisionColumn && !isBlank(divisionVal)) {
+                        // In standard format, col A might contain leader pattern
+                        // (not typical, but the compact format puts it there)
                         currentDivisionName = divisionVal.trim();
                     }
 
-                    // Handle department/leader from column B
+                    // Handle department/leader from dept column
                     if (!isBlank(deptVal)) {
                         Matcher leaderMatch = LEADER_PATTERN.matcher(deptVal.trim());
                         if (leaderMatch.find()) {
@@ -125,6 +141,9 @@ public class ExcelImportService {
 
                             if (deptNameFromCell != null) {
                                 currentDeptName = deptNameFromCell;
+                            } else {
+                                // Compact format: leader label has no (DeptName), use leader label as dept name
+                                currentDeptName = deptVal.trim();
                             }
 
                             // Ensure division + department exist
@@ -172,7 +191,7 @@ public class ExcelImportService {
                     // Must have department context
                     if (currentDept == null || currentDivisionName == null) continue;
 
-                    // Handle objective from column C (inherit from previous if blank)
+                    // Handle objective (inherit from previous if blank)
                     if (!isBlank(objVal)) {
                         String cleanObjName = cleanObjectiveName(objVal.trim());
                         if (!cleanObjName.equals(currentObjName)) {
@@ -201,7 +220,7 @@ public class ExcelImportService {
                     Double[] thresholds = new Double[5];
                     if (metricType != KeyResult.MetricType.QUALITATIVE) {
                         for (int i = 0; i < numLevels && i < 5; i++) {
-                            int col = COL_THRESHOLD_START + i;
+                            int col = colThreshStart + i;
                             String thVal = getCellString(row, col);
                             if (!isBlank(thVal)) {
                                 try {
@@ -260,12 +279,23 @@ public class ExcelImportService {
         return false;
     }
 
-    private boolean isSummaryRow(String krNameVal) {
-        if (isBlank(krNameVal)) return false;
-        String upper = krNameVal.toUpperCase();
+    /**
+     * Check if column A header indicates a Division/Block column (standard format).
+     * If column A is "Департамент"/"Department", it's the compact format.
+     */
+    private boolean hasDivisionHeader(Row headerRow) {
+        String colA = getCellString(headerRow, 0);
+        if (colA == null) return false;
+        return DIVISION_HEADERS.contains(colA.trim().toLowerCase());
+    }
+
+    private boolean isSummaryRow(String val) {
+        if (isBlank(val)) return false;
+        String upper = val.toUpperCase();
         return upper.contains("\uD83D\uDCCA") // 📊
                 || upper.contains("\uD83C\uDFE2") // 🏢
                 || upper.contains("\uD83D\uDC64") // 👤
+                || upper.contains("\uD83C\uDF10") // 🌐
                 || upper.contains("ВЗВЕШЕННАЯ ОЦЕНКА")
                 || upper.contains("OBJECTIVE WEIGHTED SCORE")
                 || upper.contains("DEPARTMENT WEIGHTED SCORE")
@@ -318,7 +348,7 @@ public class ExcelImportService {
     }
 
     private String getCellString(Row row, int colIdx) {
-        if (row == null) return null;
+        if (row == null || colIdx < 0) return null;
         Cell cell = row.getCell(colIdx);
         if (cell == null) return null;
 
