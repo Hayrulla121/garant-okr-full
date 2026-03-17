@@ -24,6 +24,8 @@ import uz.garantbank.okrTrackingSystem.security.JwtTokenProvider;
 import uz.garantbank.okrTrackingSystem.security.UserDetailsImpl;
 import uz.garantbank.okrTrackingSystem.service.UserService;
 
+import java.util.Collections;
+
 /**
  * Controller for authentication endpoints
  */
@@ -62,13 +64,33 @@ public class AuthController {
 
         // Generate JWT token
         String jwt = jwtTokenProvider.generateToken(authentication);
-        // Get user details
+
+        // Get user details from auth principal
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-        // Update last login timestamp
-        userService.updateLastLogin(userDetails.getId());
+        // Update last login timestamp (non-blocking)
+        try {
+            userService.updateLastLogin(userDetails.getId());
+        } catch (Exception e) {
+            log.warn("Failed to update last login for user: {}", request.getUsername(), e);
+        }
 
-        UserDTO userDTO = userService.getUserById(userDetails.getId());
+        // Load full user profile, fallback to principal data if DB fails
+        UserDTO userDTO;
+        try {
+            userDTO = userService.getUserById(userDetails.getId());
+        } catch (Exception e) {
+            log.error("Failed to load user profile from DB, using auth principal as fallback", e);
+            userDTO = UserDTO.builder()
+                    .id(userDetails.getId())
+                    .username(userDetails.getUsername())
+                    .email(userDetails.getEmail())
+                    .fullName(userDetails.getFullName())
+                    .isActive(userDetails.isEnabled())
+                    .assignedDepartments(Collections.emptyList())
+                    .assignedGroups(Collections.emptyList())
+                    .build();
+        }
 
         log.info("Login completed for user: {}", request.getUsername());
 
