@@ -128,6 +128,15 @@ public class DivisionService {
         List<Department> departments = departmentRepository.findByDivisionId(id);
         if (!departments.isEmpty()) {
             log.info("Cascade-deleting {} department(s) in division '{}'", departments.size(), division.getName());
+
+            // Remove user-department associations before deleting departments
+            for (Department dept : departments) {
+                List<User> usersInDept = userRepository.findByAssignedDepartmentId(dept.getId());
+                for (User user : usersInDept) {
+                    user.getAssignedDepartments().remove(dept);
+                }
+            }
+
             departmentRepository.deleteAll(departments);
         }
 
