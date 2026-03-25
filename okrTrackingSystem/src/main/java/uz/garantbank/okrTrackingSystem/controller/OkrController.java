@@ -291,8 +291,7 @@ public class OkrController {
             @ApiResponse(responseCode = "403", description = "No edit permission", content = @Content),
             @ApiResponse(responseCode = "404", description = "Key result not found", content = @Content)
     })
-    @PutMapping(value = "/key-results/{id}/actual-value",
-                consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "/key-results/{id}/actual-value")
     public ResponseEntity<KeyResultDTO> updateKeyResultActualValue(
             @Parameter(description = "Key Result ID", required = true) @PathVariable("id") String id,
             @Parameter(description = "The new actual value") @RequestParam("actualValue") String actualValue,

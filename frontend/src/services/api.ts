@@ -96,7 +96,7 @@ export const keyResultApi = {
         formData.append('actualValue', value);
         if (file) formData.append('file', file);
         return api.put<KeyResult>(`/key-results/${id}/actual-value`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
+            headers: { 'Content-Type': undefined },
         });
     },
     updateProgress: (id: string, progress: number) =>
