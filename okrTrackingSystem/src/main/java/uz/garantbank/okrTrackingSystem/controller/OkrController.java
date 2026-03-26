@@ -24,6 +24,7 @@ import uz.garantbank.okrTrackingSystem.dto.DepartmentScoreResult;
 import uz.garantbank.okrTrackingSystem.dto.ImportResultDTO;
 import uz.garantbank.okrTrackingSystem.dto.KeyResultDTO;
 import uz.garantbank.okrTrackingSystem.dto.ObjectiveDTO;
+import uz.garantbank.okrTrackingSystem.entity.KeyResult;
 import uz.garantbank.okrTrackingSystem.entity.Objective;
 import uz.garantbank.okrTrackingSystem.entity.ScoreSnapshot;
 import uz.garantbank.okrTrackingSystem.entity.User;
@@ -502,13 +503,11 @@ public class OkrController {
     }
 
     private String getDepartmentIdFromKeyResult(String keyResultId) {
-        return keyResultRepository.findById(keyResultId)
-                .map(kr -> {
-                    if (kr.getObjective() != null && kr.getObjective().getDepartment() != null) {
-                        return kr.getObjective().getDepartment().getId();
-                    }
-                    return null;
-                })
+        KeyResult kr = keyResultRepository.findById(keyResultId)
                 .orElseThrow(() -> new EntityNotFoundException("Key Result not found: " + keyResultId));
+        if (kr.getObjective() != null && kr.getObjective().getDepartment() != null) {
+            return kr.getObjective().getDepartment().getId();
+        }
+        return null;
     }
 }
