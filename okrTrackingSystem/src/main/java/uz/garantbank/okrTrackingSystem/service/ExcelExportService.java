@@ -6,6 +6,7 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
 import org.springframework.stereotype.Service;
 import uz.garantbank.okrTrackingSystem.dto.DepartmentDTO;
+import uz.garantbank.okrTrackingSystem.dto.DivisionDTO;
 import uz.garantbank.okrTrackingSystem.dto.KeyResultDTO;
 import uz.garantbank.okrTrackingSystem.dto.ObjectiveDTO;
 import uz.garantbank.okrTrackingSystem.entity.KeyResult;
@@ -80,11 +81,25 @@ public class ExcelExportService {
     // ─── Public API ──────────────────────────────────────────────────────────
 
     public byte[] exportToExcel(List<DepartmentDTO> departments) {
-        return exportToExcel(departments, true);
+        return exportToExcel(departments, List.of(), true);
     }
 
     public byte[] exportToExcel(List<DepartmentDTO> departments, boolean multiSheet) {
+        return exportToExcel(departments, List.of(), multiSheet);
+    }
+
+    public byte[] exportToExcel(List<DepartmentDTO> departments, List<DivisionDTO> allDivisions, boolean multiSheet) {
         log.info("Exporting {} departments to Excel (multiSheet={})", departments.size(), multiSheet);
+
+        // Identify divisions that have no departments but have objectives
+        Set<String> divisionIdsWithDepts = departments.stream()
+                .filter(d -> d.getDivision() != null && d.getDivision().getId() != null)
+                .map(d -> d.getDivision().getId())
+                .collect(Collectors.toSet());
+        List<DivisionDTO> standaloneDivisions = allDivisions.stream()
+                .filter(div -> !divisionIdsWithDepts.contains(div.getId()))
+                .filter(div -> div.getObjectives() != null && !div.getObjectives().isEmpty())
+                .collect(Collectors.toList());
         try (XSSFWorkbook wb = new XSSFWorkbook();
                 ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
@@ -113,6 +128,24 @@ public class ExcelExportService {
                     int rowIdx = 1;
                     rowIdx = writeDepartment(ws, dept, levels, numLevels, threshStart, scoreCol, levelCol, st, rowIdx,
                             totalCols);
+
+                    if (rowIdx > 1) {
+                        applyConditionalFormatting(ws, rowIdx - 1, scoreCol, levelCol, levels);
+                        deptSummaryRefs.add(new DeptSummaryRef(sheetName, rowIdx - 1));
+                    }
+                }
+
+                // Write standalone divisions (no departments) on their own sheets
+                for (DivisionDTO div : standaloneDivisions) {
+                    String sheetName = sanitizeSheetName(
+                            div.getName() != null ? div.getName() : "Division", wb);
+                    XSSFSheet ws = wb.createSheet(sheetName);
+                    writeHeaderRow(ws, st, levels, numLevels, threshStart, scoreCol, levelCol);
+                    setColumnWidths(ws, numLevels, scoreCol, levelCol);
+
+                    int rowIdx = 1;
+                    rowIdx = writeStandaloneDivision(ws, div, levels, numLevels, threshStart,
+                            scoreCol, levelCol, st, rowIdx, totalCols);
 
                     if (rowIdx > 1) {
                         applyConditionalFormatting(ws, rowIdx - 1, scoreCol, levelCol, levels);
@@ -151,6 +184,16 @@ public class ExcelExportService {
                     int startRow = rowIdx;
                     rowIdx = writeDepartment(ws, dept, levels, numLevels, threshStart, scoreCol, levelCol, st, rowIdx,
                             totalCols);
+                    if (rowIdx > startRow) {
+                        deptSummaryRefs.add(new DeptSummaryRef(null, rowIdx - 1));
+                    }
+                }
+
+                // Write standalone divisions (no departments)
+                for (DivisionDTO div : standaloneDivisions) {
+                    int startRow = rowIdx;
+                    rowIdx = writeStandaloneDivision(ws, div, levels, numLevels, threshStart,
+                            scoreCol, levelCol, st, rowIdx, totalCols);
                     if (rowIdx > startRow) {
                         deptSummaryRefs.add(new DeptSummaryRef(null, rowIdx - 1));
                     }
@@ -943,6 +986,190 @@ public class ExcelExportService {
             Row firstRow = ws.getRow(deptStartRow);
             if (firstRow != null && firstRow.getCell(COL_DIVISION) != null) {
                 firstRow.getCell(COL_DIVISION).setCellStyle(st.deptLabelStyle);
+            }
+        }
+
+        return rowIdx;
+    }
+
+    // ─── Standalone division writer (divisions with no departments) ────────
+
+    private int writeStandaloneDivision(XSSFSheet ws, DivisionDTO div,
+            List<ScoreLevel> levels, int numLevels,
+            int threshStart, int scoreCol, int levelCol,
+            Styles st, int startRow, int totalCols) {
+        int rowIdx = startRow;
+        int divStartRow = rowIdx;
+
+        String divisionName = div.getName() != null ? div.getName() : "";
+        List<ObjectiveDTO> divObjs = div.getObjectives();
+        if (divObjs == null || divObjs.isEmpty()) return rowIdx;
+
+        List<Integer> objSummaryRows = new ArrayList<>();
+
+        for (ObjectiveDTO obj : divObjs) {
+            if (obj == null || obj.getKeyResults() == null || obj.getKeyResults().isEmpty())
+                continue;
+
+            int objStartRow = rowIdx;
+            List<KeyResultDTO> krs = obj.getKeyResults();
+            int objWeight = obj.getWeight() != null ? obj.getWeight() : 0;
+
+            for (KeyResultDTO kr : krs) {
+                if (kr == null) continue;
+                Row row = ws.createRow(rowIdx);
+                int krWeight = kr.getWeight() != null ? kr.getWeight() : 0;
+
+                if (rowIdx == divStartRow) {
+                    Cell c = row.createCell(COL_DIVISION);
+                    c.setCellValue(divisionName);
+                    c.setCellStyle(st.deptLabelStyle);
+                }
+
+                if (rowIdx == divStartRow) {
+                    Cell c = row.createCell(COL_DEPT);
+                    c.setCellValue("\uD83C\uDFDB Дивизион: " + divisionName);
+                    c.setCellStyle(st.leaderLabelStyle);
+                }
+
+                if (rowIdx == objStartRow) {
+                    Cell c = row.createCell(COL_OBJ);
+                    c.setCellValue(obj.getName() != null ? obj.getName() : "");
+                    c.setCellStyle(st.objNameStyle);
+
+                    Cell cWt = row.createCell(COL_OBJ_WT);
+                    cWt.setCellValue(objWeight);
+                    cWt.setCellStyle(st.weightStyle);
+                }
+
+                row.createCell(COL_KR_NAME).setCellValue(kr.getName() != null ? kr.getName() : "");
+                Cell krWtCell = row.createCell(COL_KR_WT);
+                krWtCell.setCellValue(krWeight);
+                krWtCell.setCellStyle(st.weightStyle);
+                row.createCell(COL_TYPE).setCellValue(metricTypeDisplay(kr.getMetricType()));
+
+                Cell actualCell = row.createCell(COL_ACTUAL);
+                actualCell.setCellStyle(st.centeredStyle);
+                writeActualValue(actualCell, kr);
+
+                row.createCell(COL_UNIT).setCellValue(kr.getUnit() != null ? kr.getUnit() : "");
+                writeThresholds(row, kr, levels, numLevels, threshStart, st);
+
+                int xlRow = rowIdx + 1;
+                Cell scoreCell = row.createCell(scoreCol);
+                writeScoreFormula(scoreCell, kr, xlRow, levels, threshStart, st);
+
+                Cell levelCell = row.createCell(levelCol);
+                writeLevelFormula(levelCell, kr, xlRow, scoreCol, levels, st);
+
+                rowIdx++;
+            }
+
+            int objKrEndRow = rowIdx - 1;
+            if (!krs.isEmpty()) {
+                Row sumRow = ws.createRow(rowIdx);
+                Cell lblCell = sumRow.createCell(COL_KR_NAME);
+                lblCell.setCellValue("\uD83D\uDCCA ВЗВЕШЕННАЯ ОЦЕНКА ЦЕЛИ (ДИВ)");
+                lblCell.setCellStyle(st.objSummaryLabelStyle);
+
+                for (int c = COL_KR_WT; c < threshStart + numLevels; c++) {
+                    sumRow.createCell(c).setCellStyle(st.objSummaryBgStyle);
+                }
+
+                String scoreColLetter = colLetter(scoreCol);
+                String krWtColLetter = colLetter(COL_KR_WT);
+                int xlObjStart = objStartRow + 1;
+                int xlObjEnd = objKrEndRow + 1;
+                String objScoreFormula = String.format(
+                        "IF(SUM(%s%d:%s%d)>0,SUMPRODUCT(%s%d:%s%d,%s%d:%s%d)/SUM(%s%d:%s%d),AVERAGE(%s%d:%s%d))",
+                        krWtColLetter, xlObjStart, krWtColLetter, xlObjEnd,
+                        scoreColLetter, xlObjStart, scoreColLetter, xlObjEnd,
+                        krWtColLetter, xlObjStart, krWtColLetter, xlObjEnd,
+                        krWtColLetter, xlObjStart, krWtColLetter, xlObjEnd,
+                        scoreColLetter, xlObjStart, scoreColLetter, xlObjEnd);
+                Cell objScoreCell = sumRow.createCell(scoreCol);
+                objScoreCell.setCellFormula(objScoreFormula);
+                objScoreCell.setCellStyle(st.scoreSummaryStyle);
+
+                Cell objLevelCell = sumRow.createCell(levelCol);
+                objLevelCell.setCellFormula(levelFormula(rowIdx + 1, scoreCol, levels));
+                objLevelCell.setCellStyle(st.levelSummaryStyle);
+
+                objSummaryRows.add(rowIdx);
+                applyBottomBorder(ws, rowIdx, totalCols, BorderStyle.MEDIUM, "000000");
+                rowIdx++;
+            }
+
+            int objEndRow = rowIdx - 1;
+            if (objEndRow > objStartRow) {
+                safeAddMerge(ws, objStartRow, objEndRow, COL_OBJ, COL_OBJ);
+                safeAddMerge(ws, objStartRow, objEndRow, COL_OBJ_WT, COL_OBJ_WT);
+                ws.getRow(objStartRow).getCell(COL_OBJ_WT).setCellStyle(st.weightSumStyle);
+            }
+        }
+
+        // Division Summary Row
+        if (!objSummaryRows.isEmpty()) {
+            Row divSumRow = ws.createRow(rowIdx);
+
+            Cell divCell = divSumRow.createCell(COL_DIVISION);
+            divCell.setCellValue(divisionName);
+            divCell.setCellStyle(st.deptSummaryNameStyle);
+
+            Cell deptLbl = divSumRow.createCell(COL_DEPT);
+            deptLbl.setCellValue(divisionName);
+            deptLbl.setCellStyle(st.deptSummaryNameStyle);
+
+            Cell divSumLbl = divSumRow.createCell(COL_KR_NAME);
+            divSumLbl.setCellValue("\uD83C\uDFDB ВЗВЕШЕННАЯ ОЦЕНКА ДИВИЗИОНА");
+            divSumLbl.setCellStyle(st.deptSummaryLabelStyle);
+
+            for (int c = COL_OBJ; c < threshStart + numLevels; c++) {
+                if (c != COL_KR_NAME && c != COL_DEPT) {
+                    divSumRow.createCell(c).setCellStyle(st.deptSummaryBgStyle);
+                }
+            }
+
+            String scoreColLetter = colLetter(scoreCol);
+            String objWtColLetter = colLetter(COL_OBJ_WT);
+            StringBuilder scoreRefs = new StringBuilder();
+            StringBuilder weightRefs = new StringBuilder();
+            for (int i = 0; i < objSummaryRows.size(); i++) {
+                int xlSumRow = objSummaryRows.get(i) + 1;
+                if (i > 0) {
+                    scoreRefs.append(",");
+                    weightRefs.append(",");
+                }
+                scoreRefs.append(scoreColLetter).append(xlSumRow);
+                weightRefs.append(objWtColLetter).append(xlSumRow);
+            }
+            String divScoreFormula = String.format(
+                    "IF(SUM(%s)>0,SUMPRODUCT(%s,%s)/SUM(%s),AVERAGE(%s))",
+                    weightRefs, scoreRefs, weightRefs, weightRefs, scoreRefs);
+
+            Cell divScoreCell = divSumRow.createCell(scoreCol);
+            divScoreCell.setCellFormula(divScoreFormula);
+            divScoreCell.setCellStyle(st.deptScoreSummaryStyle);
+
+            Cell divLevelCell = divSumRow.createCell(levelCol);
+            divLevelCell.setCellFormula(levelFormula(rowIdx + 1, scoreCol, levels));
+            divLevelCell.setCellStyle(st.deptLevelSummaryStyle);
+
+            applyBottomBorder(ws, rowIdx, totalCols, BorderStyle.THICK, "000000");
+            rowIdx++;
+        }
+
+        // Merge division column (A) and dept column (B) across entire block
+        int divEndRow = rowIdx - 1;
+        if (divEndRow > divStartRow) {
+            safeAddMerge(ws, divStartRow, divEndRow, COL_DIVISION, COL_DIVISION);
+            Row firstRow = ws.getRow(divStartRow);
+            if (firstRow != null && firstRow.getCell(COL_DIVISION) != null) {
+                firstRow.getCell(COL_DIVISION).setCellStyle(st.deptLabelStyle);
+            }
+            safeAddMerge(ws, divStartRow, divEndRow - 1, COL_DEPT, COL_DEPT);
+            if (firstRow != null && firstRow.getCell(COL_DEPT) != null) {
+                firstRow.getCell(COL_DEPT).setCellStyle(st.leaderLabelStyle);
             }
         }
 

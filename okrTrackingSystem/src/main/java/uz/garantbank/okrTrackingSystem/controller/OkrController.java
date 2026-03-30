@@ -30,7 +30,9 @@ import uz.garantbank.okrTrackingSystem.entity.ScoreSnapshot;
 import uz.garantbank.okrTrackingSystem.entity.User;
 import uz.garantbank.okrTrackingSystem.repository.KeyResultRepository;
 import uz.garantbank.okrTrackingSystem.repository.ObjectiveRepository;
+import uz.garantbank.okrTrackingSystem.dto.DivisionDTO;
 import uz.garantbank.okrTrackingSystem.service.DepartmentAccessService;
+import uz.garantbank.okrTrackingSystem.service.DivisionService;
 import uz.garantbank.okrTrackingSystem.service.ExcelExportService;
 import uz.garantbank.okrTrackingSystem.service.ExcelImportService;
 import uz.garantbank.okrTrackingSystem.service.OkrService;
@@ -49,6 +51,7 @@ public class OkrController {
     private final ExcelExportService excelExportService;
     private final ExcelImportService excelImportService;
     private final DepartmentAccessService accessService;
+    private final DivisionService divisionService;
     private final ObjectiveRepository objectiveRepository;
     private final KeyResultRepository keyResultRepository;
     private final ScoreSnapshotService scoreSnapshotService;
@@ -387,7 +390,8 @@ public class OkrController {
             @RequestParam(value = "multiSheet", defaultValue = "true") boolean multiSheet) {
         try {
             List<DepartmentDTO> departments = okrService.getAllDepartments();
-            byte[] excelData = excelExportService.exportToExcel(departments, multiSheet);
+            List<DivisionDTO> divisions = divisionService.getAllDivisions();
+            byte[] excelData = excelExportService.exportToExcel(departments, divisions, multiSheet);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
