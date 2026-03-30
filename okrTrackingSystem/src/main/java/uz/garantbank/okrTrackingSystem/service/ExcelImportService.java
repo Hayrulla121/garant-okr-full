@@ -59,6 +59,16 @@ public class ExcelImportService {
             Pattern.DOTALL
     );
 
+    // Pattern for group section: "👥 Группа: GroupName"
+    private static final Pattern GROUP_NAME_PATTERN = Pattern.compile(
+            "\uD83D\uDC65\\s*(?:Группа|Group)[:\\s]+(.+?)(?:\\n|$)", Pattern.DOTALL
+    );
+
+    // Pattern for division section: "🏛 Дивизион: DivisionName" or "🏛 Division: DivisionName"
+    private static final Pattern DIV_SECTION_PATTERN = Pattern.compile(
+            "\uD83C\uDFDB\\s*(?:Дивизион|Division)[:\\s]+(.+?)(?:\\n|$)", Pattern.DOTALL
+    );
+
     @Transactional
     public ImportResultDTO importFromExcel(byte[] fileContent) {
         List<String> warnings = new ArrayList<>();
@@ -99,8 +109,12 @@ public class ExcelImportService {
                 String currentDeptName = null;
                 String currentObjName = null;
                 Department currentDept = null;
+                Division currentDivision = null;
+                OrgGroup currentGroup = null;
                 Objective currentObj = null;
                 boolean inLeaderSection = false;
+                boolean inDivisionSection = false;
+                boolean inGroupSection = false;
                 UUID leaderEmployeeId = null;
 
                 for (int rowIdx = dataStartRow; rowIdx <= ws.getLastRowNum(); rowIdx++) {
@@ -123,9 +137,9 @@ public class ExcelImportService {
                         continue;
                     }
 
-                    // Skip summary/formula rows — check both KR column and dept column
+                    // Skip summary/formula rows (only check KR column;
+                    // dept column may contain section markers like 👤/🏛/👥 that are not summaries)
                     if (isSummaryRow(krNameVal)) continue;
-                    if (isSummaryRow(deptVal)) continue;
 
                     // Handle division from column A (standard format only; inherit from previous if blank)
                     if (hasDivisionColumn && !isBlank(divisionVal)) {
@@ -138,16 +152,48 @@ public class ExcelImportService {
                     if (!isBlank(deptVal)) {
                         String trimmedDept = deptVal.trim();
 
-                        // Group section: "👥 Группа: Name" — keep current dept, import as dept objectives
-                        if (trimmedDept.contains(GROUP_PREFIX) || trimmedDept.contains(DIV_SECTION_PREFIX)) {
-                            // Don't change currentDept — group/division-section objectives
-                            // are imported as department-level objectives under the current dept
+                        // Division section: "🏛 Дивизион: Name"
+                        if (trimmedDept.contains(DIV_SECTION_PREFIX)) {
+                            Matcher divMatch = DIV_SECTION_PATTERN.matcher(trimmedDept);
+                            if (divMatch.find()) {
+                                currentDivisionName = divMatch.group(1).trim();
+                            }
+                            currentDivision = okrService.findOrCreateDivision(
+                                    currentDivisionName != null ? currentDivisionName : DEFAULT_DIVISION);
+                            // Ensure dept context (use sheet name)
+                            if (currentDept == null) {
+                                currentDept = okrService.findOrCreateDepartment(ws.getSheetName(), currentDivision.getId());
+                                deptCount++;
+                            }
                             currentObj = null;
                             currentObjName = null;
                             inLeaderSection = false;
+                            inDivisionSection = true;
+                            inGroupSection = false;
+                            currentGroup = null;
                             leaderEmployeeId = null;
                             if (isBlank(objVal) || isBlank(krNameVal)) continue;
-                            // Fall through to objective/KR processing below
+                        } else
+                        // Group section: "👥 Группа: Name"
+                        if (trimmedDept.contains(GROUP_PREFIX)) {
+                            // Ensure dept context (use sheet name if needed)
+                            if (currentDept == null && currentDivisionName != null) {
+                                Division division = okrService.findOrCreateDivision(currentDivisionName);
+                                currentDept = okrService.findOrCreateDepartment(ws.getSheetName(), division.getId());
+                                deptCount++;
+                            }
+                            if (currentDept != null) {
+                                Matcher groupMatch = GROUP_NAME_PATTERN.matcher(trimmedDept);
+                                String groupName = groupMatch.find() ? groupMatch.group(1).trim() : trimmedDept;
+                                currentGroup = okrService.findOrCreateGroup(groupName, currentDept.getId());
+                            }
+                            currentObj = null;
+                            currentObjName = null;
+                            inLeaderSection = false;
+                            inDivisionSection = false;
+                            inGroupSection = true;
+                            leaderEmployeeId = null;
+                            if (isBlank(objVal) || isBlank(krNameVal)) continue;
                         } else
                         // Leader/employee section: "👤 Руководитель: Name" or "👤 Сотрудник: Name"
                         if (LEADER_PATTERN.matcher(trimmedDept).find()) {
@@ -155,6 +201,9 @@ public class ExcelImportService {
                             leaderMatch.find();
                             // This is a leader/employee section
                             inLeaderSection = true;
+                            inDivisionSection = false;
+                            inGroupSection = false;
+                            currentGroup = null;
                             String leaderNameFromCell = leaderMatch.group(1).trim();
                             String deptNameFromCell = leaderMatch.group(2) != null ? leaderMatch.group(2).trim() : null;
 
@@ -187,12 +236,11 @@ public class ExcelImportService {
                             // If this row also has KR data, continue processing; otherwise skip
                             if (isBlank(objVal) || isBlank(krNameVal)) continue;
                         } else {
-                            // Regular department name — transition out of leader section
-                            if (inLeaderSection) {
-                                currentObj = null;
-                                currentObjName = null;
-                            }
+                            // Regular department name — transition out of all special sections
                             inLeaderSection = false;
+                            inDivisionSection = false;
+                            inGroupSection = false;
+                            currentGroup = null;
                             leaderEmployeeId = null;
                             currentDeptName = deptVal.trim();
 
@@ -217,11 +265,18 @@ public class ExcelImportService {
                             currentObjName = cleanObjName;
                             int weight = parseWeight(objWeightVal);
 
-                            ObjectiveLevel level = inLeaderSection ? ObjectiveLevel.INDIVIDUAL : ObjectiveLevel.DEPARTMENT;
-                            UUID empId = inLeaderSection ? leaderEmployeeId : null;
-
-                            currentObj = okrService.upsertObjective(
-                                    currentDept.getId(), currentObjName, weight, level, empId);
+                            if (inDivisionSection && currentDivision != null) {
+                                currentObj = okrService.upsertDivisionObjective(
+                                        currentDivision.getId(), currentObjName, weight);
+                            } else if (inGroupSection && currentGroup != null && currentDept != null) {
+                                currentObj = okrService.upsertGroupObjective(
+                                        currentGroup.getId(), currentDept.getId(), currentObjName, weight);
+                            } else {
+                                ObjectiveLevel level = inLeaderSection ? ObjectiveLevel.INDIVIDUAL : ObjectiveLevel.DEPARTMENT;
+                                UUID empId = inLeaderSection ? leaderEmployeeId : null;
+                                currentObj = okrService.upsertObjective(
+                                        currentDept.getId(), currentObjName, weight, level, empId);
+                            }
                             objCount++;
                         }
                     }

@@ -22,4 +22,6 @@ public interface GroupRepository extends JpaRepository<OrgGroup, String> {
 
     @Query("SELECT g FROM OrgGroup g LEFT JOIN FETCH g.members WHERE g.id = :id")
     Optional<OrgGroup> findByIdWithMembers(@Param("id") String id);
+
+    Optional<OrgGroup> findByNameAndDepartmentId(String name, String departmentId);
 }

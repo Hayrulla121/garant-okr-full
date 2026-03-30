@@ -1178,6 +1178,57 @@ public class OkrService {
     }
 
     /**
+     * Find or create a group by name within a department for import.
+     */
+    @Transactional
+    public OrgGroup findOrCreateGroup(String groupName, String departmentId) {
+        return groupRepository.findByNameAndDepartmentId(groupName, departmentId)
+                .orElseGet(() -> {
+                    Department dept = departmentRepository.findById(departmentId)
+                            .orElseThrow(() -> new IllegalArgumentException("Department not found: " + departmentId));
+                    OrgGroup group = OrgGroup.builder()
+                            .name(groupName)
+                            .department(dept)
+                            .build();
+                    return groupRepository.save(group);
+                });
+    }
+
+    /**
+     * Upsert a division-level objective by name for import.
+     */
+    @Transactional
+    public Objective upsertDivisionObjective(String divisionId, String objName, int weight) {
+        Objective obj = objectiveRepository.findByNameAndDivisionId(objName, divisionId).orElse(null);
+        if (obj != null) {
+            obj.setWeight(weight);
+            return objectiveRepository.save(obj);
+        }
+        Division div = divisionRepository.findById(divisionId)
+                .orElseThrow(() -> new IllegalArgumentException("Division not found: " + divisionId));
+        return objectiveRepository.save(Objective.builder()
+                .name(objName).weight(weight).division(div).level(ObjectiveLevel.DIVISION).build());
+    }
+
+    /**
+     * Upsert a group-level objective by name for import.
+     */
+    @Transactional
+    public Objective upsertGroupObjective(String groupId, String deptId, String objName, int weight) {
+        Objective obj = objectiveRepository.findByNameAndGroupId(objName, groupId).orElse(null);
+        if (obj != null) {
+            obj.setWeight(weight);
+            return objectiveRepository.save(obj);
+        }
+        OrgGroup group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new IllegalArgumentException("Group not found: " + groupId));
+        Department dept = departmentRepository.findById(deptId)
+                .orElseThrow(() -> new IllegalArgumentException("Department not found: " + deptId));
+        return objectiveRepository.save(Objective.builder()
+                .name(objName).weight(weight).group(group).department(dept).level(ObjectiveLevel.GROUP).build());
+    }
+
+    /**
      * Find or create/update a key result by name within an objective for import.
      */
     @Transactional

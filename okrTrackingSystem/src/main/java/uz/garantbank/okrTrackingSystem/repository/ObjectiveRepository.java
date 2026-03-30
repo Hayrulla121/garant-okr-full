@@ -46,4 +46,12 @@ public interface ObjectiveRepository extends JpaRepository<Objective, String> {
     List<Objective> findByGroupIdWithKeyResults(@Param("groupId") String groupId);
 
     List<Objective> findByGroupId(String groupId);
+
+    // Find objective by name within a group (for import upsert)
+    @Query("SELECT o FROM Objective o WHERE o.name = :name AND o.group.id = :groupId AND o.level = 'GROUP'")
+    Optional<Objective> findByNameAndGroupId(@Param("name") String name, @Param("groupId") String groupId);
+
+    // Find objective by name within a division (for import upsert)
+    @Query("SELECT o FROM Objective o WHERE o.name = :name AND o.division.id = :divisionId AND o.level = 'DIVISION'")
+    Optional<Objective> findByNameAndDivisionId(@Param("name") String name, @Param("divisionId") String divisionId);
 }
