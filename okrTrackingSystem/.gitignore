@@ -48,3 +48,6 @@ uploads/
 
 ### Maven wrapper jar ###
 .mvn/wrapper/maven-wrapper.jar
+
+### Logs ###
+logs/
